@@ -1,0 +1,377 @@
+---
+title: "Consensus regions across replicated experiments"
+author:
+- name: "Sebastian Gregoricchio, Ph.D."
+  affiliation:
+    - "Netherlands Cancer Institute, Oncogenomics division, Amsterdam - Netherlands"
+  email: 's.gregoricchio@nki.nl'
+date: "Last update: `r format(Sys.time(), '%d<sup>th</sup> %B, %Y')`"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    fig_caption: true
+vignette: >
+  %\VignetteIndexEntry{consensusRegions: consensus regions across replicated experiments}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = ">",
+                      warning = FALSE, message = FALSE, fig.align = "center",
+                      dev = "png", dpi = 96, fig.width = 7, fig.height = 4.5)
+```
+
+
+
+----------------------------------------------------------
+
+# **Introduction** {#intro}
+Replicates disagree. A region can be convincing in two samples and just
+below threshold in the third, and the usual response, taking the
+intersection of the peak sets, throws it away. Taking the union instead
+keeps it along with every piece of noise the worst replicate produced.
+
+`consensusRegions` does neither. Each peak is examined together with the
+peaks that overlap it in the other replicates, and their p-values are
+combined into one. Repeated weak evidence then adds up to something that
+survives, while a strong peak nobody else saw does not. The idea comes
+from [MSPC](https://genometric.github.io/MSPC/docs/) ([Jalili *et al.*, 2015](https://doi.org/10.1093/bioinformatics/btv293));
+what is added here is the ability to
+weight replicates, to calibrate the decision threshold rather than fix
+it, and to work with peak files that have lost their statistics.
+
+```{r load}
+library(consensusRegions)
+```
+
+
+----------------------------------
+
+<br>
+
+
+# **Reading peaks** {#read_peaks}
+The example data is three replicates over two chromosomes, with a
+deliberately shallow third sample.
+
+```{r read}
+peakFiles <- system.file("extdata",
+                         c("rep1.narrowPeak",
+                           "rep2.narrowPeak",
+                           "rep3.narrowPeak"),
+                         package = "consensusRegions")
+
+peaks <- readPeakSets(peakFiles, sampleNames = c("rep1", "rep2", "rep3"))
+peaks
+```
+
+`readPeakSets()` inspects the files and reports which statistic it can
+use. narrowPeak keeps -log10 p-values in its eighth column, so those go
+straight in. A BED with only a score gets rank-transformed. A bare BED3
+has nothing at all, and the analysis will fall back to counting
+replicates instead of combining evidence.
+
+<br>
+
+## Call peaks permissively
+This is the mistake that ruins the whole exercise, so it is worth saying
+plainly. If you call peaks at `q < 0.05` and run the consensus on what
+survives, there is nothing left to rescue and you have written an
+intersection with extra steps. Call at something like `p < 1e-3` and let
+`buildConsensus()` do the thresholding. The two-tier design assumes
+exactly this.
+
+<br>
+
+
+-------------------------------------------------
+
+# A first run {#first_run}
+```{r basic}
+result <- buildConsensus(peaks, verbose = FALSE)
+result
+```
+
+The per-replicate summary is where to look first.
+
+```{r stats}
+consensusStats(result)
+```
+
+`nRescued` counts peaks that were only weak on their own and were kept
+because the others agreed. That number is the reason to use this method,
+and also the thing to be suspicious of. If it dwarfs everything else,
+`weakThreshold` is too permissive and the combination is confirming
+noise.
+
+```{r plotRescue}
+plotRescue(result)
+```
+
+The consensus regions carry the number of contributing replicates and a
+significance recomputed from their member peaks.
+
+```{r consensus}
+head(consensusRanges(result), 3)
+```
+
+<br>
+
+-------------------------------------------
+
+
+# **Weighting the replicates** {#weighting_reps}
+Fisher's method treats every replicate as equally informative. Yours
+probably are not: one is shallower, or has a worse antibody, or was
+prepared on a bad day. The choices are usually to drop it, which wastes
+data, or to keep it and let it drag the combined statistic around.
+Weighting is the third option.
+
+When the BAM files are available, FRiP and library size can be measured
+directly:
+
+```{r weightsBam, eval = FALSE}
+weights <- computeReplicateWeights(
+    peaks,
+    method = "frip",
+    bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"))
+```
+
+More often the alignments are long gone and only the numbers survive in
+an old QC report. Pass them in:
+
+```{r weightsFrip}
+weights <- computeReplicateWeights(peaks, method = "frip",
+                                   frip = c(0.21, 0.19, 0.06),
+                                   verbose = FALSE)
+weights
+```
+
+And when there is nothing but the peaks themselves, each replicate can be
+scored by how well it agrees with the others:
+
+```{r weightsIntrinsic}
+computeReplicateWeights(peaks, method = "intrinsic", verbose = FALSE)
+```
+
+That last measure is circular, since agreement is also what the
+consensus is testing. Use it when there is no alternative, not in
+preference to FRiP.
+
+Weights only reach the combination through Stouffer's Z or Lancaster's
+method. Fisher and the rank product ignore them.
+
+```{r weighted}
+weighted <- buildConsensus(peaks, weights = weights,
+                           combinationMethod = "stouffer",
+                           verbose = FALSE)
+consensusStats(weighted)
+```
+
+```{r jaccard}
+plotJaccard(weighted)
+```
+
+<br>
+
+----------------------------------------
+
+
+# **Choosing the combination*** {#choosing_combination}
+
+| Method        | Weights | Use it when                                                |
+|---------------|---------|------------------------------------------------------------|
+| `fisher`      | no      | Reproducing MSPC, or replicates really are comparable      |
+| `stouffer`    | yes     | Default. Replicate quality varies                          |
+| `lancaster`   | yes     | Weights wanted, Fisher-like sensitivity to one strong peak |
+| `rankProduct` | no      | Only scores available, or p-values you do not trust        |
+
+One caveat about Fisher that matters more than it usually gets credit
+for: the combined statistic keeps accumulating as replicates are added.
+With three samples this is fine. With twenty donors, a region detected
+faintly in all of them starts to look overwhelmingly significant, which
+is not what anyone means by reproducible. Stouffer and the rank product
+degrade more gracefully at that scale.
+
+<br>
+
+--------------------------------------------
+
+
+# **Calibrating the threshold** {#calibrating_threshold}
+
+The cut on the combined p-value is conventionally `1e-8`. That number is
+a guess, and the right one depends on the number of replicates, how the
+peaks were called, and how densely they sit.
+
+`calibrateThreshold()` estimates it. Peak positions are shuffled within
+each chromosome, keeping widths, counts and statistics, so any overlap
+between the shuffled replicates arises by chance. Running the combination
+on those gives a null, and the threshold is read off where the expected
+number of null peaks falls to a chosen fraction of the observed count.
+
+```{r calibrate}
+calibration <- calibrateThreshold(peaks, nPermutations = 10,
+                                  targetFDR = 0.05, seed = 1,
+                                  verbose = FALSE)
+
+calibration$threshold
+```
+
+```{r plotCalibration}
+plotCalibration(calibration)
+```
+
+```{r calibrated}
+calibrated <- buildConsensus(peaks,
+                             combinedThreshold = calibration$threshold,
+                             verbose = FALSE)
+length(calibrated)
+```
+
+Ten permutations is enough for a demonstration; fifty is a reasonable
+working number. Passing a blacklist through `excludeRegions` makes the
+null more honest, because shuffled peaks otherwise land in artefact
+regions where real peaks cluster too.
+
+
+<br>
+
+------------------------------------------------
+
+# **Input without statistics** {#input_no_stats}
+Sometimes all that survives of an old analysis is a folder of BED3 files.
+There is no p-value to combine, so the package says so and switches to a
+weighted presence rule: a region is kept when the weights of the
+replicates supporting it sum to at least `minSupport`. With equal weights
+that is the familiar k-of-n rule.
+
+```{r bed3}
+minimalFile <- system.file("extdata", "rep1_minimal.bed",
+                           package = "consensusRegions")
+
+minimal <- readPeakSets(rep(minimalFile, 3),
+                        sampleNames = c("a", "b", "c"))
+
+minimalResult <- buildConsensus(minimal, verbose = FALSE)
+analysisParameters(minimalResult)$presenceOnly
+```
+
+This is a fallback, not an equivalent. Without per-peak statistics
+nothing can be rescued, and the result is reproducibility filtering
+rather than combined evidence.
+
+
+-------------------------------------------------
+
+<br>
+
+
+# **Merging, and relative issues** {#merging}
+Peak A overlaps B, B overlaps C, and A never touches C. Transitive
+merging puts all three in one region, and on permissive input this
+occasionally produces regions tens of kilobases long that mean nothing.
+
+Two defences. `maxConsensusWidth` catches oversized regions and rebuilds
+only those. `mergeMethod = "iterative"` avoids the problem entirely by
+seeding on the most significant peak, claiming what it overlaps, and
+repeating, which is the approach the ATAC-seq peak atlases use.
+
+```{r merge}
+seeded <- buildConsensus(peaks, mergeMethod = "iterative",
+                         verbose = FALSE)
+
+summary(GenomicRanges::width(consensusRanges(result)))
+summary(GenomicRanges::width(consensusRanges(seeded)))
+```
+
+<br>
+
+
+------------------------------------
+
+
+# **Fixed-width regions** {#fixed_width}
+Consensus regions inherit their edges from whichever peaks were merged,
+so their widths vary. That variation biases everything downstream: a
+wider region collects more reads and more motif matches for reasons that
+have nothing to do with biology. For transcription factors and ATAC data,
+recentre on the summit and use a common width.
+
+```{r recentre}
+fixed <- recentrePeaks(result, width = 400, summitSource = "best")
+head(fixed, 3)
+```
+
+Do not do this to broad histone domains. Collapsing a domain to a point
+discards the thing being measured.
+
+
+<br>
+
+----------------------------
+
+
+# **Handing over to a differential analysis**
+If the consensus is a step on the way to differential binding rather than
+the endpoint, convert it and count reads over the row ranges with csaw,
+DiffBind or edgeR.
+
+```{r se}
+se <- asSummarizedExperiment(result)
+se
+```
+
+The assay holds per-replicate significance, not counts. It is useful for
+spotting a replicate that disagrees with the others; it is not a
+substitute for counting reads.
+
+And a word on where to spend your effort. If the consensus is an
+intermediate, do not over-engineer it. Aggressive filtering upfront
+mostly discards peaks that a proper count-based model would have handled
+correctly anyway. The stringency of this package earns its keep when the
+peak set is the deliverable.
+
+<br>
+
+--------------------------
+
+
+# Blacklisting
+Filter after the consensus, not before. Removing regions upfront distorts
+the rank distributions the combination relies on, which is why
+`excludeRegions` is applied at the end of `buildConsensus()`.
+
+```{r blacklist, eval = FALSE}
+result <- buildConsensus(peaks, excludeRegions = blacklistGRanges)
+```
+
+<br>
+
+---------------------------------
+
+# **Checking the result**
+Nothing in this package can tell you whether your consensus set is any
+good. Validate it against something orthogonal: central motif enrichment
+for a transcription factor, TSS enrichment and cCRE overlap for ATAC,
+correlation with expression for activating marks. If the rescued peaks
+are motif-poor and TSS-depleted, the settings are too permissive
+regardless of what the statistics say.
+
+
+
+============================
+
+# **Session info**
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
