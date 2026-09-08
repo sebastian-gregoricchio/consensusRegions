@@ -88,11 +88,7 @@ consensusStats(result)
 plotRescue(result)
 ```
 
------------------------
-
-<br>
-
-## One thing worth knowing before you start
+### One thing worth knowing before you start
 Feed this permissive input. Calling peaks at `q < 0.05` and running the
 consensus on the survivors leaves nothing to rescue and turns the whole
 exercise into an intersection with extra steps. Call at around

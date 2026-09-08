@@ -24,6 +24,10 @@
 #'   no further part.
 #' @param combinedThreshold Threshold on the combined p-value. Defaults to
 #'   `stringencyThreshold`; [calibrateThreshold()] can estimate it instead.
+#'   The scale differs between combination schemes, so a value carried
+#'   over from one will not mean the same under another. The rank product
+#'   in particular is bounded by the number of peaks per replicate and
+#'   usually needs a far more permissive threshold.
 #' @param alpha Level for the within-replicate Benjamini-Hochberg step.
 #' @param minSupport Number of *other* replicates that must hold an
 #'   overlapping peak.
@@ -205,6 +209,21 @@ buildConsensus <- function(peakList,
         replicate = S4Vectors::mcols(retained)$replicate,
         presenceOnly = presenceOnly)
 
+    ## the rank product is bounded by the number of peaks per replicate,
+    ## so the usual 1e-8 is often unreachable and would silently return
+    ## nothing at all
+    if (!presenceOnly && combinationMethod == "rankProduct") {
+        reachable <- .rankProductCeiling(retained, requiredSupport)
+        if (-log10(combinedThreshold) > reachable) {
+            stop("the rank product cannot reach a combined p-value of ",
+                 combinedThreshold, " with these peak sets: the smallest ",
+                 "attainable is ", signif(10^(-reachable), 3),
+                 ", because the statistic is bounded by the number of ",
+                 "peaks per replicate. Lower 'combinedThreshold', or let ",
+                 "calibrateThreshold() choose one")
+        }
+    }
+
     ## ---- overlap graph -----------------------------------------------
     .messageIf(verbose, "Collecting cross-replicate overlaps")
     overlapTable <- .buildOverlapTable(
@@ -367,6 +386,41 @@ buildConsensus <- function(peakList,
         rho = rank(-.data$negLog10P, ties.method = "average") /
             (dplyr::n() + 1))
     dplyr::pull(dplyr::ungroup(ranked), .data$rho)
+}
+
+
+#' Smallest combined p-value the rank product could ever produce
+#'
+#' @description
+#' The rank product works on relative ranks, so the best a peak can do is
+#' come first in every replicate. That bound depends on how many peaks
+#' each replicate holds, which is why a threshold borrowed from a
+#' p-value-based scheme often cannot be met.
+#'
+#' @param retained Flattened `GRanges` of retained peaks.
+#' @param requiredSupport Minimum supporting replicates.
+#'
+#' @return The attainable maximum on the -log10 scale.
+#'
+#' @author Sebastian Gregoricchio
+#'
+#' @importFrom S4Vectors mcols split
+#' @importFrom stats pgamma
+#'
+#' @keywords internal
+#' @noRd
+.rankProductCeiling <- function(retained, requiredSupport) {
+    metadataColumns <- S4Vectors::mcols(retained)
+    bestPerReplicate <- vapply(
+        split(metadataColumns$rho, metadataColumns$replicate),
+        min, numeric(1))
+
+    ## a peak plus the replicates that have to support it
+    nMembers <- min(requiredSupport + 1L, length(bestPerReplicate))
+    bestMembers <- sort(bestPerReplicate)[seq_len(nMembers)]
+
+    -stats::pgamma(sum(-log(bestMembers)), shape = nMembers, rate = 1,
+                   lower.tail = FALSE, log.p = TRUE) / log(10)
 }
 
 

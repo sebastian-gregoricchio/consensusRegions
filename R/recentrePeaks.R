@@ -34,14 +34,13 @@
 #'
 #' @author Sebastian Gregoricchio
 #'
-#' @importFrom GenomicRanges GRanges start end width mcols mcols<- resize
-#'   findOverlaps seqnames
+#' @importFrom GenomicRanges GRanges start end width findOverlaps
+#'   seqnames
 #' @importFrom IRanges IRanges
 #' @importFrom S4Vectors queryHits subjectHits mcols
 #' @importFrom GenomeInfoDb seqlengths seqinfo
 #' @importFrom BiocGenerics unlist
-#' @importFrom dplyr tibble group_by summarise arrange slice_max mutate
-#'   left_join
+#' @importFrom dplyr tibble group_by summarise mutate
 #' @importFrom rlang .data
 #'
 #' @examples
@@ -148,9 +147,9 @@ recentrePeaks <- function(object,
 #'
 #' @author Sebastian Gregoricchio
 #'
-#' @importFrom GenomicRanges GRanges seqnames mcols mcols<- start end
+#' @importFrom GenomicRanges GRanges seqnames start end
 #' @importFrom IRanges IRanges
-#' @importFrom GenomeInfoDb seqlengths seqinfo seqinfo<-
+#' @importFrom GenomeInfoDb seqlengths seqinfo
 #'
 #' @keywords internal
 #' @noRd

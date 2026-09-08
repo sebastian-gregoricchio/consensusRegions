@@ -42,7 +42,11 @@ replicates; `"technical"` asks for all of them.}
 no further part.}
 
 \item{combinedThreshold}{Threshold on the combined p-value. Defaults to
-`stringencyThreshold`; [calibrateThreshold()] can estimate it instead.}
+`stringencyThreshold`; [calibrateThreshold()] can estimate it instead.
+The scale differs between combination schemes, so a value carried
+over from one will not mean the same under another. The rank product
+in particular is bounded by the number of peaks per replicate and
+usually needs a far more permissive threshold.}
 
 \item{alpha}{Level for the within-replicate Benjamini-Hochberg step.}
 

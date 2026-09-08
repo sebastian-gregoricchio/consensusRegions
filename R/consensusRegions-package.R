@@ -41,6 +41,3 @@
 #'
 #' @keywords internal
 "_PACKAGE"
-
-## quiet the check note raised by the tidy evaluation pronoun
-utils::globalVariables(".data")

@@ -4,10 +4,12 @@
 \alias{plotCalibration}
 \title{The calibration curve}
 \usage{
-plotCalibration(calibration)
+plotCalibration(calibration, baseSize = 12)
 }
 \arguments{
 \item{calibration}{Output of [calibrateThreshold()].}
+
+\item{baseSize}{Base font size in points.}
 }
 \value{
 A `ggplot` object.

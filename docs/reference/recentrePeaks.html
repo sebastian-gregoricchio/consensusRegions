@@ -126,33 +126,33 @@ collapsing a domain to a point throws away the thing being measured.</p>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="buildConsensus.html">buildConsensus</a></span><span class="op">(</span><span class="va">peaks</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">recentrePeaks</span><span class="op">(</span><span class="va">result</span>, width <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 279 ranges and 5 metadata columns:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 292 ranges and 5 metadata columns:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         seqnames          ranges strand | nReplicates    nPeaks  replicates</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt; |   &lt;integer&gt; &lt;integer&gt; &lt;character&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]     chr1     88410-88809      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]     chr1   124000-124399      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]     chr1   193359-193758      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]     chr1   406839-407238      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]     chr1   479963-480362      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]     chr1     57617-58016      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]     chr1   102389-102788      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]     chr1   145949-146348      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]     chr1   235462-235861      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]     chr1   239978-240377      * |           3         3    r1,r2,r3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ...      ...             ...    ... .         ...       ...         ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [275]     chr2 8866334-8866733      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [276]     chr2 8895637-8896036      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [277]     chr2 8942945-8943344      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [278]     chr2 8971831-8972230      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [279]     chr2 8988388-8988787      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [288]     chr2 8631856-8632255      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [289]     chr2 8742403-8742802      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [290]     chr2 8746053-8746452      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [291]     chr2 8772995-8773394      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [292]     chr2 8862888-8863287      * |           3         3    r1,r2,r3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         combinedNegLog10P    summit</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;numeric&gt; &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]           13.0846     88610</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]           25.1267    124200</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]           11.8195    193559</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]           25.8863    407039</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]           26.6986    480163</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]           25.2442     57817</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]           22.3973    102589</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]           26.9232    146149</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]           13.5687    235662</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]           21.6011    240178</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ...               ...       ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [275]           22.7642   8866534</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [276]           20.6173   8895837</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [277]           24.0368   8943145</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [278]           29.3225   8972031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [279]           25.5599   8988588</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [288]           21.2867   8632056</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [289]           12.7704   8742603</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [290]           30.0325   8746253</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [291]           31.6482   8773195</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [292]           25.1038   8863088</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 2 sequences from an unspecified genome; no seqlengths</span>
 <span class="r-in"><span></span></span>

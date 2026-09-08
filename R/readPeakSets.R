@@ -169,6 +169,7 @@ readPeakSets <- function(peaks,
 #' @author Sebastian Gregoricchio
 #'
 #' @importFrom rtracklayer import
+#' @importFrom tools file_ext
 #'
 #' @keywords internal
 #' @noRd
@@ -280,14 +281,15 @@ readPeakSets <- function(peaks,
         ## already on the right scale, nothing to do
         as.numeric(metadataColumns$pValue)
     } else if (scoreType == "pvalue") {
-        rawP <- as.numeric(metadataColumns[[scoreColumn %||% "pValue"]])
+        column <- if (is.null(scoreColumn)) "pValue" else scoreColumn
+        rawP <- as.numeric(metadataColumns[[column]])
         if (any(rawP < 0 | rawP > 1, na.rm = TRUE)) {
             stop("values outside [0, 1] found where p-values were expected")
         }
         -log10(pmax(rawP, .Machine$double.xmin))
     } else if (scoreType == "score") {
-        .negLog10FromScore(
-            as.numeric(metadataColumns[[scoreColumn %||% "score"]]))
+        column <- if (is.null(scoreColumn)) "score" else scoreColumn
+        .negLog10FromScore(as.numeric(metadataColumns[[column]]))
     } else {
         ## nothing usable; the presence rule takes over later
         rep(NA_real_, length(gr))

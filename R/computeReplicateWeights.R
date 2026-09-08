@@ -125,6 +125,7 @@ computeReplicateWeights <- function(peakList,
     ## from here on the metrics either come pre-computed or are read off
     ## the alignments
     measured <- .collectBamMetrics(peakList = peakList,
+                                   required = method,
                                    bamFiles = bamFiles,
                                    frip = frip,
                                    librarySize = librarySize,
@@ -157,6 +158,8 @@ computeReplicateWeights <- function(peakList,
 #' Gather FRiP and depth, reading the BAM files only when needed
 #'
 #' @param peakList A `GRangesList`.
+#' @param required Which metric the caller needs, `"frip"` or
+#'   `"librarySize"`.
 #' @param bamFiles Character vector of BAM paths or `NULL`.
 #' @param frip Pre-computed FRiP values or `NULL`.
 #' @param librarySize Pre-computed depths or `NULL`.
@@ -174,11 +177,13 @@ computeReplicateWeights <- function(peakList,
 #' @keywords internal
 #' @noRd
 .collectBamMetrics <- function(peakList,
+                               required = c("frip", "librarySize"),
                                bamFiles,
                                frip,
                                librarySize,
                                minMapq = 0L,
                                verbose = TRUE) {
+    required <- match.arg(required)
     replicateNames <- names(peakList)
     nReplicates <- length(peakList)
 
@@ -199,7 +204,11 @@ computeReplicateWeights <- function(peakList,
         librarySize
     }
 
-    needsBam <- any(is.na(fripValues)) || any(is.na(depthValues))
+    ## a FRiP-weighted run has no use for the library size, so asking for
+    ## BAM files just because that column is empty would be wrong
+    missingFrip <- required == "frip" && any(is.na(fripValues))
+    missingDepth <- required == "librarySize" && any(is.na(depthValues))
+    needsBam <- missingFrip || missingDepth
 
     if (needsBam) {
         if (is.null(bamFiles)) {
@@ -220,13 +229,15 @@ computeReplicateWeights <- function(peakList,
             .messageIf(verbose, "Counting reads for ", replicateNames[i])
 
             ## the index carries the mapped totals, so the whole file
-            ## never has to be traversed for the denominator
-            if (is.na(depthValues[i])) {
+            ## never has to be traversed for the denominator; FRiP needs
+            ## it too, as the denominator of the fraction
+            if (is.na(depthValues[i]) &&
+                (missingDepth || is.na(fripValues[i]))) {
                 indexStats <- Rsamtools::idxstatsBam(bamFiles[i])
                 depthValues[i] <- sum(indexStats$mapped)
             }
 
-            if (is.na(fripValues[i])) {
+            if (missingFrip && is.na(fripValues[i])) {
                 ## flattening the peaks first stops a read that spans two
                 ## overlapping calls from being counted twice
                 targets <- GenomicRanges::reduce(peakList[[i]],
@@ -240,7 +251,8 @@ computeReplicateWeights <- function(peakList,
         }
     }
 
-    outOfRange <- which(fripValues <= 0 | fripValues > 1)
+    outOfRange <- which(!is.na(fripValues) &
+                            (fripValues <= 0 | fripValues > 1))
     if (length(outOfRange) > 0) {
         stop("FRiP outside (0, 1] for: ",
              paste(replicateNames[outOfRange], collapse = ", "))

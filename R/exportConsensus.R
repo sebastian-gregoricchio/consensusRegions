@@ -18,7 +18,8 @@
 #' @author Sebastian Gregoricchio
 #'
 #' @importFrom rtracklayer export
-#' @importFrom GenomicRanges mcols mcols<-
+#' @importFrom GenomicRanges width
+#' @importFrom tools file_ext file_path_sans_ext
 #' @importFrom S4Vectors mcols
 #' @importFrom methods is
 #'

@@ -101,44 +101,44 @@ weights. `analysisParameters()` returns the list of settings used.
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="buildConsensus.html">buildConsensus</a></span><span class="op">(</span><span class="va">peaks</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">consensusRanges</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 279 ranges and 4 metadata columns:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> GRanges object with 292 ranges and 4 metadata columns:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         seqnames          ranges strand | nReplicates    nPeaks  replicates</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>            &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt; |   &lt;integer&gt; &lt;integer&gt; &lt;character&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]     chr1     88346-88911      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]     chr1   123906-124747      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]     chr1   193385-193791      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]     chr1   406763-407340      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]     chr1   479769-480472      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]     chr1     57439-58142      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]     chr1   102191-103030      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]     chr1   145851-146446      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]     chr1   235338-235885      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]     chr1   240015-240714      * |           3         3    r1,r2,r3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ...      ...             ...    ... .         ...       ...         ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [275]     chr2 8866200-8866881      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [276]     chr2 8895424-8896197      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [277]     chr2 8942749-8943594      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [278]     chr2 8971717-8972598      * |           3         3    r1,r2,r3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [279]     chr2 8988237-8989040      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [288]     chr2 8631832-8632669      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [289]     chr2 8742442-8743024      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [290]     chr2 8745833-8746585      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [291]     chr2 8772694-8773607      * |           3         3    r1,r2,r3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [292]     chr2 8862514-8863473      * |           3         3    r1,r2,r3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         combinedNegLog10P</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;numeric&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]           13.0846</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]           25.1267</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]           11.8195</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]           25.8863</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]           26.6986</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [1]           25.2442</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [2]           22.3973</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [3]           26.9232</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [4]           13.5687</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     [5]           21.6011</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     ...               ...</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [275]           22.7642</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [276]           20.6173</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [277]           24.0368</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [278]           29.3225</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [279]           25.5599</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [288]           21.2867</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [289]           12.7704</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [290]           30.0325</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [291]           31.6482</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [292]           25.1038</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   -------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   seqinfo: 2 sequences from an unspecified genome; no seqlengths</span>
 <span class="r-in"><span><span class="fu">consensusStats</span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        r1     370        180   190        280      100              0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2        r2     370        190   180        281       91              0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3        r3     370         31   339        281      250              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        r1     430        241   189        340       99              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2        r2     430        240   190        340      100              0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3        r3     430         30   400        340      310              0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   nDiscarded rescueRate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1         90  0.3571429</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2         89  0.3238434</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3         89  0.8896797</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         90  0.2911765</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         90  0.2941176</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3         90  0.9117647</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

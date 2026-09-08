@@ -29,11 +29,9 @@ importClassesFrom(GenomicRanges,GRanges)
 importClassesFrom(GenomicRanges,GRangesList)
 importFrom(BiocGenerics,unlist)
 importFrom(GenomeInfoDb,
-  "seqinfo<-",
   keepStandardChromosomes,
   seqinfo,
   seqlengths,
-  seqlevels,
   seqnames
 )
 importFrom(GenomicRanges,
@@ -47,7 +45,6 @@ importFrom(GenomicRanges,
   mcols,
   pintersect,
   reduce,
-  resize,
   seqnames,
   start,
   union,
@@ -97,7 +94,10 @@ importFrom(dplyr,
 importFrom(ggplot2,
   aes,
   element_blank,
+  element_line,
+  element_rect,
   element_text,
+  expansion,
   geom_col,
   geom_hline,
   geom_line,
@@ -106,14 +106,16 @@ importFrom(ggplot2,
   geom_vline,
   ggplot,
   labs,
-  position_stack,
+  scale_colour_identity,
   scale_fill_gradient,
   scale_fill_manual,
-  scale_y_continuous,
+  scale_x_discrete,
+  scale_y_discrete,
   theme,
-  theme_bw,
-  theme_minimal
+  theme_bw
 )
+importFrom(ggtext,element_markdown)
+importFrom(grDevices,colorRamp)
 importFrom(methods,
   is,
   new,
@@ -121,7 +123,6 @@ importFrom(methods,
   setGeneric,
   setMethod,
   show,
-  slot,
   validObject
 )
 importFrom(rlang,.data)
@@ -131,7 +132,6 @@ importFrom(rtracklayer,
 )
 importFrom(stats,
   median,
-  na.omit,
   pchisq,
   pgamma,
   pnorm,
@@ -145,4 +145,7 @@ importFrom(tibble,
   tibble
 )
 importFrom(tidyr,pivot_longer)
-importFrom(tools,file_path_sans_ext)
+importFrom(tools,
+  file_ext,
+  file_path_sans_ext
+)

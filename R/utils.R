@@ -35,8 +35,6 @@
 #'
 #' @author Sebastian Gregoricchio
 #'
-#' @importFrom stats na.omit
-#'
 #' @keywords internal
 #' @noRd
 .negLog10FromScore <- function(score) {
@@ -172,7 +170,6 @@
 #' @importFrom GenomicRanges GRanges width start seqnames countOverlaps
 #' @importFrom IRanges IRanges
 #' @importFrom stats runif
-#' @importFrom GenomeInfoDb seqlevels
 #'
 #' @keywords internal
 #' @noRd

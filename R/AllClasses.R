@@ -20,7 +20,7 @@
 #' @author Sebastian Gregoricchio
 #'
 #' @importClassesFrom GenomicRanges GRanges GRangesList
-#' @importFrom methods setClass validObject new is slot
+#' @importFrom methods setClass validObject new is
 #'
 #' @name ConsensusRegions-class
 #' @rdname ConsensusRegions-class

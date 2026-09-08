@@ -4,12 +4,26 @@
 \alias{plotJaccard}
 \title{Pairwise agreement between replicates}
 \usage{
-plotJaccard(object, showValues = TRUE)
+plotJaccard(
+  object,
+  showValues = TRUE,
+  lowColour = "#F5F5F5",
+  highColour = "#2C6E91",
+  baseSize = 12
+)
 }
 \arguments{
 \item{object}{A [ConsensusRegions-class] object.}
 
-\item{showValues}{Print the index inside each tile.}
+\item{showValues}{Print the index inside each tile. The lettering
+switches between black and white so that it stays legible whatever
+the tile is filled with.}
+
+\item{lowColour}{Colour for a Jaccard index of zero.}
+
+\item{highColour}{Colour for a Jaccard index of one.}
+
+\item{baseSize}{Base font size in points.}
 }
 \value{
 A `ggplot` object.

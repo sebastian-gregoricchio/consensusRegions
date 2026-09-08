@@ -4,12 +4,14 @@
 \alias{plotRescue}
 \title{Rescue and discard rates per replicate}
 \usage{
-plotRescue(object, proportion = FALSE)
+plotRescue(object, proportion = FALSE, baseSize = 12)
 }
 \arguments{
 \item{object}{A [ConsensusRegions-class] object.}
 
 \item{proportion}{Scale the bars to one instead of showing counts.}
+
+\item{baseSize}{Base font size in points.}
 }
 \value{
 A `ggplot` object.

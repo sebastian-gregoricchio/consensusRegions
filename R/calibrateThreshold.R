@@ -247,8 +247,8 @@ calibrateThreshold <- function(peakList,
 #'
 #' @author Sebastian Gregoricchio
 #'
-#' @importFrom GenomicRanges GRangesList mcols mcols<-
-#' @importFrom S4Vectors metadata metadata<-
+#' @importFrom GenomicRanges GRangesList
+#' @importFrom S4Vectors mcols mcols<- metadata metadata<-
 #'
 #' @keywords internal
 #' @noRd

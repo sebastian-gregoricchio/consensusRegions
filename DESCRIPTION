@@ -25,6 +25,7 @@ Depends:
     R (>= 4.6.0),
     GenomicRanges (>= 1.56.0)
 Imports:
+    dplyr (>= 1.1.0),
     methods,
     stats,
     tools,
@@ -32,12 +33,13 @@ Imports:
     BiocGenerics,
     GenomeInfoDb,
     GenomicAlignments,
+    ggplot2,
+    ggtext,
+    grDevices,
     IRanges,
     Rsamtools,
     S4Vectors,
     SummarizedExperiment,
-    dplyr (>= 1.1.0),
-    ggplot2,
     rlang,
     rtracklayer,
     tibble,
