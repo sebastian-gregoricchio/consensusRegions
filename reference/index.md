@@ -26,8 +26,6 @@
   : Derive per-replicate weights
 - [`exportConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/exportConsensus.md)
   : Write the results to disk
-- [`hello()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/hello.md)
-  : Hello, World!
 - [`plotCalibration()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/plotCalibration.md)
   : The calibration curve
 - [`plotJaccard()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/plotJaccard.md)
