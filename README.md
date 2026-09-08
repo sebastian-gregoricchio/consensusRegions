@@ -35,8 +35,11 @@ What is added here:
 
 <br>
 
-## Installation
 
+----------------------------------------
+
+
+## Installation
 ```r
 if (!require("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
@@ -55,8 +58,11 @@ remotes::install_github("sebastian-gregoricchio/consensusRegions",
                         build_vignettes = TRUE)
 ```
 
-## Usage
+------------------------
 
+<br>
+
+## Quick start
 ```r
 library(consensusRegions)
 
@@ -82,20 +88,29 @@ consensusStats(result)
 plotRescue(result)
 ```
 
-## One thing worth knowing before you start
+-----------------------
 
+<br>
+
+## One thing worth knowing before you start
 Feed this permissive input. Calling peaks at `q < 0.05` and running the
 consensus on the survivors leaves nothing to rescue and turns the whole
 exercise into an intersection with extra steps. Call at around
 `p < 1e-3` and let `buildConsensus()` do the thresholding.
 
-## Documentation
+<br>
 
+-----------------------------------------
+
+## Documentation
 `browseVignettes("consensusRegions")` after installation, or the
 [web manual](https://sebastian-gregoricchio.github.io/consensusRegions/).
 
-## Citation
+<br>
 
+------------------------
+
+## Citation
 If the package is useful, please cite MSPC alongside it, since the core
 approach is theirs:
 
@@ -103,22 +118,10 @@ approach is theirs:
 > combined evidence from replicates to evaluate ChIP-seq peaks.
 > *Bioinformatics* 31(17):2761-2769.
 
-## Issues
 
+<br>
+
+## Issues
 Bug reports and suggestions in the
 [issues tab](https://github.com/sebastian-gregoricchio/consensusRegions/issues).
 
-## Development
-
-The `man/` pages are generated from the roxygen blocks, so they have to be
-built before the package will pass a check:
-
-```r
-roxygen2::roxygenise()          # writes man/ and refreshes NAMESPACE
-devtools::check()               # or: R CMD build . && R CMD check *.tar.gz
-BiocCheck::BiocCheck()          # the additional Bioconductor rules
-```
-
-The example peak files in `inst/extdata` are produced by
-`inst/script/makeExampleData.py`; the seed is fixed, so regenerating them
-gives the same files back.
