@@ -8,7 +8,13 @@ rather than a quality problem.
 ## Usage
 
 ``` r
-plotJaccard(object, showValues = TRUE)
+plotJaccard(
+  object,
+  showValues = TRUE,
+  lowColour = "#F5F5F5",
+  highColour = "#2C6E91",
+  baseSize = 12
+)
 ```
 
 ## Arguments
@@ -19,7 +25,20 @@ plotJaccard(object, showValues = TRUE)
 
 - showValues:
 
-  Print the index inside each tile.
+  Print the index inside each tile. The lettering switches between black
+  and white so that it stays legible whatever the tile is filled with.
+
+- lowColour:
+
+  Colour for a Jaccard index of zero.
+
+- highColour:
+
+  Colour for a Jaccard index of one.
+
+- baseSize:
+
+  Base font size in points.
 
 ## Value
 

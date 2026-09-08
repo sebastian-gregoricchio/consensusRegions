@@ -102,14 +102,14 @@ peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
 computeReplicateWeights(peaks, method = "intrinsic")
 #> Scoring replicates by mutual agreement
 #>        r1        r2        r3 
-#> 0.9958619 1.0109825 0.9931556 
+#> 0.9925346 1.0069021 1.0005633 
 #> attr(,"metrics")
 #> # A tibble: 3 × 2
 #>   replicate jaccard
 #>   <chr>       <dbl>
-#> 1 r1          0.474
-#> 2 r2          0.482
-#> 3 r3          0.473
+#> 1 r1          0.525
+#> 2 r2          0.533
+#> 3 r3          0.529
 
 ## FRiP measured elsewhere
 computeReplicateWeights(peaks, method = "frip",

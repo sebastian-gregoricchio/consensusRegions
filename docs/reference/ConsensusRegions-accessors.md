@@ -61,42 +61,42 @@ peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"))
 result <- buildConsensus(peaks, verbose = FALSE)
 
 consensusRanges(result)
-#> GRanges object with 279 ranges and 4 metadata columns:
+#> GRanges object with 292 ranges and 4 metadata columns:
 #>         seqnames          ranges strand | nReplicates    nPeaks  replicates
 #>            <Rle>       <IRanges>  <Rle> |   <integer> <integer> <character>
-#>     [1]     chr1     88346-88911      * |           3         3    r1,r2,r3
-#>     [2]     chr1   123906-124747      * |           3         3    r1,r2,r3
-#>     [3]     chr1   193385-193791      * |           3         3    r1,r2,r3
-#>     [4]     chr1   406763-407340      * |           3         3    r1,r2,r3
-#>     [5]     chr1   479769-480472      * |           3         3    r1,r2,r3
+#>     [1]     chr1     57439-58142      * |           3         3    r1,r2,r3
+#>     [2]     chr1   102191-103030      * |           3         3    r1,r2,r3
+#>     [3]     chr1   145851-146446      * |           3         3    r1,r2,r3
+#>     [4]     chr1   235338-235885      * |           3         3    r1,r2,r3
+#>     [5]     chr1   240015-240714      * |           3         3    r1,r2,r3
 #>     ...      ...             ...    ... .         ...       ...         ...
-#>   [275]     chr2 8866200-8866881      * |           3         3    r1,r2,r3
-#>   [276]     chr2 8895424-8896197      * |           3         3    r1,r2,r3
-#>   [277]     chr2 8942749-8943594      * |           3         3    r1,r2,r3
-#>   [278]     chr2 8971717-8972598      * |           3         3    r1,r2,r3
-#>   [279]     chr2 8988237-8989040      * |           3         3    r1,r2,r3
+#>   [288]     chr2 8631832-8632669      * |           3         3    r1,r2,r3
+#>   [289]     chr2 8742442-8743024      * |           3         3    r1,r2,r3
+#>   [290]     chr2 8745833-8746585      * |           3         3    r1,r2,r3
+#>   [291]     chr2 8772694-8773607      * |           3         3    r1,r2,r3
+#>   [292]     chr2 8862514-8863473      * |           3         3    r1,r2,r3
 #>         combinedNegLog10P
 #>                 <numeric>
-#>     [1]           13.0846
-#>     [2]           25.1267
-#>     [3]           11.8195
-#>     [4]           25.8863
-#>     [5]           26.6986
+#>     [1]           25.2442
+#>     [2]           22.3973
+#>     [3]           26.9232
+#>     [4]           13.5687
+#>     [5]           21.6011
 #>     ...               ...
-#>   [275]           22.7642
-#>   [276]           20.6173
-#>   [277]           24.0368
-#>   [278]           29.3225
-#>   [279]           25.5599
+#>   [288]           21.2867
+#>   [289]           12.7704
+#>   [290]           30.0325
+#>   [291]           31.6482
+#>   [292]           25.1038
 #>   -------
 #>   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 consensusStats(result)
 #>   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive
-#> 1        r1     370        180   190        280      100              0
-#> 2        r2     370        190   180        281       91              0
-#> 3        r3     370         31   339        281      250              0
+#> 1        r1     430        241   189        340       99              0
+#> 2        r2     430        240   190        340      100              0
+#> 3        r3     430         30   400        340      310              0
 #>   nDiscarded rescueRate
-#> 1         90  0.3571429
-#> 2         89  0.3238434
-#> 3         89  0.8896797
+#> 1         90  0.2911765
+#> 2         90  0.2941176
+#> 3         90  0.9117647
 ```

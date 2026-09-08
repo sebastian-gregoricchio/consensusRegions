@@ -56,7 +56,7 @@ result <- buildConsensus(peaks, verbose = FALSE)
 se <- asSummarizedExperiment(result)
 se
 #> class: RangedSummarizedExperiment 
-#> dim: 279 3 
+#> dim: 292 3 
 #> metadata(15): scoreType combinationMethod ... maxConsensusWidth
 #>   presenceOnly
 #> assays(2): negLog10P detected

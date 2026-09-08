@@ -33,5 +33,5 @@ peakFiles <- system.file("extdata",
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
                       verbose = FALSE)
 length(buildConsensus(peaks, verbose = FALSE))
-#> [1] 279
+#> [1] 292
 ```

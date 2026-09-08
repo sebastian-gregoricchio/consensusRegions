@@ -128,7 +128,7 @@ peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
 calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 1,
                                   verbose = FALSE)
 calibration$threshold
-#> [1] 6.462449e-24
+#> [1] 2.565737e-25
 
 result <- buildConsensus(peaks,
                          combinedThreshold = calibration$threshold,

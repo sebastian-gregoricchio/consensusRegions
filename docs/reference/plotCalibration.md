@@ -8,7 +8,7 @@ enough to support a consensus at that stringency.
 ## Usage
 
 ``` r
-plotCalibration(calibration)
+plotCalibration(calibration, baseSize = 12)
 ```
 
 ## Arguments
@@ -16,6 +16,10 @@ plotCalibration(calibration)
 - calibration:
 
   Output of \[calibrateThreshold()\].
+
+- baseSize:
+
+  Base font size in points.
 
 ## Value
 

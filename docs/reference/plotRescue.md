@@ -10,7 +10,7 @@ combination is confirming noise.
 ## Usage
 
 ``` r
-plotRescue(object, proportion = FALSE)
+plotRescue(object, proportion = FALSE, baseSize = 12)
 ```
 
 ## Arguments
@@ -22,6 +22,10 @@ plotRescue(object, proportion = FALSE)
 - proportion:
 
   Scale the bars to one instead of showing counts.
+
+- baseSize:
+
+  Base font size in points.
 
 ## Value
 
