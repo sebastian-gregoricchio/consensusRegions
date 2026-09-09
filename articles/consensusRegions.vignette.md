@@ -753,7 +753,7 @@ rather than blind trust, and the wrapper gives you no chance to take it.
 
     > R version 4.6.1 (2026-06-24)
     > Platform: x86_64-pc-linux-gnu
-    > Running under: Ubuntu 24.04.4 LTS
+    > Running under: Ubuntu 24.04.5 LTS
     > 
     > Matrix products: default
     > BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -789,36 +789,36 @@ rather than blind trust, and the wrapper gives you no chance to take it.
     > [17] tools_4.6.1                 utf8_1.2.6                 
     > [19] yaml_2.3.12                 rtracklayer_1.72.0         
     > [21] knitr_1.52                  S4Arrays_1.12.0            
-    > [23] labeling_0.4.3              htmlwidgets_1.6.4          
-    > [25] curl_8.0.0                  DelayedArray_0.38.2        
-    > [27] xml2_1.6.0                  RColorBrewer_1.1-3         
-    > [29] abind_1.4-8                 BiocParallel_1.46.0        
-    > [31] withr_3.0.3                 purrr_1.2.2                
-    > [33] desc_1.4.3                  grid_4.6.1                 
-    > [35] ggplot2_4.0.3               scales_1.4.0               
-    > [37] SummarizedExperiment_1.42.0 cli_3.6.6                  
-    > [39] rmarkdown_2.32              crayon_1.5.3               
-    > [41] ragg_1.5.2                  otel_0.2.0                 
-    > [43] httr_1.4.9                  rjson_0.2.23               
-    > [45] commonmark_2.0.0            cachem_1.1.0               
-    > [47] stringr_1.6.0               parallel_4.6.1             
-    > [49] BiocManager_1.30.27         XVector_0.52.0             
-    > [51] restfulr_0.0.17             matrixStats_1.5.0          
-    > [53] vctrs_0.7.3                 Matrix_1.7-5               
-    > [55] jsonlite_2.0.0              litedown_0.11              
-    > [57] bookdown_0.48               systemfonts_1.3.2          
-    > [59] jquerylib_0.1.4             tidyr_1.3.2                
-    > [61] glue_1.8.1                  pkgdown_2.2.1              
-    > [63] codetools_0.2-20            ggtext_0.2.0               
-    > [65] stringi_1.8.9               gtable_0.3.6               
-    > [67] GenomeInfoDb_1.48.0         BiocIO_1.22.0              
-    > [69] UCSC.utils_1.8.0            tibble_3.3.1               
-    > [71] pillar_1.11.1               htmltools_0.5.9            
-    > [73] R6_2.6.1                    textshaping_1.0.5          
-    > [75] evaluate_1.0.5              lattice_0.22-9             
-    > [77] Biobase_2.72.0              markdown_2.0               
-    > [79] Rsamtools_2.28.0            cigarillo_1.2.1            
-    > [81] gridtext_0.1.6              bslib_0.12.0               
-    > [83] Rcpp_1.1.2                  SparseArray_1.12.2         
-    > [85] xfun_0.60                   fs_2.1.0                   
-    > [87] MatrixGenerics_1.24.0       pkgconfig_2.0.3
+    > [23] labeling_0.4.3              curl_8.0.0                 
+    > [25] DelayedArray_0.38.2         xml2_1.6.0                 
+    > [27] RColorBrewer_1.1-3          abind_1.4-8                
+    > [29] BiocParallel_1.46.0         withr_3.0.3                
+    > [31] purrr_1.2.2                 desc_1.4.3                 
+    > [33] grid_4.6.1                  ggplot2_4.0.3              
+    > [35] scales_1.4.0                SummarizedExperiment_1.42.0
+    > [37] cli_3.6.6                   rmarkdown_2.32             
+    > [39] crayon_1.5.3                ragg_1.5.2                 
+    > [41] otel_0.2.0                  httr_1.4.9                 
+    > [43] rjson_0.2.23                commonmark_2.0.0           
+    > [45] cachem_1.1.0                stringr_1.6.0              
+    > [47] parallel_4.6.1              BiocManager_1.30.27        
+    > [49] XVector_0.52.0              restfulr_0.0.17            
+    > [51] matrixStats_1.5.0           vctrs_0.7.3                
+    > [53] Matrix_1.7-5                jsonlite_2.0.0             
+    > [55] litedown_0.11               bookdown_0.48              
+    > [57] systemfonts_1.3.2           jquerylib_0.1.4            
+    > [59] tidyr_1.3.2                 glue_1.8.1                 
+    > [61] pkgdown_2.2.1               codetools_0.2-20           
+    > [63] ggtext_0.2.0                stringi_1.8.9              
+    > [65] gtable_0.3.6                GenomeInfoDb_1.48.0        
+    > [67] BiocIO_1.22.0               UCSC.utils_1.8.0           
+    > [69] tibble_3.3.1                pillar_1.11.1              
+    > [71] htmltools_0.5.9             R6_2.6.1                   
+    > [73] textshaping_1.0.5           evaluate_1.0.5             
+    > [75] lattice_0.22-9              Biobase_2.72.0             
+    > [77] markdown_2.0                Rsamtools_2.28.0           
+    > [79] cigarillo_1.2.1             gridtext_0.1.6             
+    > [81] bslib_0.12.0                Rcpp_1.1.2                 
+    > [83] SparseArray_1.12.2          xfun_0.60                  
+    > [85] fs_2.1.0                    MatrixGenerics_1.24.0      
+    > [87] pkgconfig_2.0.3
