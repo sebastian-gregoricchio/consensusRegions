@@ -1,12 +1,13 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+#
+# The site is built from two branches: the package source comes from 'main', the
+# pkgdown configuration from 'devel-tools', where this workflow lives. The two
+# checkouts below put them together in the same working tree
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-  release:
-    types: [published]
   workflow_dispatch:
+  schedule:
+    - cron: '0 7 * * 1'
 
 name: pkgdown
 
@@ -15,15 +16,31 @@ permissions: read-all
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
-    # Only restrict concurrency for non-PR jobs
     concurrency:
-      group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+      group: pkgdown-${{ github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
     steps:
+      # Package source
       - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      # '_pkgdown.yaml' was removed from 'main' and is taken from here. 'path'
+      # keeps it out of the package root, so nothing stray ends up in the tree
+      - uses: actions/checkout@v5
+        with:
+          ref: devel-tools
+          path: .pkgdown-config
+          sparse-checkout: |
+            _pkgdown.yaml
+          sparse-checkout-cone-mode: false
+
+      - name: Restore the pkgdown configuration
+        run: cp .pkgdown-config/_pkgdown.yaml . && rm -rf .pkgdown-config
+        shell: bash
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -42,7 +59,6 @@ jobs:
         shell: Rscript {0}
 
       - name: Deploy to GitHub pages 🚀
-        if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
           clean: false
