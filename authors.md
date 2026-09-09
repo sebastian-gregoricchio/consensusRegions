@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/sebastian-gregoricchio/consensusRegions/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/sebastian-gregoricchio/consensusRegions/blob/devel-tools/DESCRIPTION)
 
 Gregoricchio S (2026). *consensusRegions: Consensus Regions from
 Replicated ChIP-seq and ATAC-seq Experiments*. R package version 0.99.0,
