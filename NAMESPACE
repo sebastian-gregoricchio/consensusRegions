@@ -17,6 +17,7 @@ export(plotUpset)
 export(readPeakSets)
 export(recentrePeaks)
 export(replicateWeights)
+export(runConsensus)
 exportClasses(ConsensusRegions)
 exportMethods(analysisParameters)
 exportMethods(consensusRanges)
@@ -28,10 +29,21 @@ exportMethods(show)
 importClassesFrom(GenomicRanges,GRanges)
 importClassesFrom(GenomicRanges,GRangesList)
 importFrom(BiocGenerics,unlist)
+importFrom(BiocParallel,
+  MulticoreParam,
+  SerialParam,
+  SnowParam,
+  bplapply,
+  bpnworkers
+)
 importFrom(GenomeInfoDb,
+  "seqlevels<-",
+  "seqlevelsStyle<-",
   keepStandardChromosomes,
   seqinfo,
   seqlengths,
+  seqlevels,
+  seqlevelsStyle,
   seqnames
 )
 importFrom(GenomicRanges,
@@ -119,12 +131,14 @@ importFrom(ggplot2,
 importFrom(ggtext,element_markdown)
 importFrom(grDevices,colorRamp)
 importFrom(methods,
+  "slot<-",
   is,
   new,
   setClass,
   setGeneric,
   setMethod,
   show,
+  slot,
   validObject
 )
 importFrom(rlang,.data)

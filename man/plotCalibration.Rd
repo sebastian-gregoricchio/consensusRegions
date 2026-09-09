@@ -9,7 +9,7 @@ plotCalibration(calibration, baseSize = 12)
 \arguments{
 \item{calibration}{Output of [calibrateThreshold()].}
 
-\item{baseSize}{Base font size in points.}
+\item{baseSize}{Base font size in points. Default: \code{12}.}
 }
 \value{
 A `ggplot` object.
@@ -27,7 +27,8 @@ peakFiles <- system.file("extdata",
                          package = "consensusRegions")
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
                       verbose = FALSE)
-calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 1,
+set.seed(42)
+calibration <- calibrateThreshold(peaks, nPermutations = 5,
                                   verbose = FALSE)
 
 plotCalibration(calibration)

@@ -21,54 +21,65 @@ calibrateThreshold(
   multipleIntersections = c("lowest", "highest"),
   chromosomeLengths = NULL,
   excludeRegions = NULL,
-  seed = NULL,
+  BPPARAM = 1,
   verbose = TRUE
 )
 }
 \arguments{
 \item{peakList}{A `GRangesList` from [readPeakSets()].}
 
-\item{weights}{Named numeric vector of replicate weights, or `NULL`.}
+\item{weights}{Named numeric vector of replicate weights, or `NULL`.
+Default: \code{NULL}.}
 
-\item{combinationMethod}{Passed to [combineEvidence()].}
+\item{combinationMethod}{Passed to [combineEvidence()].
+Default: \code{"stouffer"}.}
 
-\item{nPermutations}{Number of shuffled replicate sets to generate.}
+\item{nPermutations}{Number of shuffled replicate sets to generate.
+Default: \code{50L}.}
 
-\item{targetFDR}{Empirical false discovery rate to aim for.}
+\item{targetFDR}{Empirical false discovery rate to aim for.
+Default: \code{0.05}.}
 
 \item{stringencyThreshold}{Stringent p-value cut, as in
-[buildConsensus()].}
+[buildConsensus()]. Default: \code{1e-08}.}
 
-\item{weakThreshold}{Background p-value cut.}
+\item{weakThreshold}{Background p-value cut. Default: \code{1e-04}.}
 
 \item{minSupport}{Minimum supporting replicates. Give this or
-`minReplicates`, not both.}
+`minReplicates`, not both. Default: \code{NULL}.}
 
 \item{minReplicates}{Total replicates that must hold the peak, counting
 its own. Accepts a count, a proportion or a percentage string, as in
-[buildConsensus()]. Must match the value used there.}
+[buildConsensus()]. Must match the value used there.
+Default: \code{NULL}.}
 
-\item{minOverlap}{Minimum overlap in base pairs.}
+\item{minOverlap}{Minimum overlap in base pairs. Default: \code{1L}.}
 
 \item{minOverlapFraction}{Optional fractional overlap requirement.
-Must match the value used in [buildConsensus()].}
+Must match the value used in [buildConsensus()]. Default: \code{NULL}.}
 
 \item{recursive}{Whether the confirmation is re-run after pruning
-unsupported peaks. Must match the value used in [buildConsensus()].}
+unsupported peaks. Must match the value used in [buildConsensus()].
+Default: \code{TRUE}.}
 
-\item{maxIterations}{Cap on the recursive rounds.}
+\item{maxIterations}{Cap on the recursive rounds. Default: \code{10L}.}
 
 \item{multipleIntersections}{Resolution rule for several overlapping
-peaks from one replicate.}
+peaks from one replicate. Default: \code{"lowest"}.}
 
 \item{chromosomeLengths}{Named integer vector. Taken from the input, or
-inferred from the furthest peak, when left `NULL`.}
+inferred from the furthest peak, when left `NULL`. Default: \code{NULL}.}
 
-\item{excludeRegions}{Optional `GRanges` the shuffled peaks must avoid.}
+\item{excludeRegions}{Optional `GRanges` the shuffled peaks must avoid.
+Default: \code{NULL}.}
 
-\item{seed}{Optional integer for reproducibility.}
+\item{BPPARAM}{Either the number of cores to use, or a
+`BiocParallelParam` object for finer control. The permutations are
+independent of one another and are where nearly all the time goes, so
+raising this is worth it on a large peak set: a single round takes
+around half a minute on 100,000 peaks per replicate. Default: \code{1}.}
 
-\item{verbose}{Report progress.}
+\item{verbose}{Report progress. Default: \code{TRUE}.}
 }
 \value{
 A list with the recommended `threshold` on the p-value scale,
@@ -99,6 +110,17 @@ mappable chromosomes beforehand, both help.
 Fifty permutations are usually enough to place the threshold within a
 factor of two, which is as much precision as the choice deserves. Push
 it higher only if the curve looks ragged near `targetFDR`.
+
+The peak positions are drawn at random, so call [base::set.seed()]
+beforehand if you need the same threshold back. The function does not
+set the seed itself, since doing so would silently reset the random
+number stream the rest of your session is drawing from.
+
+This is also why the default runs on a single core. Workers draw from
+their own random streams, so `set.seed()` no longer governs the result
+once `BPPARAM` is above one, and the seed has to travel to the workers
+instead: `BiocParallel::MulticoreParam(workers = 8, RNGseed = 42)`.
+Reach for that when a parallel run has to be reproducible.
 }
 \examples{
 peakFiles <- system.file("extdata",
@@ -108,7 +130,8 @@ peakFiles <- system.file("extdata",
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
                       verbose = FALSE)
 
-calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 1,
+set.seed(42)
+calibration <- calibrateThreshold(peaks, nPermutations = 5,
                                   verbose = FALSE)
 calibration$threshold
 

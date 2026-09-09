@@ -43,17 +43,17 @@ combineEvidence(
 
   Numeric vector of replicate weights, recycled to the length of
   \`negLog10P\`. Ignored by \`"fisher"\` and \`"rankProduct"\`. Defaults
-  to equal weights.
+  to equal weights. Default: `NULL`.
 
 - method:
 
   One of \`"stouffer"\`, \`"fisher"\`, \`"lancaster"\` or
-  \`"rankProduct"\`.
+  \`"rankProduct"\`. Default: `"stouffer"`.
 
 - rho:
 
   Numeric vector of relative within-replicate ranks in \`(0, 1\]\`,
-  required by \`"rankProduct"\` and ignored otherwise.
+  required by \`"rankProduct"\` and ignored otherwise. Default: `NULL`.
 
 ## Value
 

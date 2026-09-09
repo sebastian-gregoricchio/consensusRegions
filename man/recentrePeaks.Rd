@@ -14,15 +14,17 @@ recentrePeaks(
 \arguments{
 \item{object}{A [ConsensusRegions-class] object.}
 
-\item{width}{Width of the returned regions in base pairs.}
+\item{width}{Width of the returned regions in base pairs.
+Default: \code{400L}.}
 
 \item{summitSource}{How to place the anchor. `"best"` takes the summit
 of the most significant member peak, `"weighted"` averages the member
 summits weighted by their significance, and `"centre"` uses the
-midpoint of the merged region.}
+midpoint of the merged region. Default: \code{"best"}.}
 
 \item{chromosomeLengths}{Named integer vector used to trim regions that
-would run off a chromosome end. Taken from the object when `NULL`.}
+would run off a chromosome end. Taken from the object when `NULL`.
+Default: \code{NULL}.}
 }
 \value{
 A `GRanges` of fixed-width regions carrying the summit position

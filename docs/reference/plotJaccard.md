@@ -27,18 +27,19 @@ plotJaccard(
 
   Print the index inside each tile. The lettering switches between black
   and white so that it stays legible whatever the tile is filled with.
+  Default: `TRUE`.
 
 - lowColour:
 
-  Colour for a Jaccard index of zero.
+  Colour for a Jaccard index of zero. Default: `"#F5F5F5"`.
 
 - highColour:
 
-  Colour for a Jaccard index of one.
+  Colour for a Jaccard index of one. Default: `"#2C6E91"`.
 
 - baseSize:
 
-  Base font size in points.
+  Base font size in points. Default: `12`.
 
 ## Value
 

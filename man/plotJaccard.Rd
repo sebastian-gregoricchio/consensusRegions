@@ -17,13 +17,15 @@ plotJaccard(
 
 \item{showValues}{Print the index inside each tile. The lettering
 switches between black and white so that it stays legible whatever
-the tile is filled with.}
+the tile is filled with. Default: \code{TRUE}.}
 
-\item{lowColour}{Colour for a Jaccard index of zero.}
+\item{lowColour}{Colour for a Jaccard index of zero.
+Default: \code{"#F5F5F5"}.}
 
-\item{highColour}{Colour for a Jaccard index of one.}
+\item{highColour}{Colour for a Jaccard index of one.
+Default: \code{"#2C6E91"}.}
 
-\item{baseSize}{Base font size in points.}
+\item{baseSize}{Base font size in points. Default: \code{12}.}
 }
 \value{
 A `ggplot` object.

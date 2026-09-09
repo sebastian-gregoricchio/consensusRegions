@@ -232,3 +232,49 @@
 .mcolsAsTibble <- function(gr) {
     tibble::as_tibble(as.data.frame(S4Vectors::mcols(gr)))
 }
+
+
+#' Accept a core count or a BiocParallel object
+#'
+#' @description
+#' Naming a number of cores is how most people think about this, so a bare
+#' number is accepted and turned into the right backend for the platform.
+#' A `BiocParallelParam` object is passed through untouched, which is what
+#' you need for anything beyond the core count, a fixed random seed above
+#' all.
+#'
+#' @param BPPARAM A number of cores or a `BiocParallelParam` object.
+#'
+#' @return A `BiocParallelParam` object.
+#'
+#' @author Sebastian Gregoricchio
+#'
+#' @importFrom BiocParallel SerialParam MulticoreParam SnowParam
+#' @importFrom methods is
+#'
+#' @keywords internal
+#' @noRd
+.resolveBPPARAM <- function(BPPARAM) {
+    if (methods::is(BPPARAM, "BiocParallelParam")) {
+        return(BPPARAM)
+    }
+
+    if (!is.numeric(BPPARAM) || length(BPPARAM) != 1 ||
+        !is.finite(BPPARAM) || BPPARAM < 1) {
+        stop("'BPPARAM' must be a number of cores, or a ",
+             "BiocParallelParam object")
+    }
+
+    nCores <- as.integer(BPPARAM)
+    if (nCores == 1L) {
+        return(BiocParallel::SerialParam())
+    }
+
+    ## forking is unavailable on Windows, where a socket cluster is the
+    ## equivalent arrangement
+    if (.Platform$OS.type == "windows") {
+        BiocParallel::SnowParam(workers = nCores)
+    } else {
+        BiocParallel::MulticoreParam(workers = nCores)
+    }
+}

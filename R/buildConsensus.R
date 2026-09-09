@@ -14,57 +14,69 @@
 #' `p < 1e-3` gives the combination room to work.
 #'
 #' @param peakList A `GRangesList` from [readPeakSets()].
-#' @param weights Named numeric vector of replicate weights, or `NULL`
-#'   for equal weights. See [computeReplicateWeights()].
+#' @param weights Named numeric vector of replicate weights. See
+#'   [computeReplicateWeights()]. Default: \code{NULL}, meaning that every
+#'   replicate counts the same.
 #' @param combinationMethod Passed to [combineEvidence()].
+#'   Default: \code{"stouffer"}.
 #' @param replicateType `"biological"` asks for `minSupport` supporting
 #'   replicates; `"technical"` asks for all of them.
+#'   Default: \code{"biological"}.
 #' @param stringencyThreshold P-value below which a peak is stringent.
+#'   Default: \code{1e-08}.
 #' @param weakThreshold P-value above which a peak is background and takes
-#'   no further part.
-#' @param combinedThreshold Threshold on the combined p-value. Defaults to
-#'   `stringencyThreshold`; [calibrateThreshold()] can estimate it instead.
-#'   The scale differs between combination schemes, so a value carried
-#'   over from one will not mean the same under another. The rank product
-#'   in particular is bounded by the number of peaks per replicate and
-#'   usually needs a far more permissive threshold.
+#'   no further part. Default: \code{1e-04}.
+#' @param combinedThreshold Threshold on the combined p-value.
+#'   [calibrateThreshold()] can estimate it instead. The scale differs
+#'   between combination schemes, so a value carried over from one will
+#'   not mean the same under another. The rank product in particular is
+#'   bounded by the number of peaks per replicate and usually needs a far
+#'   more permissive threshold. Default: \code{NULL}, meaning that
+#'   \code{stringencyThreshold} is used.
 #' @param alpha Level for the within-replicate Benjamini-Hochberg step.
+#'   Default: \code{0.05}.
 #' @param minSupport Number of *other* replicates that must hold an
 #'   overlapping peak. This is a count of replicates and weights never
 #'   substitute for it. Give this or `minReplicates`, not both.
+#'   Default: \code{NULL}, meaning that one supporting replicate is
+#'   enough.
 #' @param minReplicates How many replicates in total must hold the peak,
 #'   counting the one it came from. This is the way the requirement is
 #'   usually spoken about, and it matches MSPC's `-c`. Accepts a count
 #'   (`5`), a proportion (`0.75`) or a percentage (`"75%"`), the last two
 #'   rounded up. `minReplicates = 2` and `minSupport = 1` are the same
-#'   requirement.
+#'   requirement. Default: \code{NULL}.
 #' @param minSupportWeight Optional additional requirement on the summed
 #'   weight of the supporting replicates. Applied on top of `minSupport`,
 #'   never instead of it. Only meaningful when weights are not equal.
+#'   Default: \code{NULL}.
 #' @param adjustmentFamily Which peaks form the family for the
 #'   Benjamini-Hochberg step. `"tested"` corrects across every peak that
 #'   entered the analysis; `"confirmed"` corrects only across the peaks
 #'   that cleared `combinedThreshold`, which is what MSPC does.
-#' @param minOverlap Minimum overlap in base pairs.
+#'   Default: \code{"tested"}.
+#' @param minOverlap Minimum overlap in base pairs. Default: \code{1L}.
 #' @param minOverlapFraction Optional minimum overlap as a fraction of the
 #'   shorter of the two peaks. Applied on top of `minOverlap`.
+#'   Default: \code{NULL}.
 #' @param multipleIntersections How to pick among several overlapping
 #'   peaks from the same replicate: `"lowest"` takes the smallest p-value,
-#'   `"highest"` the largest.
+#'   `"highest"` the largest. Default: \code{"lowest"}.
 #' @param recursive Re-run the confirmation after dropping discarded peaks
-#'   from the pool of eligible supporters.
-#' @param maxIterations Cap on the recursive rounds.
+#'   from the pool of eligible supporters. Default: \code{TRUE}.
+#' @param maxIterations Cap on the recursive rounds. Default: \code{10L}.
 #' @param mergeMethod `"reduce"` merges anything that touches;
 #'   `"iterative"` seeds on the most significant peak and removes what it
-#'   overlaps, then repeats.
+#'   overlaps, then repeats. Default: \code{"reduce"}.
 #' @param maxConsensusWidth Optional cap in base pairs. Merged regions
 #'   wider than this are rebuilt with the iterative rule.
+#'   Default: \code{NULL}.
 #' @param calibration Optional output of [calibrateThreshold()]. When
 #'   supplied its threshold is used, overriding `combinedThreshold`, and
-#'   the whole calibration is kept with the result.
+#'   the whole calibration is kept with the result. Default: \code{NULL}.
 #' @param excludeRegions Optional `GRanges` of blacklisted positions,
-#'   removed from the consensus at the end.
-#' @param verbose Report progress.
+#'   removed from the consensus at the end. Default: \code{NULL}.
+#' @param verbose Report progress. Default: \code{TRUE}.
 #'
 #' @return A [ConsensusRegions-class] object.
 #'
@@ -421,11 +433,14 @@ buildConsensus <- function(peakList,
 .parseReplicateCount <- function(value, nReplicates) {
     if (is.character(value)) {
         trimmed <- trimws(value)
-        number <- suppressWarnings(as.numeric(sub("%$", "", trimmed)))
-        if (is.na(number)) {
+
+        ## check the shape first rather than converting and inspecting
+        ## the damage, which would need the warning to be muffled
+        if (!grepl("^[0-9]*[.]?[0-9]+[%]?$", trimmed)) {
             stop("could not read '", value,
                  "' as a count, a proportion or a percentage")
         }
+        number <- as.numeric(sub("%$", "", trimmed))
 
         ## a percentage is always a share of the experiment, including
         ## when it is the whole of it; falling through to the branch

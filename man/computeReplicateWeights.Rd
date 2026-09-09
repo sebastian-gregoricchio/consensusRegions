@@ -19,22 +19,25 @@ computeReplicateWeights(
 \item{peakList}{A `GRangesList`, typically from [readPeakSets()].}
 
 \item{method}{One of `"equal"`, `"frip"`, `"librarySize"`,
-`"intrinsic"` or `"custom"`.}
+`"intrinsic"` or `"custom"`. Default: \code{"equal"}.}
 
 \item{bamFiles}{Character vector of indexed BAM files, in the same
 order as `peakList`. Needed by `"frip"` and `"librarySize"` unless
-the values are supplied directly.}
+the values are supplied directly. Default: \code{NULL}.}
 
 \item{frip}{Numeric vector of pre-computed fractions of reads in
-peaks. Skips the BAM pass.}
+peaks. Skips the BAM pass. Default: \code{NULL}.}
 
-\item{librarySize}{Numeric vector of pre-computed mapped read counts.}
+\item{librarySize}{Numeric vector of pre-computed mapped read counts.
+Default: \code{NULL}.}
 
-\item{weights}{Numeric vector used as is when `method` is `"custom"`.}
+\item{weights}{Numeric vector used as is when `method` is `"custom"`.
+Default: \code{NULL}.}
 
-\item{minMapq}{Minimum mapping quality when counting from BAM.}
+\item{minMapq}{Minimum mapping quality when counting from BAM.
+Default: \code{0L}.}
 
-\item{verbose}{Report progress.}
+\item{verbose}{Report progress. Default: \code{TRUE}.}
 }
 \value{
 A named numeric vector with mean one, carrying the raw metrics

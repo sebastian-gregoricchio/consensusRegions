@@ -144,6 +144,37 @@ combining evidence.
 
   
 
+### Chromosome naming
+
+Peak files rarely agree on whether a chromosome is called `chr1` or `1`.
+Two replicates that name the same chromosome differently share no
+overlap at all, so every peak is discarded for lack of support and the
+result looks like a biological finding rather than a clerical one.
+
+[`readPeakSets()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/readPeakSets.md)
+therefore harmonises the names on the way in, defaulting to UCSC style,
+in the same way as
+[`RegionSetDE::loadRegions()`](https://sebastian-gregoricchio.github.io/RegionSetDE/reference/loadRegions.html):
+
+``` r
+withChr <- GenomicRanges::GRanges(
+    "chr1", IRanges::IRanges(start = c(1000, 20000), width = 500))
+withoutChr <- GenomicRanges::GRanges(
+    "1", IRanges::IRanges(start = c(1100, 20100), width = 500))
+
+mixed <- readPeakSets(list(a = withChr, b = withoutChr),
+                      seqlevelsStyle = "UCSC")
+GenomeInfoDb::seqlevels(mixed[["b"]])
+> [1] "chr1"
+```
+
+`"Ensembl"` and `"NCBI"` go the other way, stripping the prefix. Setting
+`seqlevelsStyle = NULL` leaves the names untouched and stops if the
+replicates disagree, which is the safe choice when you would rather see
+the mismatch than have it quietly repaired.
+
+  
+
 ### Call peaks permissively
 
 This is the mistake that ruins the whole exercise, so it is worth saying
@@ -469,9 +500,9 @@ gives a null, and the threshold is read off where the expected number of
 null peaks falls to a chosen fraction of the observed count.
 
 ``` r
+set.seed(42)
 calibration <- calibrateThreshold(peaks, nPermutations = 10,
-                                  targetFDR = 0.05, seed = 1,
-                                  verbose = FALSE)
+                                  targetFDR = 0.05, verbose = FALSE)
 
 calibration$threshold
 > [1] 4.242908e-11
@@ -493,9 +524,42 @@ length(calibrated)
 ```
 
 Ten permutations is enough for a demonstration; fifty is a reasonable
-working number. Passing a blacklist through `excludeRegions` makes the
-null more honest, because shuffled peaks otherwise land in artefact
-regions where real peaks cluster too.
+working number. The positions are drawn at random and the function does
+not seed the stream itself, so call
+[`set.seed()`](https://rdrr.io/r/base/Random.html) beforehand when you
+want the same threshold back.
+
+The permutations are independent of one another and are where nearly all
+the time goes, so they are handed to `BiocParallel`. On a genome-scale
+peak set a single round takes tens of seconds, which makes fifty of them
+most of an afternoon in series:
+
+``` r
+
+calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8)
+```
+
+`BPPARAM` takes the number of cores directly, which is how the question
+usually gets asked. A `BiocParallelParam` object is accepted too, and is
+what you need when a parallel run has to be reproducible: the workers
+draw from their own random streams, so
+[`set.seed()`](https://rdrr.io/r/base/Random.html) no longer governs the
+result and the seed has to travel with the backend instead.
+
+``` r
+
+calibration <- calibrateThreshold(
+    peaks, nPermutations = 50,
+    BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
+```
+
+The default is a single core, so that
+[`set.seed()`](https://rdrr.io/r/base/Random.html) behaves as described
+above unless you ask for more.
+
+Passing a blacklist through `excludeRegions` makes the null more honest,
+because shuffled peaks otherwise land in artefact regions where real
+peaks cluster too.
 
   
 
@@ -635,6 +699,52 @@ for a transcription factor, TSS enrichment and cCRE overlap for ATAC,
 correlation with expression for activating marks. If the rescued peaks
 are motif-poor and TSS-depleted, the settings are too permissive
 regardless of what the statistics say.
+
+  
+
+------------------------------------------------------------------------
+
+## **Everything in one call**
+
+The steps above almost always run in the same order, so
+[`runConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/runConsensus.md)
+chains them: read, weight, optionally calibrate, build, optionally
+recentre, optionally write out.
+
+``` r
+result <- runConsensus(peakFiles,
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       minReplicates = 2,
+                       verbose = FALSE)
+length(result)
+> [1] 292
+```
+
+Anything it does not name itself is passed through to
+[`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md),
+so `combinationMethod`, `mergeMethod`, `adjustmentFamily` and the rest
+all work here too:
+
+``` r
+
+result <- runConsensus(peakFiles,
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       weightMethod = "frip",
+                       bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
+                       calibrate = TRUE,
+                       nPermutations = 50,
+                       combinationMethod = "stouffer",
+                       minReplicates = "75%",
+                       recentre = TRUE, width = 400,
+                       excludeRegions = blacklist,
+                       outputFile = "consensus.bed",
+                       BPPARAM = 8)
+```
+
+Use the individual functions when a step needs looking at before the
+next one runs. Calibration in particular deserves a glance at
+[`plotCalibration()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/plotCalibration.md)
+rather than blind trust, and the wrapper gives you no chance to take it.
 
   
 

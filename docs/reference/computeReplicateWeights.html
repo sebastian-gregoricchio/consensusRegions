@@ -95,34 +95,37 @@ that survives of an old analysis is a folder of BED files.</p>
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>One of `"equal"`, `"frip"`, `"librarySize"`,
-`"intrinsic"` or `"custom"`.</p></dd>
+`"intrinsic"` or `"custom"`. Default: <code>"equal"</code>.</p></dd>
 
 
 <dt id="arg-bamfiles">bamFiles<a class="anchor" aria-label="anchor" href="#arg-bamfiles"></a></dt>
 <dd><p>Character vector of indexed BAM files, in the same
 order as `peakList`. Needed by `"frip"` and `"librarySize"` unless
-the values are supplied directly.</p></dd>
+the values are supplied directly. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-frip">frip<a class="anchor" aria-label="anchor" href="#arg-frip"></a></dt>
 <dd><p>Numeric vector of pre-computed fractions of reads in
-peaks. Skips the BAM pass.</p></dd>
+peaks. Skips the BAM pass. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-librarysize">librarySize<a class="anchor" aria-label="anchor" href="#arg-librarysize"></a></dt>
-<dd><p>Numeric vector of pre-computed mapped read counts.</p></dd>
+<dd><p>Numeric vector of pre-computed mapped read counts.
+Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Numeric vector used as is when `method` is `"custom"`.</p></dd>
+<dd><p>Numeric vector used as is when `method` is `"custom"`.
+Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-minmapq">minMapq<a class="anchor" aria-label="anchor" href="#arg-minmapq"></a></dt>
-<dd><p>Minimum mapping quality when counting from BAM.</p></dd>
+<dd><p>Minimum mapping quality when counting from BAM.
+Default: <code>0L</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Report progress.</p></dd>
+<dd><p>Report progress. Default: <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

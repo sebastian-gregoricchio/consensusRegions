@@ -29,19 +29,19 @@ recentrePeaks(
 
 - width:
 
-  Width of the returned regions in base pairs.
+  Width of the returned regions in base pairs. Default: `400L`.
 
 - summitSource:
 
   How to place the anchor. \`"best"\` takes the summit of the most
   significant member peak, \`"weighted"\` averages the member summits
   weighted by their significance, and \`"centre"\` uses the midpoint of
-  the merged region.
+  the merged region. Default: `"best"`.
 
 - chromosomeLengths:
 
   Named integer vector used to trim regions that would run off a
-  chromosome end. Taken from the object when \`NULL\`.
+  chromosome end. Taken from the object when \`NULL\`. Default: `NULL`.
 
 ## Value
 

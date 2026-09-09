@@ -13,6 +13,7 @@
 #'
 #' @param object A [ConsensusRegions-class] object.
 #' @param assayName Name given to the significance assay.
+#'   Default: \code{"negLog10P"}.
 #'
 #' @return A `RangedSummarizedExperiment`.
 #'

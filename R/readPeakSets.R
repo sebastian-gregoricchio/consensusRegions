@@ -10,16 +10,24 @@
 #' @param peaks Character vector of file paths, or a `GRanges`,
 #'   `GRangesList`, or list of `GRanges`.
 #' @param sampleNames Character vector naming the replicates. Taken from
-#'   the file names or the list names when left `NULL`.
+#'   the file names or the list names when left `NULL`. Default: \code{NULL}.
 #' @param scoreType One of `"auto"`, `"log10pvalue"`, `"pvalue"`,
 #'   `"score"` or `"none"`. `"auto"` inspects the input.
+#'   Default: \code{"auto"}.
 #' @param scoreColumn Name of the metadata column holding the statistic.
 #'   Only needed when the input is not a standard peak format.
+#'   Default: \code{NULL}.
 #' @param keepStandardChromosomes Drop scaffolds and patches.
+#'   Default: \code{TRUE}.
+#' @param seqlevelsStyle String indicating the chromosome naming style to
+#'   apply to every replicate, one among `"UCSC"` (chr1), `"Ensembl"` (1)
+#'   or `"NCBI"`. When set to `NULL` the names are left as they are and
+#'   the loading is interrupted if the replicates use different styles.
+#'   Default: `"UCSC"`.
 #' @param genome Genome identifier passed to the importer, for instance
 #'   `"hg38"`. Fills in the chromosome lengths used by
 #'   [calibrateThreshold()].
-#' @param verbose Report what was detected.
+#' @param verbose Report what was detected. Default: \code{TRUE}.
 #'
 #' @return A `GRangesList`, one element per replicate, with a `negLog10P`
 #'   metadata column when a statistic was available. The resolved score
@@ -54,9 +62,20 @@ readPeakSets <- function(peaks,
                                        "score", "none"),
                          scoreColumn = NULL,
                          keepStandardChromosomes = TRUE,
+                         seqlevelsStyle = "UCSC",
                          genome = NA,
                          verbose = TRUE) {
     scoreType <- match.arg(scoreType)
+
+    if (!is.null(seqlevelsStyle)) {
+        seqlevelsStyle <- unname(
+            c(ucsc = "UCSC", ensembl = "Ensembl",
+              ncbi = "NCBI")[tolower(seqlevelsStyle[1])])
+        if (is.na(seqlevelsStyle)) {
+            stop("The 'seqlevelsStyle' parameter must be one among ",
+                 "'UCSC', 'Ensembl' or 'NCBI'.", call. = FALSE)
+        }
+    }
 
     ## bring every accepted input shape down to a plain list of GRanges
     peakList <- .coercePeakInput(peaks, genome = genome)
@@ -81,6 +100,14 @@ readPeakSets <- function(peaks,
         stop("'sampleNames' must be unique")
     }
     names(peakList) <- sampleNames
+
+    ## Peak files rarely agree on whether a chromosome is called chr1 or
+    ## 1, and two replicates naming the same chromosome differently share
+    ## no overlap at all: every peak would be discarded for lack of
+    ## support and the analysis would look like a biological result.
+    peakList <- .applySeqlevelsStyle(peakList,
+                                     seqlevelsStyle = seqlevelsStyle,
+                                     verbose = verbose)
 
     if (isTRUE(keepStandardChromosomes)) {
         peakList <- lapply(peakList, function(x) {
@@ -112,6 +139,115 @@ readPeakSets <- function(peaks,
     result <- GenomicRanges::GRangesList(peakList)
     S4Vectors::metadata(result) <- list(scoreType = resolvedType)
     result
+}
+
+
+#' Put every replicate on the same chromosome naming style
+#'
+#' @description
+#' `GenomeInfoDb` knows the mapping for the assemblies it ships, and falls
+#' over on anything it does not recognise. The prefix rule below is the
+#' fallback for those cases, which is the same arrangement used by
+#' `RegionSetDE::loadRegions()`.
+#'
+#' @param peakList Named list of `GRanges`.
+#' @param seqlevelsStyle `"UCSC"`, `"Ensembl"`, `"NCBI"` or `NULL`.
+#' @param verbose Report what was changed.
+#'
+#' @return The list with harmonised sequence levels.
+#'
+#' @author Sebastian Gregoricchio
+#'
+#' @importFrom GenomeInfoDb seqlevels seqlevels<- seqlevelsStyle
+#'   seqlevelsStyle<-
+#'
+#' @keywords internal
+#' @noRd
+.applySeqlevelsStyle <- function(peakList, seqlevelsStyle, verbose = TRUE) {
+    currentStyle <- function(gr) {
+        style <- tryCatch(GenomeInfoDb::seqlevelsStyle(gr),
+                          error = function(e) NA_character_)
+        style[1]
+    }
+
+    ## nothing to impose, but replicates that disagree cannot be compared
+    if (is.null(seqlevelsStyle)) {
+        styles <- vapply(peakList, currentStyle, character(1))
+        prefixed <- vapply(peakList, function(gr) {
+            any(grepl("^chr", GenomeInfoDb::seqlevels(gr)))
+        }, logical(1))
+
+        if (length(unique(prefixed)) > 1) {
+            stop("the replicates use different chromosome naming styles (",
+                 paste(names(peakList)[prefixed], collapse = ", "),
+                 " carry a 'chr' prefix and the others do not); set ",
+                 "'seqlevelsStyle' to harmonise them", call. = FALSE)
+        }
+        if (length(unique(stats::na.omit(styles))) > 1) {
+            stop("the replicates use different chromosome naming styles: ",
+                 paste(unique(stats::na.omit(styles)), collapse = ", "),
+                 "; set 'seqlevelsStyle' to harmonise them", call. = FALSE)
+        }
+        return(peakList)
+    }
+
+    before <- vapply(peakList, function(gr) {
+        paste(utils::head(GenomeInfoDb::seqlevels(gr), 1), collapse = "")
+    }, character(1))
+
+    harmonised <- lapply(peakList, function(gr) {
+        tryCatch({
+            GenomeInfoDb::seqlevelsStyle(gr) <- seqlevelsStyle
+            gr
+        }, error = function(e) .harmonizeSeqlevels(gr, seqlevelsStyle))
+    })
+
+    after <- vapply(harmonised, function(gr) {
+        paste(utils::head(GenomeInfoDb::seqlevels(gr), 1), collapse = "")
+    }, character(1))
+
+    changed <- names(peakList)[before != after]
+    if (length(changed) > 0) {
+        .messageIf(verbose, "Chromosome names set to ", seqlevelsStyle,
+                   " style in: ", paste(changed, collapse = ", "))
+    }
+
+    harmonised
+}
+
+
+#' Add or strip the chr prefix when the assembly is not recognised
+#'
+#' @param gr A `GRanges`.
+#' @param style `"UCSC"`, `"Ensembl"` or `"NCBI"`.
+#'
+#' @return The `GRanges` with renamed sequence levels.
+#'
+#' @author Sebastian Gregoricchio
+#'
+#' @importFrom GenomeInfoDb seqlevels seqlevels<-
+#'
+#' @keywords internal
+#' @noRd
+.harmonizeSeqlevels <- function(gr, style) {
+    newLevels <- GenomeInfoDb::seqlevels(gr)
+
+    if (style == "UCSC") {
+        newLevels <- ifelse(grepl("^chr", newLevels), newLevels,
+                            paste0("chr", newLevels))
+        newLevels <- gsub("^chrMT$", "chrM", newLevels)
+    } else {
+        newLevels <- gsub("^chr", "", newLevels)
+        newLevels <- gsub("^M$", "MT", newLevels)
+    }
+
+    if (any(duplicated(newLevels))) {
+        stop("The chromosome names could not be converted to the ",
+             "requested style without collisions.", call. = FALSE)
+    }
+
+    GenomeInfoDb::seqlevels(gr) <- newLevels
+    gr
 }
 
 

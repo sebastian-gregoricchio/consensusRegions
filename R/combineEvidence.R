@@ -26,11 +26,12 @@
 #' @param negLog10P Numeric vector of -log10 transformed p-values.
 #' @param weights Numeric vector of replicate weights, recycled to the
 #'   length of `negLog10P`. Ignored by `"fisher"` and `"rankProduct"`.
-#'   Defaults to equal weights.
+#'   Defaults to equal weights. Default: \code{NULL}.
 #' @param method One of `"stouffer"`, `"fisher"`, `"lancaster"` or
-#'   `"rankProduct"`.
+#'   `"rankProduct"`. Default: \code{"stouffer"}.
 #' @param rho Numeric vector of relative within-replicate ranks in
 #'   `(0, 1]`, required by `"rankProduct"` and ignored otherwise.
+#'   Default: \code{NULL}.
 #'
 #' @return A single numeric value, the combined significance on the
 #'   -log10 scale.

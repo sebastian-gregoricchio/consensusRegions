@@ -24,45 +24,45 @@
                            legendPosition = "right",
                            border = FALSE,
                            borderWidth = 1) {
-  ## a heatmap wants a closed panel, everything else wants open axes
-  panelBorder <- if (isTRUE(border)) {
-    ggplot2::element_rect(colour = "black", fill = NA,
-                          linewidth = borderWidth)
-  } else {
-    ggplot2::element_blank()
-  }
-  axisLine <- if (isTRUE(border)) {
-    ggplot2::element_blank()
-  } else {
-    ggplot2::element_line(colour = "black", linewidth = 0.5)
-  }
+    ## a heatmap wants a closed panel, everything else wants open axes
+    panelBorder <- if (isTRUE(border)) {
+        ggplot2::element_rect(colour = "black", fill = NA,
+                              linewidth = borderWidth)
+    } else {
+        ggplot2::element_blank()
+    }
+    axisLine <- if (isTRUE(border)) {
+        ggplot2::element_blank()
+    } else {
+        ggplot2::element_line(colour = "black", linewidth = 0.5)
+    }
 
-  ggplot2::theme_bw(base_size = baseSize) +
-    ggplot2::theme(
-      panel.border = panelBorder,
-      panel.grid.major = ggplot2::element_blank(),
-      panel.grid.minor = ggplot2::element_blank(),
-      panel.background = ggplot2::element_blank(),
-      axis.line = axisLine,
-      axis.text = ggplot2::element_text(colour = "black",
-                                        size = baseSize - 1),
-      axis.title = ggplot2::element_text(colour = "black",
-                                         size = baseSize),
-      axis.ticks = ggplot2::element_line(colour = "black",
-                                         linewidth = 0.5),
-      legend.position = legendPosition,
-      legend.key = ggplot2::element_blank(),
-      legend.background = ggplot2::element_blank(),
-      legend.text = ggplot2::element_text(colour = "black",
-                                          size = baseSize - 1),
-      legend.title = ggplot2::element_text(colour = "black",
-                                           size = baseSize),
-      strip.background = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(colour = "black",
-                                         size = baseSize),
-      plot.title = ggplot2::element_text(colour = "black",
-                                         size = baseSize + 2,
-                                         face = "bold", hjust = 0.5))
+    ggplot2::theme_bw(base_size = baseSize) +
+        ggplot2::theme(
+            panel.border = panelBorder,
+            panel.grid.major = ggplot2::element_blank(),
+            panel.grid.minor = ggplot2::element_blank(),
+            panel.background = ggplot2::element_blank(),
+            axis.line = axisLine,
+            axis.text = ggplot2::element_text(colour = "black",
+                                              size = baseSize - 1),
+            axis.title = ggplot2::element_text(colour = "black",
+                                               size = baseSize),
+            axis.ticks = ggplot2::element_line(colour = "black",
+                                               linewidth = 0.5),
+            legend.position = legendPosition,
+            legend.key = ggplot2::element_blank(),
+            legend.background = ggplot2::element_blank(),
+            legend.text = ggplot2::element_text(colour = "black",
+                                                size = baseSize - 1),
+            legend.title = ggplot2::element_text(colour = "black",
+                                                 size = baseSize),
+            strip.background = ggplot2::element_blank(),
+            strip.text = ggplot2::element_text(colour = "black",
+                                               size = baseSize),
+            plot.title = ggplot2::element_text(colour = "black",
+                                               size = baseSize + 2,
+                                               face = "bold", hjust = 0.5))
 }
 
 
@@ -91,19 +91,19 @@
                                     lowColour,
                                     highColour,
                                     limits = c(0, 1)) {
-  scaled <- (value - limits[1]) / diff(limits)
-  scaled[is.na(scaled)] <- 0
-  scaled <- pmin(pmax(scaled, 0), 1)
+    scaled <- (value - limits[1]) / diff(limits)
+    scaled[is.na(scaled)] <- 0
+    scaled <- pmin(pmax(scaled, 0), 1)
 
-  channels <- grDevices::colorRamp(c(lowColour, highColour))(scaled)
+    channels <- grDevices::colorRamp(c(lowColour, highColour))(scaled)
 
-  ## the usual weighted sum for perceived brightness: the eye is far
-  ## more sensitive to green than it is to blue
-  luminance <- (channels[, 1] * 0.299 +
-                  channels[, 2] * 0.587 +
-                  channels[, 3] * 0.114) / 255
+    ## the usual weighted sum for perceived brightness: the eye is far
+    ## more sensitive to green than it is to blue
+    luminance <- (channels[, 1] * 0.299 +
+                      channels[, 2] * 0.587 +
+                      channels[, 3] * 0.114) / 255
 
-  ifelse(luminance > 0.5, "black", "white")
+    ifelse(luminance > 0.5, "black", "white")
 }
 
 
@@ -119,7 +119,8 @@
 #'
 #' @param object A [ConsensusRegions-class] object.
 #' @param proportion Scale the bars to one instead of showing counts.
-#' @param baseSize Base font size in points.
+#'   Default: \code{FALSE}.
+#' @param baseSize Base font size in points. Default: \code{12}.
 #'
 #' @return A `ggplot` object.
 #'
@@ -146,49 +147,49 @@
 #'
 #' @export
 plotRescue <- function(object, proportion = FALSE, baseSize = 12) {
-  if (!methods::is(object, "ConsensusRegions")) {
-    stop("'object' must be a ConsensusRegions object")
-  }
+    if (!methods::is(object, "ConsensusRegions")) {
+        stop("'object' must be a ConsensusRegions object")
+    }
 
-  ## split the confirmed peaks into those that stood on their own and
-  ## those that needed the other replicates
-  summary <- dplyr::mutate(
-    tibble::as_tibble(object@stats),
-    confirmedStringent = .data$nConfirmed - .data$nRescued)
+    ## split the confirmed peaks into those that stood on their own and
+    ## those that needed the other replicates
+    summary <- dplyr::mutate(
+        tibble::as_tibble(object@stats),
+        confirmedStringent = .data$nConfirmed - .data$nRescued)
 
-  plotData <- tidyr::pivot_longer(
-    dplyr::select(summary, "replicate", "confirmedStringent",
-                  "nRescued", "nFalsePositive", "nDiscarded"),
-    cols = -"replicate",
-    names_to = "outcome",
-    values_to = "count")
+    plotData <- tidyr::pivot_longer(
+        dplyr::select(summary, "replicate", "confirmedStringent",
+                      "nRescued", "nFalsePositive", "nDiscarded"),
+        cols = -"replicate",
+        names_to = "outcome",
+        values_to = "count")
 
-  plotData <- dplyr::mutate(
-    plotData,
-    outcome = factor(.data$outcome,
-                     levels = c("confirmedStringent", "nRescued",
-                                "nFalsePositive", "nDiscarded"),
-                     labels = c("confirmed", "rescued",
-                                "failed correction", "discarded")))
+    plotData <- dplyr::mutate(
+        plotData,
+        outcome = factor(.data$outcome,
+                         levels = c("confirmedStringent", "nRescued",
+                                    "nFalsePositive", "nDiscarded"),
+                         labels = c("confirmed", "rescued",
+                                    "failed correction", "discarded")))
 
-  barPosition <- if (isTRUE(proportion)) "fill" else "stack"
+    barPosition <- if (isTRUE(proportion)) "fill" else "stack"
 
-  ggplot2::ggplot(plotData,
-                  ggplot2::aes(x = .data$replicate, y = .data$count,
-                               fill = .data$outcome)) +
-    ggplot2::geom_col(position = barPosition, width = 0.7) +
-    ggplot2::scale_fill_manual(
-      values = c(confirmed = "#2C6E91",
-                 rescued = "#78B4C8",
-                 `failed correction` = "#E0B25F",
-                 discarded = "#BDBDBD")) +
-    ggplot2::labs(x = NULL,
-                  y = if (isTRUE(proportion)) "fraction" else "peaks",
-                  fill = NULL) +
-    .themePubrLike(baseSize = baseSize, legendPosition = "right") +
-    ## the replicate names sit under the bars already, so the ticks
-    ## only add clutter
-    ggplot2::theme(axis.ticks.x = ggplot2::element_blank())
+    ggplot2::ggplot(plotData,
+                    ggplot2::aes(x = .data$replicate, y = .data$count,
+                                 fill = .data$outcome)) +
+        ggplot2::geom_col(position = barPosition, width = 0.7) +
+        ggplot2::scale_fill_manual(
+            values = c(confirmed = "#2C6E91",
+                       rescued = "#78B4C8",
+                       `failed correction` = "#E0B25F",
+                       discarded = "#BDBDBD")) +
+        ggplot2::labs(x = NULL,
+                      y = if (isTRUE(proportion)) "fraction" else "peaks",
+                      fill = NULL) +
+        .themePubrLike(baseSize = baseSize, legendPosition = "right") +
+        ## the replicate names sit under the bars already, so the ticks
+        ## only add clutter
+        ggplot2::theme(axis.ticks.x = ggplot2::element_blank())
 }
 
 
@@ -203,10 +204,12 @@ plotRescue <- function(object, proportion = FALSE, baseSize = 12) {
 #' @param object A [ConsensusRegions-class] object.
 #' @param showValues Print the index inside each tile. The lettering
 #'   switches between black and white so that it stays legible whatever
-#'   the tile is filled with.
+#'   the tile is filled with. Default: \code{TRUE}.
 #' @param lowColour Colour for a Jaccard index of zero.
+#'   Default: \code{"#F5F5F5"}.
 #' @param highColour Colour for a Jaccard index of one.
-#' @param baseSize Base font size in points.
+#'   Default: \code{"#2C6E91"}.
+#' @param baseSize Base font size in points. Default: \code{12}.
 #'
 #' @return A `ggplot` object.
 #'
@@ -235,57 +238,57 @@ plotJaccard <- function(object,
                         lowColour = "#F5F5F5",
                         highColour = "#2C6E91",
                         baseSize = 12) {
-  if (!methods::is(object, "ConsensusRegions")) {
-    stop("'object' must be a ConsensusRegions object")
-  }
+    if (!methods::is(object, "ConsensusRegions")) {
+        stop("'object' must be a ConsensusRegions object")
+    }
 
-  jaccard <- .pairwiseJaccard(object@peaks)
+    jaccard <- .pairwiseJaccard(object@peaks)
 
-  plotData <- tidyr::pivot_longer(
-    dplyr::mutate(as.data.frame(jaccard),
-                  replicateA = rownames(jaccard)),
-    cols = -"replicateA",
-    names_to = "replicateB",
-    values_to = "jaccard")
+    plotData <- tidyr::pivot_longer(
+        dplyr::mutate(as.data.frame(jaccard),
+                      replicateA = rownames(jaccard)),
+        cols = -"replicateA",
+        names_to = "replicateB",
+        values_to = "jaccard")
 
-  ## the lettering follows the fill rather than the value, so it keeps
-  ## working if the palette is changed
-  plotData <- dplyr::mutate(
-    plotData,
-    labelColour = .contrastingLabelColour(.data$jaccard,
-                                          lowColour = lowColour,
-                                          highColour = highColour,
-                                          limits = c(0, 1)))
+    ## the lettering follows the fill rather than the value, so it keeps
+    ## working if the palette is changed
+    plotData <- dplyr::mutate(
+        plotData,
+        labelColour = .contrastingLabelColour(.data$jaccard,
+                                              lowColour = lowColour,
+                                              highColour = highColour,
+                                              limits = c(0, 1)))
 
-  plot <- ggplot2::ggplot(
-    plotData,
-    ggplot2::aes(x = .data$replicateA, y = .data$replicateB,
-                 fill = .data$jaccard)) +
-    ggplot2::geom_tile(colour = "white", linewidth = 0.4) +
-    ggplot2::scale_fill_gradient(low = lowColour, high = highColour,
-                                 limits = c(0, 1)) +
-    ## half a category of padding puts the panel edge exactly on the
-    ## outer tile boundary: no gap, and no tile cut in half
-    ggplot2::scale_x_discrete(
-      expand = ggplot2::expansion(mult = 0, add = 0.5)) +
-    ggplot2::scale_y_discrete(
-      expand = ggplot2::expansion(mult = 0, add = 0.5)) +
-    ggplot2::labs(x = NULL, y = NULL, fill = "Jaccard") +
-    .themePubrLike(baseSize = baseSize, legendPosition = "right",
-                   border = TRUE, borderWidth = 1) +
-    ggplot2::theme(aspect.ratio = 1,
-                   axis.ticks = element_blank())
+    plot <- ggplot2::ggplot(
+        plotData,
+        ggplot2::aes(x = .data$replicateA, y = .data$replicateB,
+                     fill = .data$jaccard)) +
+        ggplot2::geom_tile(colour = "white", linewidth = 0.4) +
+        ggplot2::scale_fill_gradient(low = lowColour, high = highColour,
+                                     limits = c(0, 1)) +
+        ## half a category of padding puts the panel edge exactly on the
+        ## outer tile boundary: no gap, and no tile cut in half
+        ggplot2::scale_x_discrete(
+            expand = ggplot2::expansion(mult = 0, add = 0.5)) +
+        ggplot2::scale_y_discrete(
+            expand = ggplot2::expansion(mult = 0, add = 0.5)) +
+        ggplot2::labs(x = NULL, y = NULL, fill = "Jaccard") +
+        .themePubrLike(baseSize = baseSize, legendPosition = "right",
+                       border = TRUE, borderWidth = 1) +
+        ggplot2::theme(aspect.ratio = 1,
+                       axis.ticks = element_blank())
 
-  if (isTRUE(showValues)) {
-    plot <- plot +
-      ggplot2::geom_text(
-        ggplot2::aes(label = sprintf("%.2f", .data$jaccard),
-                     colour = .data$labelColour),
-        size = baseSize / 4) +
-      ggplot2::scale_colour_identity()
-  }
+    if (isTRUE(showValues)) {
+        plot <- plot +
+            ggplot2::geom_text(
+                ggplot2::aes(label = sprintf("%.2f", .data$jaccard),
+                             colour = .data$labelColour),
+                size = baseSize / 4) +
+            ggplot2::scale_colour_identity()
+    }
 
-  plot
+    plot
 }
 
 
@@ -298,7 +301,7 @@ plotJaccard <- function(object,
 #' direction.
 #'
 #' @param object A [ConsensusRegions-class] object.
-#' @param minSize Drop intersections smaller than this.
+#' @param minSize Drop intersections smaller than this. Default: \code{0}.
 #'
 #' @return A `ggplot` object built by `ComplexUpset`.
 #'
@@ -323,25 +326,25 @@ plotJaccard <- function(object,
 #'
 #' @export
 plotUpset <- function(object, minSize = 0) {
-  if (!requireNamespace("ComplexUpset", quietly = TRUE)) {
-    stop("plotUpset() needs the ComplexUpset package, install it with ",
-         "install.packages('ComplexUpset')")
-  }
-  if (!methods::is(object, "ConsensusRegions")) {
-    stop("'object' must be a ConsensusRegions object")
-  }
+    if (!requireNamespace("ComplexUpset", quietly = TRUE)) {
+        stop("plotUpset() needs the ComplexUpset package, install it with ",
+             "install.packages('ComplexUpset')")
+    }
+    if (!methods::is(object, "ConsensusRegions")) {
+        stop("'object' must be a ConsensusRegions object")
+    }
 
-  ## a membership matrix is all ComplexUpset needs
-  membership <- .membershipMatrix(object)
-  if (nrow(membership) == 0) {
-    stop("the consensus is empty, there is nothing to plot")
-  }
+    ## a membership matrix is all ComplexUpset needs
+    membership <- .membershipMatrix(object)
+    if (nrow(membership) == 0) {
+        stop("the consensus is empty, there is nothing to plot")
+    }
 
-  ComplexUpset::upset(
-    as.data.frame(membership),
-    intersect = colnames(membership),
-    min_size = minSize,
-    name = "replicates")
+    ComplexUpset::upset(
+        as.data.frame(membership),
+        intersect = colnames(membership),
+        min_size = minSize,
+        name = "replicates")
 }
 
 
@@ -354,7 +357,7 @@ plotUpset <- function(object, minSize = 0) {
 #' chance often enough to support a consensus at that stringency.
 #'
 #' @param calibration Output of [calibrateThreshold()].
-#' @param baseSize Base font size in points.
+#' @param baseSize Base font size in points. Default: \code{12}.
 #'
 #' @return A `ggplot` object.
 #'
@@ -372,33 +375,34 @@ plotUpset <- function(object, minSize = 0) {
 #'                          package = "consensusRegions")
 #' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
 #'                       verbose = FALSE)
-#' calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 1,
+#' set.seed(42)
+#' calibration <- calibrateThreshold(peaks, nPermutations = 5,
 #'                                   verbose = FALSE)
 #'
 #' plotCalibration(calibration)
 #'
 #' @export
 plotCalibration <- function(calibration, baseSize = 12) {
-  if (!is.list(calibration) || is.null(calibration$fdrCurve)) {
-    stop("'calibration' must be the output of calibrateThreshold()")
-  }
+    if (!is.list(calibration) || is.null(calibration$fdrCurve)) {
+        stop("'calibration' must be the output of calibrateThreshold()")
+    }
 
-  ggplot2::ggplot(calibration$fdrCurve,
-                  ggplot2::aes(x = .data$cut, y = .data$fdr)) +
-    ggplot2::geom_line(colour = "#2C6E91", linewidth = 0.7) +
-    ggplot2::geom_hline(yintercept = calibration$targetFDR,
-                        linetype = "dashed", colour = "grey40") +
-    ggplot2::geom_vline(xintercept = calibration$thresholdNegLog10,
-                        linetype = "dotted", colour = "#B4553C") +
-    ## the base of the logarithm belongs in subscript, which plotmath
-    ## cannot mix with running text the way markdown can
-    ggplot2::labs(
-      x = "combined significance cut (-log<sub>10</sub> p)",
-      y = "empirical FDR") +
-    .themePubrLike(baseSize = baseSize, legendPosition = "none") +
-    ggplot2::theme(
-      axis.title.x = ggtext::element_markdown(colour = "black",
-                                              size = baseSize))
+    ggplot2::ggplot(calibration$fdrCurve,
+                    ggplot2::aes(x = .data$cut, y = .data$fdr)) +
+        ggplot2::geom_line(colour = "#2C6E91", linewidth = 0.7) +
+        ggplot2::geom_hline(yintercept = calibration$targetFDR,
+                            linetype = "dashed", colour = "grey40") +
+        ggplot2::geom_vline(xintercept = calibration$thresholdNegLog10,
+                            linetype = "dotted", colour = "#B4553C") +
+        ## the base of the logarithm belongs in subscript, which plotmath
+        ## cannot mix with running text the way markdown can
+        ggplot2::labs(
+            x = "combined significance cut (-log<sub>10</sub> p)",
+            y = "empirical FDR") +
+        .themePubrLike(baseSize = baseSize, legendPosition = "none") +
+        ggplot2::theme(
+            axis.title.x = ggtext::element_markdown(colour = "black",
+                                                    size = baseSize))
 }
 
 
@@ -416,27 +420,27 @@ plotCalibration <- function(calibration, baseSize = 12) {
 #' @keywords internal
 #' @noRd
 .membershipMatrix <- function(object) {
-  consensus <- object@consensus
-  replicateNames <- names(object@peaks)
+    consensus <- object@consensus
+    replicateNames <- names(object@peaks)
 
-  membership <- matrix(FALSE, nrow = length(consensus),
-                       ncol = length(replicateNames),
-                       dimnames = list(NULL, replicateNames))
-  if (length(consensus) == 0) {
-    return(membership)
-  }
-
-  for (thisReplicate in replicateNames) {
-    peaks <- object@peaks[[thisReplicate]]
-    peaks <- peaks[S4Vectors::mcols(peaks)$status == "confirmed"]
-    if (length(peaks) == 0) {
-      next
+    membership <- matrix(FALSE, nrow = length(consensus),
+                         ncol = length(replicateNames),
+                         dimnames = list(NULL, replicateNames))
+    if (length(consensus) == 0) {
+        return(membership)
     }
-    hits <- GenomicRanges::findOverlaps(peaks, consensus,
-                                        ignore.strand = TRUE)
-    membership[unique(S4Vectors::subjectHits(hits)), thisReplicate] <-
-      TRUE
-  }
 
-  membership
+    for (thisReplicate in replicateNames) {
+        peaks <- object@peaks[[thisReplicate]]
+        peaks <- peaks[S4Vectors::mcols(peaks)$status == "confirmed"]
+        if (length(peaks) == 0) {
+            next
+        }
+        hits <- GenomicRanges::findOverlaps(peaks, consensus,
+                                            ignore.strand = TRUE)
+        membership[unique(S4Vectors::subjectHits(hits)), thisReplicate] <-
+            TRUE
+    }
+
+    membership
 }

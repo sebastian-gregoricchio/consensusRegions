@@ -17,12 +17,13 @@ exportConsensus(
 
 \item{file}{Path for the consensus file.}
 
-\item{format}{`"bed"` or `"narrowPeak"`.}
+\item{format}{`"bed"` or `"narrowPeak"`. Default: \code{"bed"}.}
 
 \item{perReplicate}{Also write one file per replicate holding every
-peak with its verdict. The names are derived from `file`.}
+peak with its verdict. The names are derived from `file`.
+Default: \code{FALSE}.}
 
-\item{verbose}{Report what was written.}
+\item{verbose}{Report what was written. Default: \code{TRUE}.}
 }
 \value{
 Invisibly, a character vector of the paths written.

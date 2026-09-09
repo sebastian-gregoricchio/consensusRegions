@@ -19,7 +19,7 @@ plotUpset(object, minSize = 0)
 
 - minSize:
 
-  Drop intersections smaller than this.
+  Drop intersections smaller than this. Default: `0`.
 
 ## Value
 

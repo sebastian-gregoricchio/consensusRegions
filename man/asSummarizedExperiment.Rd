@@ -9,7 +9,8 @@ asSummarizedExperiment(object, assayName = "negLog10P")
 \arguments{
 \item{object}{A [ConsensusRegions-class] object.}
 
-\item{assayName}{Name given to the significance assay.}
+\item{assayName}{Name given to the significance assay.
+Default: \code{"negLog10P"}.}
 }
 \value{
 A `RangedSummarizedExperiment`.

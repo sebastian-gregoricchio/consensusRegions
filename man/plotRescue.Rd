@@ -9,9 +9,10 @@ plotRescue(object, proportion = FALSE, baseSize = 12)
 \arguments{
 \item{object}{A [ConsensusRegions-class] object.}
 
-\item{proportion}{Scale the bars to one instead of showing counts.}
+\item{proportion}{Scale the bars to one instead of showing counts.
+Default: \code{FALSE}.}
 
-\item{baseSize}{Base font size in points.}
+\item{baseSize}{Base font size in points. Default: \code{12}.}
 }
 \value{
 A `ggplot` object.

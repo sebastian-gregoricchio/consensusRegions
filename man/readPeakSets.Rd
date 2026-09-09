@@ -10,6 +10,7 @@ readPeakSets(
   scoreType = c("auto", "log10pvalue", "pvalue", "score", "none"),
   scoreColumn = NULL,
   keepStandardChromosomes = TRUE,
+  seqlevelsStyle = "UCSC",
   genome = NA,
   verbose = TRUE
 )
@@ -19,21 +20,30 @@ readPeakSets(
 `GRangesList`, or list of `GRanges`.}
 
 \item{sampleNames}{Character vector naming the replicates. Taken from
-the file names or the list names when left `NULL`.}
+the file names or the list names when left `NULL`. Default: \code{NULL}.}
 
 \item{scoreType}{One of `"auto"`, `"log10pvalue"`, `"pvalue"`,
-`"score"` or `"none"`. `"auto"` inspects the input.}
+`"score"` or `"none"`. `"auto"` inspects the input.
+Default: \code{"auto"}.}
 
 \item{scoreColumn}{Name of the metadata column holding the statistic.
-Only needed when the input is not a standard peak format.}
+Only needed when the input is not a standard peak format.
+Default: \code{NULL}.}
 
-\item{keepStandardChromosomes}{Drop scaffolds and patches.}
+\item{keepStandardChromosomes}{Drop scaffolds and patches.
+Default: \code{TRUE}.}
+
+\item{seqlevelsStyle}{String indicating the chromosome naming style to
+apply to every replicate, one among `"UCSC"` (chr1), `"Ensembl"` (1)
+or `"NCBI"`. When set to `NULL` the names are left as they are and
+the loading is interrupted if the replicates use different styles.
+Default: `"UCSC"`.}
 
 \item{genome}{Genome identifier passed to the importer, for instance
 `"hg38"`. Fills in the chromosome lengths used by
 [calibrateThreshold()].}
 
-\item{verbose}{Report what was detected.}
+\item{verbose}{Report what was detected. Default: \code{TRUE}.}
 }
 \value{
 A `GRangesList`, one element per replicate, with a `negLog10P`

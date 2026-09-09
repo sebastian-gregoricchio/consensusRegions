@@ -16,16 +16,19 @@
 #'
 #' @param peakList A `GRangesList`, typically from [readPeakSets()].
 #' @param method One of `"equal"`, `"frip"`, `"librarySize"`,
-#'   `"intrinsic"` or `"custom"`.
+#'   `"intrinsic"` or `"custom"`. Default: \code{"equal"}.
 #' @param bamFiles Character vector of indexed BAM files, in the same
 #'   order as `peakList`. Needed by `"frip"` and `"librarySize"` unless
-#'   the values are supplied directly.
+#'   the values are supplied directly. Default: \code{NULL}.
 #' @param frip Numeric vector of pre-computed fractions of reads in
-#'   peaks. Skips the BAM pass.
+#'   peaks. Skips the BAM pass. Default: \code{NULL}.
 #' @param librarySize Numeric vector of pre-computed mapped read counts.
+#'   Default: \code{NULL}.
 #' @param weights Numeric vector used as is when `method` is `"custom"`.
+#'   Default: \code{NULL}.
 #' @param minMapq Minimum mapping quality when counting from BAM.
-#' @param verbose Report progress.
+#'   Default: \code{0L}.
+#' @param verbose Report progress. Default: \code{TRUE}.
 #'
 #' @return A named numeric vector with mean one, carrying the raw metrics
 #'   as the `metrics` attribute.

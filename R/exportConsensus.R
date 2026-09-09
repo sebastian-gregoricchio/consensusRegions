@@ -8,10 +8,11 @@
 #'
 #' @param object A [ConsensusRegions-class] object.
 #' @param file Path for the consensus file.
-#' @param format `"bed"` or `"narrowPeak"`.
+#' @param format `"bed"` or `"narrowPeak"`. Default: \code{"bed"}.
 #' @param perReplicate Also write one file per replicate holding every
 #'   peak with its verdict. The names are derived from `file`.
-#' @param verbose Report what was written.
+#'   Default: \code{FALSE}.
+#' @param verbose Report what was written. Default: \code{TRUE}.
 #'
 #' @return Invisibly, a character vector of the paths written.
 #'

@@ -16,6 +16,16 @@ peakFiles <- system.file("extdata",
 peaks <- readPeakSets(peakFiles, sampleNames = c("rep1", "rep2", "rep3"))
 peaks
 
+## ----seqlevels----------------------------------------------------------------
+withChr <- GenomicRanges::GRanges(
+    "chr1", IRanges::IRanges(start = c(1000, 20000), width = 500))
+withoutChr <- GenomicRanges::GRanges(
+    "1", IRanges::IRanges(start = c(1100, 20100), width = 500))
+
+mixed <- readPeakSets(list(a = withChr, b = withoutChr),
+                      seqlevelsStyle = "UCSC")
+GenomeInfoDb::seqlevels(mixed[["b"]])
+
 ## ----basic--------------------------------------------------------------------
 result <- buildConsensus(peaks, verbose = FALSE)
 result
@@ -86,9 +96,9 @@ mspcStyle <- buildConsensus(peaks, adjustmentFamily = "confirmed",
 c(tested = length(tested), confirmed = length(mspcStyle))
 
 ## ----calibrate----------------------------------------------------------------
+set.seed(42)
 calibration <- calibrateThreshold(peaks, nPermutations = 10,
-                                  targetFDR = 0.05, seed = 1,
-                                  verbose = FALSE)
+                                  targetFDR = 0.05, verbose = FALSE)
 
 calibration$threshold
 
@@ -100,6 +110,14 @@ calibrated <- buildConsensus(peaks,
                              combinedThreshold = calibration$threshold,
                              verbose = FALSE)
 length(calibrated)
+
+## ----parallel, eval = FALSE---------------------------------------------------
+# calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8)
+
+## ----parallelSeed, eval = FALSE-----------------------------------------------
+# calibration <- calibrateThreshold(
+#     peaks, nPermutations = 50,
+#     BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
 
 ## ----bed3---------------------------------------------------------------------
 minimalFile <- system.file("extdata", "rep1_minimal.bed",
@@ -128,6 +146,27 @@ se
 
 ## ----blacklist, eval = FALSE--------------------------------------------------
 # result <- buildConsensus(peaks, excludeRegions = blacklistGRanges)
+
+## ----wrapper------------------------------------------------------------------
+result <- runConsensus(peakFiles,
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       minReplicates = 2,
+                       verbose = FALSE)
+length(result)
+
+## ----wrapperOptions, eval = FALSE---------------------------------------------
+# result <- runConsensus(peakFiles,
+#                        sampleNames = c("rep1", "rep2", "rep3"),
+#                        weightMethod = "frip",
+#                        bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
+#                        calibrate = TRUE,
+#                        nPermutations = 50,
+#                        combinationMethod = "stouffer",
+#                        minReplicates = "75%",
+#                        recentre = TRUE, width = 400,
+#                        excludeRegions = blacklist,
+#                        outputFile = "consensus.bed",
+#                        BPPARAM = 8)
 
 ## ----sessionInfo, echo=FALSE--------------------------------------------------
 sessionInfo()

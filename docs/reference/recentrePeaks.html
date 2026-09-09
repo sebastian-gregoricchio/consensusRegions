@@ -81,19 +81,21 @@ do and what motif analysis wants.</p>
 
 
 <dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
-<dd><p>Width of the returned regions in base pairs.</p></dd>
+<dd><p>Width of the returned regions in base pairs.
+Default: <code>400L</code>.</p></dd>
 
 
 <dt id="arg-summitsource">summitSource<a class="anchor" aria-label="anchor" href="#arg-summitsource"></a></dt>
 <dd><p>How to place the anchor. `"best"` takes the summit
 of the most significant member peak, `"weighted"` averages the member
 summits weighted by their significance, and `"centre"` uses the
-midpoint of the merged region.</p></dd>
+midpoint of the merged region. Default: <code>"best"</code>.</p></dd>
 
 
 <dt id="arg-chromosomelengths">chromosomeLengths<a class="anchor" aria-label="anchor" href="#arg-chromosomelengths"></a></dt>
 <dd><p>Named integer vector used to trim regions that
-would run off a chromosome end. Taken from the object when `NULL`.</p></dd>
+would run off a chromosome end. Taken from the object when `NULL`.
+Default: <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

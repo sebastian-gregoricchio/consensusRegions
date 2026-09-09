@@ -16,13 +16,14 @@ combineEvidence(
 
 \item{weights}{Numeric vector of replicate weights, recycled to the
 length of `negLog10P`. Ignored by `"fisher"` and `"rankProduct"`.
-Defaults to equal weights.}
+Defaults to equal weights. Default: \code{NULL}.}
 
 \item{method}{One of `"stouffer"`, `"fisher"`, `"lancaster"` or
-`"rankProduct"`.}
+`"rankProduct"`. Default: \code{"stouffer"}.}
 
 \item{rho}{Numeric vector of relative within-replicate ranks in
-`(0, 1]`, required by `"rankProduct"` and ignored otherwise.}
+`(0, 1]`, required by `"rankProduct"` and ignored otherwise.
+Default: \code{NULL}.}
 }
 \value{
 A single numeric value, the combined significance on the

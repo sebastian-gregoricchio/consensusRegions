@@ -16,30 +16,41 @@
 #'
 #' @param peakList A `GRangesList` from [readPeakSets()].
 #' @param weights Named numeric vector of replicate weights, or `NULL`.
+#'   Default: \code{NULL}.
 #' @param combinationMethod Passed to [combineEvidence()].
+#'   Default: \code{"stouffer"}.
 #' @param nPermutations Number of shuffled replicate sets to generate.
+#'   Default: \code{50L}.
 #' @param targetFDR Empirical false discovery rate to aim for.
+#'   Default: \code{0.05}.
 #' @param stringencyThreshold Stringent p-value cut, as in
-#'   [buildConsensus()].
-#' @param weakThreshold Background p-value cut.
+#'   [buildConsensus()]. Default: \code{1e-08}.
+#' @param weakThreshold Background p-value cut. Default: \code{1e-04}.
 #' @param minSupport Minimum supporting replicates. Give this or
-#'   `minReplicates`, not both.
+#'   `minReplicates`, not both. Default: \code{NULL}.
 #' @param minReplicates Total replicates that must hold the peak, counting
 #'   its own. Accepts a count, a proportion or a percentage string, as in
 #'   [buildConsensus()]. Must match the value used there.
-#' @param minOverlap Minimum overlap in base pairs.
+#'   Default: \code{NULL}.
+#' @param minOverlap Minimum overlap in base pairs. Default: \code{1L}.
 #' @param minOverlapFraction Optional fractional overlap requirement.
-#'   Must match the value used in [buildConsensus()].
+#'   Must match the value used in [buildConsensus()]. Default: \code{NULL}.
 #' @param recursive Whether the confirmation is re-run after pruning
 #'   unsupported peaks. Must match the value used in [buildConsensus()].
-#' @param maxIterations Cap on the recursive rounds.
+#'   Default: \code{TRUE}.
+#' @param maxIterations Cap on the recursive rounds. Default: \code{10L}.
 #' @param multipleIntersections Resolution rule for several overlapping
-#'   peaks from one replicate.
+#'   peaks from one replicate. Default: \code{"lowest"}.
 #' @param chromosomeLengths Named integer vector. Taken from the input, or
-#'   inferred from the furthest peak, when left `NULL`.
+#'   inferred from the furthest peak, when left `NULL`. Default: \code{NULL}.
 #' @param excludeRegions Optional `GRanges` the shuffled peaks must avoid.
-#' @param seed Optional integer for reproducibility.
-#' @param verbose Report progress.
+#'   Default: \code{NULL}.
+#' @param BPPARAM Either the number of cores to use, or a
+#'   `BiocParallelParam` object for finer control. The permutations are
+#'   independent of one another and are where nearly all the time goes, so
+#'   raising this is worth it on a large peak set: a single round takes
+#'   around half a minute on 100,000 peaks per replicate. Default: \code{1}.
+#' @param verbose Report progress. Default: \code{TRUE}.
 #'
 #' @return A list with the recommended `threshold` on the p-value scale,
 #'   the `fdrCurve` it was read off, and the observed and null combined
@@ -56,8 +67,21 @@
 #' factor of two, which is as much precision as the choice deserves. Push
 #' it higher only if the curve looks ragged near `targetFDR`.
 #'
+#' The peak positions are drawn at random, so call [base::set.seed()]
+#' beforehand if you need the same threshold back. The function does not
+#' set the seed itself, since doing so would silently reset the random
+#' number stream the rest of your session is drawing from.
+#'
+#' This is also why the default runs on a single core. Workers draw from
+#' their own random streams, so `set.seed()` no longer governs the result
+#' once `BPPARAM` is above one, and the seed has to travel to the workers
+#' instead: `BiocParallel::MulticoreParam(workers = 8, RNGseed = 42)`.
+#' Reach for that when a parallel run has to be reproducible.
+#'
 #' @author Sebastian Gregoricchio
 #'
+#' @importFrom BiocParallel bplapply bpnworkers SerialParam
+#'   MulticoreParam SnowParam
 #' @importFrom GenomicRanges GRangesList mcols mcols<-
 #' @importFrom GenomeInfoDb seqlengths
 #' @importFrom S4Vectors metadata
@@ -73,7 +97,8 @@
 #' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
 #'                       verbose = FALSE)
 #'
-#' calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 1,
+#' set.seed(42)
+#' calibration <- calibrateThreshold(peaks, nPermutations = 5,
 #'                                   verbose = FALSE)
 #' calibration$threshold
 #'
@@ -100,10 +125,11 @@ calibrateThreshold <- function(peakList,
                                multipleIntersections = c("lowest", "highest"),
                                chromosomeLengths = NULL,
                                excludeRegions = NULL,
-                               seed = NULL,
+                               BPPARAM = 1,
                                verbose = TRUE) {
     combinationMethod <- match.arg(combinationMethod)
     multipleIntersections <- match.arg(multipleIntersections)
+    BPPARAM <- .resolveBPPARAM(BPPARAM)
 
     scoreType <- S4Vectors::metadata(peakList)$scoreType
     if (identical(scoreType, "none")) {
@@ -116,10 +142,6 @@ calibrateThreshold <- function(peakList,
     if (nPermutations < 1) {
         stop("'nPermutations' must be at least 1")
     }
-    if (!is.null(seed)) {
-        set.seed(seed)
-    }
-
     ## the null has to be filtered by the same support rule as the data
     minSupport <- .resolveRequiredSupport(minSupport = minSupport,
                                           minReplicates = minReplicates,
@@ -156,17 +178,24 @@ calibrateThreshold <- function(peakList,
     .messageIf(verbose, "Computing observed statistics")
     observed <- .combinedStatisticsOnly(peakList, settings)
 
-    ## null statistics, one round per permutation
-    nullStatistics <- vector("list", nPermutations)
-    for (permutation in seq_len(nPermutations)) {
-        .messageIf(verbose, "Permutation ", permutation, " of ",
-                   nPermutations)
-        shuffled <- .shufflePeakList(peakList,
-                                     chromosomeLengths = chromosomeLengths,
-                                     excludeRegions = excludeRegions)
-        nullStatistics[[permutation]] <-
+    ## Null statistics, one round per permutation. Each round is
+    ## self-contained, so they are handed to BiocParallel rather than run
+    ## in sequence: on a genome-scale peak set a single round takes tens
+    ## of seconds and fifty of them is most of an afternoon.
+    .messageIf(verbose, "Running ", nPermutations, " permutations on ",
+               BiocParallel::bpnworkers(BPPARAM), " worker(s)")
+
+    nullStatistics <- BiocParallel::bplapply(
+        seq_len(nPermutations),
+        function(permutation) {
+            shuffled <- .shufflePeakList(
+                peakList,
+                chromosomeLengths = chromosomeLengths,
+                excludeRegions = excludeRegions)
             .combinedStatisticsOnly(shuffled, settings)
-    }
+        },
+        BPPARAM = BPPARAM)
+
     nullStatistics <- unlist(nullStatistics, use.names = FALSE)
 
     ## sweep candidate cuts across the observed range

@@ -19,16 +19,17 @@ Description: Merges the evidence carried by replicated ChIP-seq, ATAC-seq
     the score is absent. The threshold on the combined significance can be
     calibrated against a permutation null rather than fixed a priori.
     Quality control plots and export to SummarizedExperiment are included.
-License: GPL-3 + file LICENSE
+License: GPL-3
 Encoding: UTF-8
 Depends:
-    R (>= 4.6.0),
+    R (>= 4.4.0),
     GenomicRanges (>= 1.56.0)
 Imports:
     methods,
     stats,
     tools,
     BiocGenerics,
+    BiocParallel,
     GenomeInfoDb,
     IRanges,
     Rsamtools,
@@ -64,6 +65,7 @@ Collate:
     'computeReplicateWeights.R'
     'buildConsensus.R'
     'calibrateThreshold.R'
+    'runConsensus.R'
     'recentrePeaks.R'
     'exportConsensus.R'
     'asSummarizedExperiment.R'

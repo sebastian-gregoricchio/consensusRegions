@@ -13,12 +13,14 @@
 #'
 #' @param object A [ConsensusRegions-class] object.
 #' @param width Width of the returned regions in base pairs.
+#'   Default: \code{400L}.
 #' @param summitSource How to place the anchor. `"best"` takes the summit
 #'   of the most significant member peak, `"weighted"` averages the member
 #'   summits weighted by their significance, and `"centre"` uses the
-#'   midpoint of the merged region.
+#'   midpoint of the merged region. Default: \code{"best"}.
 #' @param chromosomeLengths Named integer vector used to trim regions that
 #'   would run off a chromosome end. Taken from the object when `NULL`.
+#'   Default: \code{NULL}.
 #'
 #' @return A `GRanges` of fixed-width regions carrying the summit position
 #'   and the metadata of the consensus it came from.

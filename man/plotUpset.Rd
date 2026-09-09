@@ -9,7 +9,7 @@ plotUpset(object, minSize = 0)
 \arguments{
 \item{object}{A [ConsensusRegions-class] object.}
 
-\item{minSize}{Drop intersections smaller than this.}
+\item{minSize}{Drop intersections smaller than this. Default: \code{0}.}
 }
 \value{
 A `ggplot` object built by `ComplexUpset`.
