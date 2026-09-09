@@ -5,9 +5,8 @@
 # pkgdown configuration from 'devel-tools', where this workflow lives. The two
 # checkouts below put them together in the same working tree
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 7 * * 1'
+  push:
+    branches: [devel-tools]
 
 name: pkgdown
 
