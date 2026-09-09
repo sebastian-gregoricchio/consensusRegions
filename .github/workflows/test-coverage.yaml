@@ -1,9 +1,12 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+#
+# Started by hand or by the weekly schedule, since the workflows sit on
+# 'devel-tools' while the package source stays on 'main'. See the checkout step
 on:
-  push:
-    branches: [main, master, devel]
-  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 6 * * 1'
 
 name: test-coverage.yaml
 
@@ -17,7 +20,10 @@ jobs:
       NOT_CRAN: true
 
     steps:
+      # The package source lives on 'main'
       - uses: actions/checkout@v5
+        with:
+          ref: main
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -68,8 +74,9 @@ jobs:
 
       - uses: codecov/codecov-action@v5
         with:
-          # Fail if error if not on PR, or if on PR and token is given
-          fail_ci_if_error: ${{ github.event_name != 'pull_request' || secrets.CODECOV_TOKEN }}
+          # No pull request reaches this workflow any more, so the run fails on error
+          # whenever the token is available
+          fail_ci_if_error: ${{ secrets.CODECOV_TOKEN != '' }}
           files: ./cobertura.xml
           plugins: noop
           disable_search: true
