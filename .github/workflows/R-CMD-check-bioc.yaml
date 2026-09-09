@@ -16,9 +16,8 @@
 name: R-CMD-check-bioc
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 6 * * 1'
+  push:
+    branches: [devel-tools]
 
 permissions: read-all
 
