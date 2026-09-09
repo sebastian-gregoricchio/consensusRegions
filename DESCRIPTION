@@ -22,27 +22,27 @@ Description: Merges the evidence carried by replicated ChIP-seq, ATAC-seq
 License: GPL-3
 Encoding: UTF-8
 Depends:
-    R (>= 4.4.0),
+    R (>= 4.6.0),
     GenomicRanges (>= 1.56.0)
 Imports:
-    methods,
-    stats,
-    tools,
     BiocGenerics,
     BiocParallel,
-    GenomeInfoDb,
-    IRanges,
-    Rsamtools,
-    S4Vectors,
-    SummarizedExperiment,
     dplyr (>= 1.1.0),
+    GenomeInfoDb,
     ggplot2,
     ggtext,
     grDevices,
+    IRanges,
+    methods,
     rlang,
+    Rsamtools,
     rtracklayer,
+    S4Vectors,
+    stats,
+    SummarizedExperiment,
     tibble,
-    tidyr
+    tidyr,
+    tools
 Suggests:
     BiocStyle,
     ComplexUpset,
@@ -55,6 +55,7 @@ URL: https://github.com/sebastian-gregoricchio/consensusRegions
 BugReports: https://github.com/sebastian-gregoricchio/consensusRegions/issues
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+RoxygenNote: 7.3.2
 Collate:
     'consensusRegions-package.R'
     'AllClasses.R'
@@ -71,4 +72,3 @@ Collate:
     'asSummarizedExperiment.R'
     'methods-ConsensusRegions.R'
     'plots.R'
-Config/roxygen2/version: 8.1.0
