@@ -4,10 +4,9 @@
 # Started by hand or by the weekly schedule, since the workflows sit on
 # 'devel-tools' while the package source stays on 'main'. See the checkout step
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '30 6 * * 1'
-
+  push:
+    branches: [devel-tools]
+    
 name: test-coverage.yaml
 
 permissions: read-all
