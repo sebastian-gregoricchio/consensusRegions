@@ -53,6 +53,8 @@ it, and to work with peak files that have lost their statistics.
 library(consensusRegions)
 ```
 
+
+
 <br>
 
 
@@ -88,6 +90,7 @@ intersection with extra steps. Call at something like `p < 1e-3` and let
 exactly this.
 
 <br>
+
 
 
 # **A first run** {#first_run}
@@ -218,13 +221,62 @@ ranked <- buildConsensus(peaks, combinationMethod = "rankProduct",
 length(ranked)
 ```
 
-That returns far fewer regions than the other three schemes do, and the
-reason is the size of the example rather than any weakness in the method.
-With only a few hundred peaks per replicate the finest relative rank
-available is about 1/430, which is not a small number, so no peak can
-accumulate much evidence however well it ranks. On a real peak set of
-10^5 calls the ranks are three orders of magnitude finer and the rank
-product becomes competitive. Judge it on your own data, not here.
+Nothing survives, and the reason is the size of the example rather than
+any weakness in the method. With only a few hundred peaks per replicate
+the finest relative rank available is about 1/430, which is not a small
+number, so no peak accumulates much evidence however well it ranks. What
+little it does accumulate is then spent on the multiple testing
+correction described in the next section. Relax that correction to the
+one MSPC uses and the peaks reappear:
+
+```{r rankProductRelaxed}
+relaxed <- buildConsensus(peaks, combinationMethod = "rankProduct",
+                          combinedThreshold = 0.05,
+                          adjustmentFamily = "confirmed", verbose = FALSE)
+length(relaxed)
+```
+
+On a real peak set of 10^5 calls the ranks are three orders of magnitude
+finer and the rank product survives the stricter correction comfortably.
+Judge it on your own data, not here.
+
+<br>
+
+
+# **Multiple testing** {#multiple_testing}
+Peaks that clear the combined threshold are corrected within each
+replicate by the Benjamini-Hochberg procedure. The question is which
+peaks make up the family being corrected, and it matters more than it
+first appears.
+
+MSPC corrects across the peaks that already cleared the threshold. That
+family was chosen for being significant, so the usual Benjamini-Hochberg
+guarantee does not carry over to it, and the resulting values can be
+optimistic. `adjustmentFamily = "tested"`, the default here, instead
+corrects across every peak that entered the analysis.
+
+```{r adjustmentFamily}
+tested <- buildConsensus(peaks, verbose = FALSE)
+mspcStyle <- buildConsensus(peaks, adjustmentFamily = "confirmed",
+                            verbose = FALSE)
+
+c(tested = length(tested), confirmed = length(mspcStyle))
+```
+
+On this data the two agree, and that is the normal case: when the
+combined evidence is strong the correction is a rounding error against
+it. The choice only bites where the evidence was marginal, which is
+where you would want it to bite. Use `"confirmed"` when you are
+deliberately reproducing MSPC.
+
+Neither setting delivers exact false discovery rate control, and the
+package does not claim it does. Two things stand in the way. The
+supporting peak for each replicate is chosen as the most significant of
+those overlapping, and a maximum over a selected set is not distributed
+the way an unselected p-value would be. Overlapping peaks also share
+supporters, so their combined p-values are not independent. If you need
+a defensible error rate rather than a ranking, use the empirical route
+in the next section.
 
 <br>
 
@@ -293,7 +345,6 @@ nothing can be rescued, and the result is reproducibility filtering
 rather than combined evidence.
 
 
-
 <br>
 
 
@@ -319,7 +370,6 @@ summary(GenomicRanges::width(consensusRanges(seeded)))
 
 
 
-
 # **Fixed-width regions** {#fixed_width}
 Consensus regions inherit their edges from whichever peaks were merged,
 so their widths vary. That variation biases everything downstream: a
@@ -337,7 +387,6 @@ discards the thing being measured.
 
 
 <br>
-
 
 
 # **Handing over to a differential analysis**
@@ -363,7 +412,6 @@ peak set is the deliverable.
 <br>
 
 
-
 # **Blacklisting**
 Filter after the consensus, not before. Removing regions upfront distorts
 the rank distributions the combination relies on, which is why
@@ -376,7 +424,6 @@ result <- buildConsensus(peaks, excludeRegions = blacklistGRanges)
 <br>
 
 
-
 # **Checking the result**
 Nothing in this package can tell you whether your consensus set is any
 good. Validate it against something orthogonal: central motif enrichment
@@ -387,7 +434,7 @@ regardless of what the statistics say.
 
 
 
------------------------------
+---------------------------------
 
 # **Session info**
 ```{r sessionInfo, echo=FALSE}

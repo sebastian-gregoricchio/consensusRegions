@@ -26,6 +26,9 @@ calibrateThreshold(
   weakThreshold = 1e-04,
   minSupport = 1L,
   minOverlap = 1L,
+  minOverlapFraction = NULL,
+  recursive = TRUE,
+  maxIterations = 10L,
   multipleIntersections = c("lowest", "highest"),
   chromosomeLengths = NULL,
   excludeRegions = NULL,
@@ -71,6 +74,20 @@ calibrateThreshold(
 - minOverlap:
 
   Minimum overlap in base pairs.
+
+- minOverlapFraction:
+
+  Optional fractional overlap requirement. Must match the value used in
+  \[buildConsensus()\].
+
+- recursive:
+
+  Whether the confirmation is re-run after pruning unsupported peaks.
+  Must match the value used in \[buildConsensus()\].
+
+- maxIterations:
+
+  Cap on the recursive rounds.
 
 - multipleIntersections:
 
@@ -128,7 +145,7 @@ peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
 calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 1,
                                   verbose = FALSE)
 calibration$threshold
-#> [1] 2.565737e-25
+#> [1] 4.242908e-11
 
 result <- buildConsensus(peaks,
                          combinedThreshold = calibration$threshold,

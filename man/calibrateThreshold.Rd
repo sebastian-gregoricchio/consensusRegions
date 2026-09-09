@@ -14,6 +14,9 @@ calibrateThreshold(
   weakThreshold = 1e-04,
   minSupport = 1L,
   minOverlap = 1L,
+  minOverlapFraction = NULL,
+  recursive = TRUE,
+  maxIterations = 10L,
   multipleIntersections = c("lowest", "highest"),
   chromosomeLengths = NULL,
   excludeRegions = NULL,
@@ -40,6 +43,14 @@ calibrateThreshold(
 \item{minSupport}{Minimum supporting replicates.}
 
 \item{minOverlap}{Minimum overlap in base pairs.}
+
+\item{minOverlapFraction}{Optional fractional overlap requirement.
+Must match the value used in [buildConsensus()].}
+
+\item{recursive}{Whether the confirmation is re-run after pruning
+unsupported peaks. Must match the value used in [buildConsensus()].}
+
+\item{maxIterations}{Cap on the recursive rounds.}
 
 \item{multipleIntersections}{Resolution rule for several overlapping
 peaks from one replicate.}

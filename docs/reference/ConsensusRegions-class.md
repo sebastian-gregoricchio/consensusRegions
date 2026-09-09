@@ -11,8 +11,8 @@ that an analysis can be traced back from its output.
 
   A \`GRangesList\`, one element per replicate, holding the peaks after
   classification. Each element carries the metadata columns
-  \`negLog10P\`, \`class\`, \`nSupport\`, \`combinedNegLog10P\`,
-  \`combinedPadj\` and \`status\`.
+  \`negLog10P\`, \`class\`, \`nSupport\`, \`supportWeight\`,
+  \`combinedNegLog10P\`, \`combinedNegLog10Padj\` and \`status\`.
 
 - `consensus`:
 

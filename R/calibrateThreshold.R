@@ -24,6 +24,11 @@
 #' @param weakThreshold Background p-value cut.
 #' @param minSupport Minimum supporting replicates.
 #' @param minOverlap Minimum overlap in base pairs.
+#' @param minOverlapFraction Optional fractional overlap requirement.
+#'   Must match the value used in [buildConsensus()].
+#' @param recursive Whether the confirmation is re-run after pruning
+#'   unsupported peaks. Must match the value used in [buildConsensus()].
+#' @param maxIterations Cap on the recursive rounds.
 #' @param multipleIntersections Resolution rule for several overlapping
 #'   peaks from one replicate.
 #' @param chromosomeLengths Named integer vector. Taken from the input, or
@@ -52,7 +57,7 @@
 #' @importFrom GenomicRanges GRangesList mcols mcols<-
 #' @importFrom GenomeInfoDb seqlengths
 #' @importFrom S4Vectors metadata
-#' @importFrom dplyr tibble filter arrange slice_head pull mutate
+#' @importFrom dplyr tibble filter arrange slice_head pull mutate desc
 #' @importFrom rlang .data
 #' @importFrom stats quantile
 #'
@@ -84,6 +89,9 @@ calibrateThreshold <- function(peakList,
                                weakThreshold = 1e-4,
                                minSupport = 1L,
                                minOverlap = 1L,
+                               minOverlapFraction = NULL,
+                               recursive = TRUE,
+                               maxIterations = 10L,
                                multipleIntersections = c("lowest", "highest"),
                                chromosomeLengths = NULL,
                                excludeRegions = NULL,
@@ -120,12 +128,18 @@ calibrateThreshold <- function(peakList,
             BiocGenerics::unlist(peakList, use.names = FALSE))
     }
 
+    ## Every operation that shapes the observed statistic has to shape
+    ## the null the same way, so the settings are carried across whole
+    ## rather than partly re-specified inside the permutation loop.
     settings <- list(weights = weights,
                      combinationMethod = combinationMethod,
                      stringencyThreshold = stringencyThreshold,
                      weakThreshold = weakThreshold,
                      minSupport = minSupport,
                      minOverlap = minOverlap,
+                     minOverlapFraction = minOverlapFraction,
+                     recursive = recursive,
+                     maxIterations = maxIterations,
                      multipleIntersections = multipleIntersections)
 
     ## observed statistics, computed once
@@ -153,8 +167,9 @@ calibrateThreshold <- function(peakList,
     acceptable <- dplyr::filter(curve, .data$fdr <= targetFDR)
     if (nrow(acceptable) == 0) {
         warning("no cut reached an FDR of ", targetFDR,
-                "; returning the most stringent cut examined")
-        chosen <- dplyr::slice_head(dplyr::arrange(curve, .data$fdr), n = 1)
+                "; returning the cut with the lowest estimated FDR")
+        chosen <- dplyr::slice_head(
+            dplyr::arrange(curve, .data$fdr, dplyr::desc(.data$cut)), n = 1)
     } else {
         ## the lowest cut still meeting the target keeps the most peaks
         chosen <- dplyr::slice_head(
@@ -214,9 +229,10 @@ calibrateThreshold <- function(peakList,
         replicate = S4Vectors::mcols(retained)$replicate,
         presenceOnly = FALSE)
 
-    overlapTable <- .buildOverlapTable(retained,
-                                       minOverlap = settings$minOverlap,
-                                       minOverlapFraction = NULL)
+    overlapTable <- .buildOverlapTable(
+        retained,
+        minOverlap = settings$minOverlap,
+        minOverlapFraction = settings$minOverlapFraction)
 
     verdict <- .runConfirmation(
         retained = retained,
@@ -227,8 +243,8 @@ calibrateThreshold <- function(peakList,
         combinedThreshold = 1,
         requiredSupport = settings$minSupport,
         multipleIntersections = settings$multipleIntersections,
-        recursive = FALSE,
-        maxIterations = 1L,
+        recursive = settings$recursive,
+        maxIterations = settings$maxIterations,
         presenceOnly = FALSE,
         verbose = FALSE)
 
@@ -279,7 +295,7 @@ calibrateThreshold <- function(peakList,
 #'
 #' @author Sebastian Gregoricchio
 #'
-#' @importFrom dplyr tibble filter arrange
+#' @importFrom dplyr tibble arrange
 #' @importFrom stats quantile
 #' @importFrom rlang .data
 #'
@@ -290,18 +306,28 @@ calibrateThreshold <- function(peakList,
         stop("no observed statistics were produced, nothing to calibrate")
     }
 
-    ## a grid over the observed range is enough; finer steps would only
-    ## add noise given how few permutations are usually affordable
+    ## The grid has to span the whole observed range. Starting it at the
+    ## median, as an earlier version did, put a floor under the answer:
+    ## no threshold below the median observed statistic could ever be
+    ## chosen, however clean the null turned out to be.
     candidateCuts <- unique(stats::quantile(
-        observed, probs = seq(0.5, 0.999, length.out = 100),
+        observed, probs = seq(0, 0.999, length.out = 200),
         na.rm = TRUE, names = FALSE))
 
     nObserved <- vapply(candidateCuts,
                         function(cut) sum(observed >= cut, na.rm = TRUE),
                         numeric(1))
+
+    ## Seeing no null peak above a cut in a finite number of permutations
+    ## is not evidence that none exists, and dividing straight through
+    ## would report an FDR of exactly zero. The added pseudocount puts a
+    ## floor of 1 / (nPermutations + 1) on the expected null count, which
+    ## is the usual correction for permutation p-values.
     expectedNull <- vapply(
         candidateCuts,
-        function(cut) sum(nullValues >= cut, na.rm = TRUE) / nPermutations,
+        function(cut) {
+            (1 + sum(nullValues >= cut, na.rm = TRUE)) / (nPermutations + 1)
+        },
         numeric(1))
 
     dplyr::arrange(

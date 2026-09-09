@@ -58,7 +58,8 @@ importFrom(Rsamtools,
   BamFile,
   ScanBamParam,
   countBam,
-  idxstatsBam
+  idxstatsBam,
+  scanBamFlag
 )
 importFrom(S4Vectors,
   "mcols<-",
@@ -75,6 +76,7 @@ importFrom(dplyr,
   arrange,
   bind_rows,
   case_when,
+  desc,
   distinct,
   filter,
   group_by,

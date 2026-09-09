@@ -34,7 +34,14 @@
 #' For FRiP the weight is proportional to the fraction itself. For library
 #' size it is proportional to the square root of the depth, which is how
 #' the information in a z-score scales, so doubling the depth is worth
-#' rather less than twice as much.
+#' rather less than twice as much. Bear in mind that peak-caller p-values
+#' already respond to sequencing depth, so weighting by depth on top of
+#' them counts it twice to some degree; FRiP is the safer choice when
+#' both are available.
+#'
+#' When `minMapq` is above zero both the reads in peaks and the library
+#' total are counted under that filter, which means the whole file is
+#' read rather than just the index.
 #'
 #' The intrinsic weight is the mean Jaccard index between one replicate
 #' and each of the others. A replicate that shares little with the rest is
@@ -171,6 +178,7 @@ computeReplicateWeights <- function(peakList,
 #' @author Sebastian Gregoricchio
 #'
 #' @importFrom Rsamtools idxstatsBam countBam ScanBamParam BamFile
+#'   scanBamFlag
 #' @importFrom GenomicRanges reduce
 #' @importFrom dplyr tibble
 #'
@@ -228,13 +236,24 @@ computeReplicateWeights <- function(peakList,
         for (i in seq_len(nReplicates)) {
             .messageIf(verbose, "Counting reads for ", replicateNames[i])
 
-            ## the index carries the mapped totals, so the whole file
-            ## never has to be traversed for the denominator; FRiP needs
-            ## it too, as the denominator of the fraction
+            ## The numerator and the denominator have to count the same
+            ## reads. The index gives mapped totals for free but knows
+            ## nothing about mapping quality, so once minMapq bites, the
+            ## denominator has to be counted the same filtered way even
+            ## though that means reading the file.
             if (is.na(depthValues[i]) &&
                 (missingDepth || is.na(fripValues[i]))) {
-                indexStats <- Rsamtools::idxstatsBam(bamFiles[i])
-                depthValues[i] <- sum(indexStats$mapped)
+                depthValues[i] <- if (minMapq > 0) {
+                    totalParam <- Rsamtools::ScanBamParam(
+                        flag = Rsamtools::scanBamFlag(
+                            isUnmappedQuery = FALSE),
+                        mapqFilter = minMapq)
+                    sum(Rsamtools::countBam(
+                        Rsamtools::BamFile(bamFiles[i]),
+                        param = totalParam)$records)
+                } else {
+                    sum(Rsamtools::idxstatsBam(bamFiles[i])$mapped)
+                }
             }
 
             if (missingFrip && is.na(fripValues[i])) {

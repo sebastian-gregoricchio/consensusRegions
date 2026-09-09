@@ -63,6 +63,19 @@ ranked <- buildConsensus(peaks, combinationMethod = "rankProduct",
                          combinedThreshold = 0.05, verbose = FALSE)
 length(ranked)
 
+## ----rankProductRelaxed-------------------------------------------------------
+relaxed <- buildConsensus(peaks, combinationMethod = "rankProduct",
+                          combinedThreshold = 0.05,
+                          adjustmentFamily = "confirmed", verbose = FALSE)
+length(relaxed)
+
+## ----adjustmentFamily---------------------------------------------------------
+tested <- buildConsensus(peaks, verbose = FALSE)
+mspcStyle <- buildConsensus(peaks, adjustmentFamily = "confirmed",
+                            verbose = FALSE)
+
+c(tested = length(tested), confirmed = length(mspcStyle))
+
 ## ----calibrate----------------------------------------------------------------
 calibration <- calibrateThreshold(peaks, nPermutations = 10,
                                   targetFDR = 0.05, seed = 1,

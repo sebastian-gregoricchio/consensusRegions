@@ -345,16 +345,68 @@ one:
 ranked <- buildConsensus(peaks, combinationMethod = "rankProduct",
                          combinedThreshold = 0.05, verbose = FALSE)
 length(ranked)
+> [1] 0
+```
+
+Nothing survives, and the reason is the size of the example rather than
+any weakness in the method. With only a few hundred peaks per replicate
+the finest relative rank available is about 1/430, which is not a small
+number, so no peak accumulates much evidence however well it ranks. What
+little it does accumulate is then spent on the multiple testing
+correction described in the next section. Relax that correction to the
+one MSPC uses and the peaks reappear:
+
+``` r
+relaxed <- buildConsensus(peaks, combinationMethod = "rankProduct",
+                          combinedThreshold = 0.05,
+                          adjustmentFamily = "confirmed", verbose = FALSE)
+length(relaxed)
 > [1] 38
 ```
 
-That returns far fewer regions than the other three schemes do, and the
-reason is the size of the example rather than any weakness in the
-method. With only a few hundred peaks per replicate the finest relative
-rank available is about 1/430, which is not a small number, so no peak
-can accumulate much evidence however well it ranks. On a real peak set
-of 10^5 calls the ranks are three orders of magnitude finer and the rank
-product becomes competitive. Judge it on your own data, not here.
+On a real peak set of 10^5 calls the ranks are three orders of magnitude
+finer and the rank product survives the stricter correction comfortably.
+Judge it on your own data, not here.
+
+  
+
+## **Multiple testing**
+
+Peaks that clear the combined threshold are corrected within each
+replicate by the Benjamini-Hochberg procedure. The question is which
+peaks make up the family being corrected, and it matters more than it
+first appears.
+
+MSPC corrects across the peaks that already cleared the threshold. That
+family was chosen for being significant, so the usual Benjamini-Hochberg
+guarantee does not carry over to it, and the resulting values can be
+optimistic. `adjustmentFamily = "tested"`, the default here, instead
+corrects across every peak that entered the analysis.
+
+``` r
+tested <- buildConsensus(peaks, verbose = FALSE)
+mspcStyle <- buildConsensus(peaks, adjustmentFamily = "confirmed",
+                            verbose = FALSE)
+
+c(tested = length(tested), confirmed = length(mspcStyle))
+>    tested confirmed 
+>       292       292
+```
+
+On this data the two agree, and that is the normal case: when the
+combined evidence is strong the correction is a rounding error against
+it. The choice only bites where the evidence was marginal, which is
+where you would want it to bite. Use `"confirmed"` when you are
+deliberately reproducing MSPC.
+
+Neither setting delivers exact false discovery rate control, and the
+package does not claim it does. Two things stand in the way. The
+supporting peak for each replicate is chosen as the most significant of
+those overlapping, and a maximum over a selected set is not distributed
+the way an unselected p-value would be. Overlapping peaks also share
+supporters, so their combined p-values are not independent. If you need
+a defensible error rate rather than a ranking, use the empirical route
+in the next section.
 
   
 
@@ -377,7 +429,7 @@ calibration <- calibrateThreshold(peaks, nPermutations = 10,
                                   verbose = FALSE)
 
 calibration$threshold
-> [1] 2.565737e-25
+> [1] 4.242908e-11
 ```
 
 ``` r
@@ -392,7 +444,7 @@ calibrated <- buildConsensus(peaks,
                              combinedThreshold = calibration$threshold,
                              verbose = FALSE)
 length(calibrated)
-> [1] 122
+> [1] 292
 ```
 
 Ten permutations is enough for a demonstration; fifty is a reasonable
@@ -495,7 +547,7 @@ se <- asSummarizedExperiment(result)
 se
 > class: RangedSummarizedExperiment 
 > dim: 292 3 
-> metadata(15): scoreType combinationMethod ... maxConsensusWidth
+> metadata(17): scoreType combinationMethod ... maxConsensusWidth
 >   presenceOnly
 > assays(2): negLog10P detected
 > rownames: NULL

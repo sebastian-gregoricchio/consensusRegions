@@ -8,8 +8,8 @@
 #'
 #' @slot peaks A `GRangesList`, one element per replicate, holding the
 #'   peaks after classification. Each element carries the metadata columns
-#'   `negLog10P`, `class`, `nSupport`, `combinedNegLog10P`,
-#'   `combinedPadj` and `status`.
+#'   `negLog10P`, `class`, `nSupport`, `supportWeight`,
+#'   `combinedNegLog10P`, `combinedNegLog10Padj` and `status`.
 #' @slot consensus A `GRanges` of consensus regions.
 #' @slot weights A named numeric vector of replicate weights.
 #' @slot parameters A list with the call arguments.

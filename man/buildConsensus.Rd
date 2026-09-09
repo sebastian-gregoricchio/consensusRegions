@@ -14,6 +14,8 @@ buildConsensus(
   combinedThreshold = NULL,
   alpha = 0.05,
   minSupport = 1L,
+  minSupportWeight = NULL,
+  adjustmentFamily = c("tested", "confirmed"),
   minOverlap = 1L,
   minOverlapFraction = NULL,
   multipleIntersections = c("lowest", "highest"),
@@ -21,6 +23,7 @@ buildConsensus(
   maxIterations = 10L,
   mergeMethod = c("reduce", "iterative"),
   maxConsensusWidth = NULL,
+  calibration = NULL,
   excludeRegions = NULL,
   verbose = TRUE
 )
@@ -51,7 +54,17 @@ usually needs a far more permissive threshold.}
 \item{alpha}{Level for the within-replicate Benjamini-Hochberg step.}
 
 \item{minSupport}{Number of *other* replicates that must hold an
-overlapping peak.}
+overlapping peak. This is a count of replicates and weights never
+substitute for it.}
+
+\item{minSupportWeight}{Optional additional requirement on the summed
+weight of the supporting replicates. Applied on top of `minSupport`,
+never instead of it. Only meaningful when weights are not equal.}
+
+\item{adjustmentFamily}{Which peaks form the family for the
+Benjamini-Hochberg step. `"tested"` corrects across every peak that
+entered the analysis; `"confirmed"` corrects only across the peaks
+that cleared `combinedThreshold`, which is what MSPC does.}
 
 \item{minOverlap}{Minimum overlap in base pairs.}
 
@@ -73,6 +86,10 @@ overlaps, then repeats.}
 
 \item{maxConsensusWidth}{Optional cap in base pairs. Merged regions
 wider than this are rebuilt with the iterative rule.}
+
+\item{calibration}{Optional output of [calibrateThreshold()]. When
+supplied its threshold is used, overriding `combinedThreshold`, and
+the whole calibration is kept with the result.}
 
 \item{excludeRegions}{Optional `GRanges` of blacklisted positions,
 removed from the consensus at the end.}

@@ -58,7 +58,14 @@ that survives of an old analysis is a folder of BED files.
 For FRiP the weight is proportional to the fraction itself. For library
 size it is proportional to the square root of the depth, which is how
 the information in a z-score scales, so doubling the depth is worth
-rather less than twice as much.
+rather less than twice as much. Bear in mind that peak-caller p-values
+already respond to sequencing depth, so weighting by depth on top of
+them counts it twice to some degree; FRiP is the safer choice when
+both are available.
+
+When `minMapq` is above zero both the reads in peaks and the library
+total are counted under that filter, which means the whole file is
+read rather than just the index.
 
 The intrinsic weight is the mean Jaccard index between one replicate
 and each of the others. A replicate that shares little with the rest is
