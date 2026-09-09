@@ -37,34 +37,35 @@ computeReplicateWeights(
 - method:
 
   One of \`"equal"\`, \`"frip"\`, \`"librarySize"\`, \`"intrinsic"\` or
-  \`"custom"\`.
+  \`"custom"\`. Default: `"equal"`.
 
 - bamFiles:
 
   Character vector of indexed BAM files, in the same order as
   \`peakList\`. Needed by \`"frip"\` and \`"librarySize"\` unless the
-  values are supplied directly.
+  values are supplied directly. Default: `NULL`.
 
 - frip:
 
   Numeric vector of pre-computed fractions of reads in peaks. Skips the
-  BAM pass.
+  BAM pass. Default: `NULL`.
 
 - librarySize:
 
-  Numeric vector of pre-computed mapped read counts.
+  Numeric vector of pre-computed mapped read counts. Default: `NULL`.
 
 - weights:
 
-  Numeric vector used as is when \`method\` is \`"custom"\`.
+  Numeric vector used as is when \`method\` is \`"custom"\`. Default:
+  `NULL`.
 
 - minMapq:
 
-  Minimum mapping quality when counting from BAM.
+  Minimum mapping quality when counting from BAM. Default: `0L`.
 
 - verbose:
 
-  Report progress.
+  Report progress. Default: `TRUE`.
 
 ## Value
 

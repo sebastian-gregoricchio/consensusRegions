@@ -29,16 +29,16 @@ exportConsensus(
 
 - format:
 
-  \`"bed"\` or \`"narrowPeak"\`.
+  \`"bed"\` or \`"narrowPeak"\`. Default: `"bed"`.
 
 - perReplicate:
 
   Also write one file per replicate holding every peak with its verdict.
-  The names are derived from \`file\`.
+  The names are derived from \`file\`. Default: `FALSE`.
 
 - verbose:
 
-  Report what was written.
+  Report what was written. Default: `TRUE`.
 
 ## Value
 

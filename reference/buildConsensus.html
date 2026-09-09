@@ -105,45 +105,53 @@ exercise into an intersection with extra steps. Something around
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>Named numeric vector of replicate weights, or `NULL`
-for equal weights. See [computeReplicateWeights()].</p></dd>
+<dd><p>Named numeric vector of replicate weights. See
+[computeReplicateWeights()]. Default: <code>NULL</code>, meaning that every
+replicate counts the same.</p></dd>
 
 
 <dt id="arg-combinationmethod">combinationMethod<a class="anchor" aria-label="anchor" href="#arg-combinationmethod"></a></dt>
-<dd><p>Passed to [combineEvidence()].</p></dd>
+<dd><p>Passed to [combineEvidence()].
+Default: <code>"stouffer"</code>.</p></dd>
 
 
 <dt id="arg-replicatetype">replicateType<a class="anchor" aria-label="anchor" href="#arg-replicatetype"></a></dt>
 <dd><p>`"biological"` asks for `minSupport` supporting
-replicates; `"technical"` asks for all of them.</p></dd>
+replicates; `"technical"` asks for all of them.
+Default: <code>"biological"</code>.</p></dd>
 
 
 <dt id="arg-stringencythreshold">stringencyThreshold<a class="anchor" aria-label="anchor" href="#arg-stringencythreshold"></a></dt>
-<dd><p>P-value below which a peak is stringent.</p></dd>
+<dd><p>P-value below which a peak is stringent.
+Default: <code>1e-08</code>.</p></dd>
 
 
 <dt id="arg-weakthreshold">weakThreshold<a class="anchor" aria-label="anchor" href="#arg-weakthreshold"></a></dt>
 <dd><p>P-value above which a peak is background and takes
-no further part.</p></dd>
+no further part. Default: <code>1e-04</code>.</p></dd>
 
 
 <dt id="arg-combinedthreshold">combinedThreshold<a class="anchor" aria-label="anchor" href="#arg-combinedthreshold"></a></dt>
-<dd><p>Threshold on the combined p-value. Defaults to
-`stringencyThreshold`; [calibrateThreshold()] can estimate it instead.
-The scale differs between combination schemes, so a value carried
-over from one will not mean the same under another. The rank product
-in particular is bounded by the number of peaks per replicate and
-usually needs a far more permissive threshold.</p></dd>
+<dd><p>Threshold on the combined p-value.
+[calibrateThreshold()] can estimate it instead. The scale differs
+between combination schemes, so a value carried over from one will
+not mean the same under another. The rank product in particular is
+bounded by the number of peaks per replicate and usually needs a far
+more permissive threshold. Default: <code>NULL</code>, meaning that
+<code>stringencyThreshold</code> is used.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Level for the within-replicate Benjamini-Hochberg step.</p></dd>
+<dd><p>Level for the within-replicate Benjamini-Hochberg step.
+Default: <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-minsupport">minSupport<a class="anchor" aria-label="anchor" href="#arg-minsupport"></a></dt>
 <dd><p>Number of *other* replicates that must hold an
 overlapping peak. This is a count of replicates and weights never
-substitute for it. Give this or `minReplicates`, not both.</p></dd>
+substitute for it. Give this or `minReplicates`, not both.
+Default: <code>NULL</code>, meaning that one supporting replicate is
+enough.</p></dd>
 
 
 <dt id="arg-minreplicates">minReplicates<a class="anchor" aria-label="anchor" href="#arg-minreplicates"></a></dt>
@@ -152,70 +160,74 @@ counting the one it came from. This is the way the requirement is
 usually spoken about, and it matches MSPC's `-c`. Accepts a count
 (`5`), a proportion (`0.75`) or a percentage (`"75<!-- %"`), the last two -->
 rounded up. `minReplicates = 2` and `minSupport = 1` are the same
-requirement.</p></dd>
+requirement. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-minsupportweight">minSupportWeight<a class="anchor" aria-label="anchor" href="#arg-minsupportweight"></a></dt>
 <dd><p>Optional additional requirement on the summed
 weight of the supporting replicates. Applied on top of `minSupport`,
-never instead of it. Only meaningful when weights are not equal.</p></dd>
+never instead of it. Only meaningful when weights are not equal.
+Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-adjustmentfamily">adjustmentFamily<a class="anchor" aria-label="anchor" href="#arg-adjustmentfamily"></a></dt>
 <dd><p>Which peaks form the family for the
 Benjamini-Hochberg step. `"tested"` corrects across every peak that
 entered the analysis; `"confirmed"` corrects only across the peaks
-that cleared `combinedThreshold`, which is what MSPC does.</p></dd>
+that cleared `combinedThreshold`, which is what MSPC does.
+Default: <code>"tested"</code>.</p></dd>
 
 
 <dt id="arg-minoverlap">minOverlap<a class="anchor" aria-label="anchor" href="#arg-minoverlap"></a></dt>
-<dd><p>Minimum overlap in base pairs.</p></dd>
+<dd><p>Minimum overlap in base pairs. Default: <code>1L</code>.</p></dd>
 
 
 <dt id="arg-minoverlapfraction">minOverlapFraction<a class="anchor" aria-label="anchor" href="#arg-minoverlapfraction"></a></dt>
 <dd><p>Optional minimum overlap as a fraction of the
-shorter of the two peaks. Applied on top of `minOverlap`.</p></dd>
+shorter of the two peaks. Applied on top of `minOverlap`.
+Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-multipleintersections">multipleIntersections<a class="anchor" aria-label="anchor" href="#arg-multipleintersections"></a></dt>
 <dd><p>How to pick among several overlapping
 peaks from the same replicate: `"lowest"` takes the smallest p-value,
-`"highest"` the largest.</p></dd>
+`"highest"` the largest. Default: <code>"lowest"</code>.</p></dd>
 
 
 <dt id="arg-recursive">recursive<a class="anchor" aria-label="anchor" href="#arg-recursive"></a></dt>
 <dd><p>Re-run the confirmation after dropping discarded peaks
-from the pool of eligible supporters.</p></dd>
+from the pool of eligible supporters. Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-maxiterations">maxIterations<a class="anchor" aria-label="anchor" href="#arg-maxiterations"></a></dt>
-<dd><p>Cap on the recursive rounds.</p></dd>
+<dd><p>Cap on the recursive rounds. Default: <code>10L</code>.</p></dd>
 
 
 <dt id="arg-mergemethod">mergeMethod<a class="anchor" aria-label="anchor" href="#arg-mergemethod"></a></dt>
 <dd><p>`"reduce"` merges anything that touches;
 `"iterative"` seeds on the most significant peak and removes what it
-overlaps, then repeats.</p></dd>
+overlaps, then repeats. Default: <code>"reduce"</code>.</p></dd>
 
 
 <dt id="arg-maxconsensuswidth">maxConsensusWidth<a class="anchor" aria-label="anchor" href="#arg-maxconsensuswidth"></a></dt>
 <dd><p>Optional cap in base pairs. Merged regions
-wider than this are rebuilt with the iterative rule.</p></dd>
+wider than this are rebuilt with the iterative rule.
+Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-calibration">calibration<a class="anchor" aria-label="anchor" href="#arg-calibration"></a></dt>
 <dd><p>Optional output of [calibrateThreshold()]. When
 supplied its threshold is used, overriding `combinedThreshold`, and
-the whole calibration is kept with the result.</p></dd>
+the whole calibration is kept with the result. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-excluderegions">excludeRegions<a class="anchor" aria-label="anchor" href="#arg-excluderegions"></a></dt>
 <dd><p>Optional `GRanges` of blacklisted positions,
-removed from the consensus at the end.</p></dd>
+removed from the consensus at the end. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Report progress.</p></dd>
+<dd><p>Report progress. Default: <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

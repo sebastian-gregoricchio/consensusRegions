@@ -144,6 +144,36 @@ combining evidence.
 
   
 
+### Chromosome naming
+
+Peak files rarely agree on whether a chromosome is called `chr1` or `1`.
+Two replicates that name the same chromosome differently share no
+overlap at all, so every peak is discarded for lack of support and the
+result looks like a biological finding rather than a clerical one.
+
+[`readPeakSets()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/readPeakSets.md)
+therefore harmonises the names on the way in, defaulting to UCSC style,
+in the same way as `RegionSetDE::loadRegions()`:
+
+``` r
+withChr <- GenomicRanges::GRanges(
+    "chr1", IRanges::IRanges(start = c(1000, 20000), width = 500))
+withoutChr <- GenomicRanges::GRanges(
+    "1", IRanges::IRanges(start = c(1100, 20100), width = 500))
+
+mixed <- readPeakSets(list(a = withChr, b = withoutChr),
+                      seqlevelsStyle = "UCSC")
+GenomeInfoDb::seqlevels(mixed[["b"]])
+> [1] "chr1"
+```
+
+`"Ensembl"` and `"NCBI"` go the other way, stripping the prefix. Setting
+`seqlevelsStyle = NULL` leaves the names untouched and stops if the
+replicates disagree, which is the safe choice when you would rather see
+the mismatch than have it quietly repaired.
+
+  
+
 ### Call peaks permissively
 
 This is the mistake that ruins the whole exercise, so it is worth saying
@@ -469,9 +499,9 @@ gives a null, and the threshold is read off where the expected number of
 null peaks falls to a chosen fraction of the observed count.
 
 ``` r
+set.seed(42)
 calibration <- calibrateThreshold(peaks, nPermutations = 10,
-                                  targetFDR = 0.05, seed = 1,
-                                  verbose = FALSE)
+                                  targetFDR = 0.05, verbose = FALSE)
 
 calibration$threshold
 > [1] 4.242908e-11
@@ -493,9 +523,42 @@ length(calibrated)
 ```
 
 Ten permutations is enough for a demonstration; fifty is a reasonable
-working number. Passing a blacklist through `excludeRegions` makes the
-null more honest, because shuffled peaks otherwise land in artefact
-regions where real peaks cluster too.
+working number. The positions are drawn at random and the function does
+not seed the stream itself, so call
+[`set.seed()`](https://rdrr.io/r/base/Random.html) beforehand when you
+want the same threshold back.
+
+The permutations are independent of one another and are where nearly all
+the time goes, so they are handed to `BiocParallel`. On a genome-scale
+peak set a single round takes tens of seconds, which makes fifty of them
+most of an afternoon in series:
+
+``` r
+
+calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8)
+```
+
+`BPPARAM` takes the number of cores directly, which is how the question
+usually gets asked. A `BiocParallelParam` object is accepted too, and is
+what you need when a parallel run has to be reproducible: the workers
+draw from their own random streams, so
+[`set.seed()`](https://rdrr.io/r/base/Random.html) no longer governs the
+result and the seed has to travel with the backend instead.
+
+``` r
+
+calibration <- calibrateThreshold(
+    peaks, nPermutations = 50,
+    BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
+```
+
+The default is a single core, so that
+[`set.seed()`](https://rdrr.io/r/base/Random.html) behaves as described
+above unless you ask for more.
+
+Passing a blacklist through `excludeRegions` makes the null more honest,
+because shuffled peaks otherwise land in artefact regions where real
+peaks cluster too.
 
   
 
@@ -640,6 +703,52 @@ regardless of what the statistics say.
 
 ------------------------------------------------------------------------
 
+## **Everything in one call**
+
+The steps above almost always run in the same order, so
+[`runConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/runConsensus.md)
+chains them: read, weight, optionally calibrate, build, optionally
+recentre, optionally write out.
+
+``` r
+result <- runConsensus(peakFiles,
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       minReplicates = 2,
+                       verbose = FALSE)
+length(result)
+> [1] 292
+```
+
+Anything it does not name itself is passed through to
+[`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md),
+so `combinationMethod`, `mergeMethod`, `adjustmentFamily` and the rest
+all work here too:
+
+``` r
+
+result <- runConsensus(peakFiles,
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       weightMethod = "frip",
+                       bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
+                       calibrate = TRUE,
+                       nPermutations = 50,
+                       combinationMethod = "stouffer",
+                       minReplicates = "75%",
+                       recentre = TRUE, width = 400,
+                       excludeRegions = blacklist,
+                       outputFile = "consensus.bed",
+                       BPPARAM = 8)
+```
+
+Use the individual functions when a step needs looking at before the
+next one runs. Calibration in particular deserves a glance at
+[`plotCalibration()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/plotCalibration.md)
+rather than blind trust, and the wrapper gives you no chance to take it.
+
+  
+
+------------------------------------------------------------------------
+
 ## **Session info**
 
     > R version 4.6.1 (2026-06-24)
@@ -680,36 +789,36 @@ regardless of what the statistics say.
     > [17] tools_4.6.1                 utf8_1.2.6                 
     > [19] yaml_2.3.12                 rtracklayer_1.72.0         
     > [21] knitr_1.52                  S4Arrays_1.12.0            
-    > [23] labeling_0.4.3              curl_8.0.0                 
-    > [25] DelayedArray_0.38.2         xml2_1.6.0                 
-    > [27] RColorBrewer_1.1-3          abind_1.4-8                
-    > [29] BiocParallel_1.46.0         withr_3.0.3                
-    > [31] purrr_1.2.2                 desc_1.4.3                 
-    > [33] grid_4.6.1                  ggplot2_4.0.3              
-    > [35] scales_1.4.0                SummarizedExperiment_1.42.0
-    > [37] cli_3.6.6                   rmarkdown_2.32             
-    > [39] crayon_1.5.3                ragg_1.5.2                 
-    > [41] otel_0.2.0                  httr_1.4.9                 
-    > [43] rjson_0.2.23                commonmark_2.0.0           
-    > [45] cachem_1.1.0                stringr_1.6.0              
-    > [47] parallel_4.6.1              BiocManager_1.30.27        
-    > [49] XVector_0.52.0              restfulr_0.0.17            
-    > [51] matrixStats_1.5.0           vctrs_0.7.3                
-    > [53] Matrix_1.7-5                jsonlite_2.0.0             
-    > [55] litedown_0.11               bookdown_0.48              
-    > [57] systemfonts_1.3.2           jquerylib_0.1.4            
-    > [59] tidyr_1.3.2                 glue_1.8.1                 
-    > [61] pkgdown_2.2.1               codetools_0.2-20           
-    > [63] ggtext_0.2.0                stringi_1.8.9              
-    > [65] gtable_0.3.6                GenomeInfoDb_1.48.0        
-    > [67] BiocIO_1.22.0               UCSC.utils_1.8.0           
-    > [69] tibble_3.3.1                pillar_1.11.1              
-    > [71] htmltools_0.5.9             R6_2.6.1                   
-    > [73] textshaping_1.0.5           evaluate_1.0.5             
-    > [75] lattice_0.22-9              Biobase_2.72.0             
-    > [77] markdown_2.0                Rsamtools_2.28.0           
-    > [79] cigarillo_1.2.1             gridtext_0.1.6             
-    > [81] bslib_0.12.0                Rcpp_1.1.2                 
-    > [83] SparseArray_1.12.2          xfun_0.60                  
-    > [85] fs_2.1.0                    MatrixGenerics_1.24.0      
-    > [87] pkgconfig_2.0.3
+    > [23] labeling_0.4.3              htmlwidgets_1.6.4          
+    > [25] curl_8.0.0                  DelayedArray_0.38.2        
+    > [27] xml2_1.6.0                  RColorBrewer_1.1-3         
+    > [29] abind_1.4-8                 BiocParallel_1.46.0        
+    > [31] withr_3.0.3                 purrr_1.2.2                
+    > [33] desc_1.4.3                  grid_4.6.1                 
+    > [35] ggplot2_4.0.3               scales_1.4.0               
+    > [37] SummarizedExperiment_1.42.0 cli_3.6.6                  
+    > [39] rmarkdown_2.32              crayon_1.5.3               
+    > [41] ragg_1.5.2                  otel_0.2.0                 
+    > [43] httr_1.4.9                  rjson_0.2.23               
+    > [45] commonmark_2.0.0            cachem_1.1.0               
+    > [47] stringr_1.6.0               parallel_4.6.1             
+    > [49] BiocManager_1.30.27         XVector_0.52.0             
+    > [51] restfulr_0.0.17             matrixStats_1.5.0          
+    > [53] vctrs_0.7.3                 Matrix_1.7-5               
+    > [55] jsonlite_2.0.0              litedown_0.11              
+    > [57] bookdown_0.48               systemfonts_1.3.2          
+    > [59] jquerylib_0.1.4             tidyr_1.3.2                
+    > [61] glue_1.8.1                  pkgdown_2.2.1              
+    > [63] codetools_0.2-20            ggtext_0.2.0               
+    > [65] stringi_1.8.9               gtable_0.3.6               
+    > [67] GenomeInfoDb_1.48.0         BiocIO_1.22.0              
+    > [69] UCSC.utils_1.8.0            tibble_3.3.1               
+    > [71] pillar_1.11.1               htmltools_0.5.9            
+    > [73] R6_2.6.1                    textshaping_1.0.5          
+    > [75] evaluate_1.0.5              lattice_0.22-9             
+    > [77] Biobase_2.72.0              markdown_2.0               
+    > [79] Rsamtools_2.28.0            cigarillo_1.2.1            
+    > [81] gridtext_0.1.6              bslib_0.12.0               
+    > [83] Rcpp_1.1.2                  SparseArray_1.12.2         
+    > [85] xfun_0.60                   fs_2.1.0                   
+    > [87] MatrixGenerics_1.24.0       pkgconfig_2.0.3

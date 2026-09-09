@@ -110,17 +110,18 @@ poorly calibrated.</p>
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
 <dd><p>Numeric vector of replicate weights, recycled to the
 length of `negLog10P`. Ignored by `"fisher"` and `"rankProduct"`.
-Defaults to equal weights.</p></dd>
+Defaults to equal weights. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>One of `"stouffer"`, `"fisher"`, `"lancaster"` or
-`"rankProduct"`.</p></dd>
+`"rankProduct"`. Default: <code>"stouffer"</code>.</p></dd>
 
 
 <dt id="arg-rho">rho<a class="anchor" aria-label="anchor" href="#arg-rho"></a></dt>
 <dd><p>Numeric vector of relative within-replicate ranks in
-`(0, 1]`, required by `"rankProduct"` and ignored otherwise.</p></dd>
+`(0, 1]`, required by `"rankProduct"` and ignored otherwise.
+Default: <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -21,11 +21,11 @@ plotRescue(object, proportion = FALSE, baseSize = 12)
 
 - proportion:
 
-  Scale the bars to one instead of showing counts.
+  Scale the bars to one instead of showing counts. Default: `FALSE`.
 
 - baseSize:
 
-  Base font size in points.
+  Base font size in points. Default: `12`.
 
 ## Value
 

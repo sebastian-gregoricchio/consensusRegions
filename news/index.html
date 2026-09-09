@@ -38,21 +38,41 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.0" id="consensusregions-0990">consensusRegions 0.99.0<a class="anchor" aria-label="anchor" href="#consensusregions-0990"></a></h2>
-<p>First release, submitted to Bioconductor.</p>
+<p>First release.</p>
+<p><code>consensusRegions</code> combines the p-values of overlapping peaks across replicated ChIP-seq, ATAC-seq and CUT&amp;RUN experiments. A region that convinces two samples and falls short in the third survives, where an intersection would drop it. The method follows MSPC (Jalili <em>et al.</em>, 2015) and runs in R, with no .NET runtime to install.</p>
+<div class="section level3">
+<h3 id="analysis-0-99-0">Analysis<a class="anchor" aria-label="anchor" href="#analysis-0-99-0"></a></h3>
 <ul><li>
-<code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> combines the evidence of overlapping peaks across replicates, following the approach of MSPC: two p-value thresholds, a minimum number of supporting replicates, a test on the combined statistic, and a Benjamini-Hochberg correction inside each replicate.</li>
-<li>Four combination schemes. Fisher reproduces the original behaviour; Stouffer and Lancaster accept per-replicate weights; the rank product works on ranks alone and needs no p-values.</li>
+<code><a href="../reference/runConsensus.html">runConsensus()</a></code> takes the whole workflow in one call. The individual functions stay available for the runs you want to inspect partway through.</li>
+<li>Four combination schemes. Fisher reproduces MSPC. Stouffer and Lancaster accept per-replicate weights, so a shallow sample counts for less rather than being dropped or trusted whole. The rank product works on ranks and needs no p-values at all.</li>
 <li>
-<code><a href="../reference/computeReplicateWeights.html">computeReplicateWeights()</a></code> derives weights from BAM files, from FRiP values measured elsewhere, or from the peak sets themselves when neither is available.</li>
+<code><a href="../reference/computeReplicateWeights.html">computeReplicateWeights()</a></code> reads those weights from BAM files, from FRiP values you measured elsewhere, or from the peak sets themselves once the alignments are gone.</li>
 <li>
-<code><a href="../reference/calibrateThreshold.html">calibrateThreshold()</a></code> estimates the threshold on the combined statistic from shuffled peak sets rather than leaving it at a fixed 1e-8.</li>
-<li>Input degrades gracefully. narrowPeak p-values are used directly, a plain score column is rank-transformed, and BED3 input falls back to a weighted k-of-n presence rule.</li>
+<code><a href="../reference/calibrateThreshold.html">calibrateThreshold()</a></code> estimates the cut on the combined statistic from shuffled peak sets, instead of leaving it at the customary <code>1e-8</code>. Give <code>BPPARAM</code> a number of cores to spread the permutations.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="input-0-99-0">Input<a class="anchor" aria-label="anchor" href="#input-0-99-0"></a></h3>
+<ul><li>narrowPeak p-values go straight in. <code><a href="../reference/readPeakSets.html">readPeakSets()</a></code> rank-transforms a score column when that is all a file carries, and falls back to a weighted k-of-n presence rule for BED3.</li>
 <li>
+<code><a href="../reference/readPeakSets.html">readPeakSets()</a></code> puts every replicate on one chromosome naming style. Two replicates calling the same chromosome <code>chr1</code> and <code>1</code> share no overlap, and the analysis would report that as biology.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="output-0-99-0">Output<a class="anchor" aria-label="anchor" href="#output-0-99-0"></a></h3>
+<ul><li>
 <code><a href="../reference/recentrePeaks.html">recentrePeaks()</a></code> recovers summits and returns fixed-width regions, which is what motif analysis and count matrices want.</li>
 <li>
-<code><a href="../reference/plotRescue.html">plotRescue()</a></code>, <code><a href="../reference/plotJaccard.html">plotJaccard()</a></code>, <code><a href="../reference/plotUpset.html">plotUpset()</a></code> and <code><a href="../reference/plotCalibration.html">plotCalibration()</a></code> for quality control; <code><a href="../reference/asSummarizedExperiment.html">asSummarizedExperiment()</a></code> to hand the consensus to csaw, DiffBind or edgeR.</li>
+<code><a href="../reference/asSummarizedExperiment.html">asSummarizedExperiment()</a></code> hands the consensus to csaw, DiffBind or edgeR. <code><a href="../reference/exportConsensus.html">exportConsensus()</a></code> writes BED or narrowPeak.</li>
+<li>
+<code><a href="../reference/plotRescue.html">plotRescue()</a></code>, <code><a href="../reference/plotJaccard.html">plotJaccard()</a></code>, <code><a href="../reference/plotUpset.html">plotUpset()</a></code> and <code><a href="../reference/plotCalibration.html">plotCalibration()</a></code> cover the quality control.</li>
 </ul></div>
-  </main></div>
+<div class="section level3">
+<h3 id="multiple-testing-0-99-0">Multiple testing<a class="anchor" aria-label="anchor" href="#multiple-testing-0-99-0"></a></h3>
+<p><code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> corrects within each replicate across every peak it tested, not across the subset that cleared the combined threshold. Correcting a family picked for being significant is not Benjamini-Hochberg, whatever the column is called. Set <code>adjustmentFamily = "confirmed"</code> to reproduce MSPC.</p>
+<p>Neither setting delivers exact false discovery rate control, and the package does not claim it. Each replicate contributes its most significant overlapping peak, and a maximum over a selected set does not behave like an unselected p-value. Overlapping peaks share supporters too, so their combined values are not independent. Reach for <code><a href="../reference/calibrateThreshold.html">calibrateThreshold()</a></code> when you need a defensible error rate rather than a ranking.</p>
+</div>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

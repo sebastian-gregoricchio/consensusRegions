@@ -38,3 +38,5 @@
   : Read peak files into a GRangesList
 - [`recentrePeaks()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/recentrePeaks.md)
   : Recover summits and return fixed-width regions
+- [`runConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/runConsensus.md)
+  : Run the whole analysis in one call

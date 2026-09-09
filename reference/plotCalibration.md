@@ -19,7 +19,7 @@ plotCalibration(calibration, baseSize = 12)
 
 - baseSize:
 
-  Base font size in points.
+  Base font size in points. Default: `12`.
 
 ## Value
 
@@ -38,7 +38,8 @@ peakFiles <- system.file("extdata",
                          package = "consensusRegions")
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
                       verbose = FALSE)
-calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 1,
+set.seed(42)
+calibration <- calibrateThreshold(peaks, nPermutations = 5,
                                   verbose = FALSE)
 
 plotCalibration(calibration)

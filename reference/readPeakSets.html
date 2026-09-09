@@ -61,6 +61,7 @@ presence rule. The detection is reported so the choice is never silent.</p>
 <span>  scoreType <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"log10pvalue"</span>, <span class="st">"pvalue"</span>, <span class="st">"score"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  scoreColumn <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  keepStandardChromosomes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  seqlevelsStyle <span class="op">=</span> <span class="st">"UCSC"</span>,</span>
 <span>  genome <span class="op">=</span> <span class="cn">NA</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -77,21 +78,32 @@ presence rule. The detection is reported so the choice is never silent.</p>
 
 <dt id="arg-samplenames">sampleNames<a class="anchor" aria-label="anchor" href="#arg-samplenames"></a></dt>
 <dd><p>Character vector naming the replicates. Taken from
-the file names or the list names when left `NULL`.</p></dd>
+the file names or the list names when left `NULL`. Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-scoretype">scoreType<a class="anchor" aria-label="anchor" href="#arg-scoretype"></a></dt>
 <dd><p>One of `"auto"`, `"log10pvalue"`, `"pvalue"`,
-`"score"` or `"none"`. `"auto"` inspects the input.</p></dd>
+`"score"` or `"none"`. `"auto"` inspects the input.
+Default: <code>"auto"</code>.</p></dd>
 
 
 <dt id="arg-scorecolumn">scoreColumn<a class="anchor" aria-label="anchor" href="#arg-scorecolumn"></a></dt>
 <dd><p>Name of the metadata column holding the statistic.
-Only needed when the input is not a standard peak format.</p></dd>
+Only needed when the input is not a standard peak format.
+Default: <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-keepstandardchromosomes">keepStandardChromosomes<a class="anchor" aria-label="anchor" href="#arg-keepstandardchromosomes"></a></dt>
-<dd><p>Drop scaffolds and patches.</p></dd>
+<dd><p>Drop scaffolds and patches.
+Default: <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-seqlevelsstyle">seqlevelsStyle<a class="anchor" aria-label="anchor" href="#arg-seqlevelsstyle"></a></dt>
+<dd><p>String indicating the chromosome naming style to
+apply to every replicate, one among `"UCSC"` (chr1), `"Ensembl"` (1)
+or `"NCBI"`. When set to `NULL` the names are left as they are and
+the loading is interrupted if the replicates use different styles.
+Default: `"UCSC"`.</p></dd>
 
 
 <dt id="arg-genome">genome<a class="anchor" aria-label="anchor" href="#arg-genome"></a></dt>
@@ -101,7 +113,7 @@ Only needed when the input is not a standard peak format.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
-<dd><p>Report what was detected.</p></dd>
+<dd><p>Report what was detected. Default: <code>TRUE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

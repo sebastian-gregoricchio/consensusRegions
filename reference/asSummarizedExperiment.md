@@ -24,7 +24,7 @@ asSummarizedExperiment(object, assayName = "negLog10P")
 
 - assayName:
 
-  Name given to the significance assay.
+  Name given to the significance assay. Default: `"negLog10P"`.
 
 ## Value
 

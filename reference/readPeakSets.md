@@ -15,6 +15,7 @@ readPeakSets(
   scoreType = c("auto", "log10pvalue", "pvalue", "score", "none"),
   scoreColumn = NULL,
   keepStandardChromosomes = TRUE,
+  seqlevelsStyle = "UCSC",
   genome = NA,
   verbose = TRUE
 )
@@ -30,21 +31,29 @@ readPeakSets(
 - sampleNames:
 
   Character vector naming the replicates. Taken from the file names or
-  the list names when left \`NULL\`.
+  the list names when left \`NULL\`. Default: `NULL`.
 
 - scoreType:
 
   One of \`"auto"\`, \`"log10pvalue"\`, \`"pvalue"\`, \`"score"\` or
-  \`"none"\`. \`"auto"\` inspects the input.
+  \`"none"\`. \`"auto"\` inspects the input. Default: `"auto"`.
 
 - scoreColumn:
 
   Name of the metadata column holding the statistic. Only needed when
-  the input is not a standard peak format.
+  the input is not a standard peak format. Default: `NULL`.
 
 - keepStandardChromosomes:
 
-  Drop scaffolds and patches.
+  Drop scaffolds and patches. Default: `TRUE`.
+
+- seqlevelsStyle:
+
+  String indicating the chromosome naming style to apply to every
+  replicate, one among \`"UCSC"\` (chr1), \`"Ensembl"\` (1) or
+  \`"NCBI"\`. When set to \`NULL\` the names are left as they are and
+  the loading is interrupted if the replicates use different styles.
+  Default: \`"UCSC"\`.
 
 - genome:
 
@@ -53,7 +62,7 @@ readPeakSets(
 
 - verbose:
 
-  Report what was detected.
+  Report what was detected. Default: `TRUE`.
 
 ## Value
 
