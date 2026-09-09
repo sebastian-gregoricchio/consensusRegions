@@ -1,3 +1,5 @@
+# Assisted-by: Claude (Anthropic). Reviewed and validated by S. Gregoricchio.
+
 #' A theme in the style of ggpubr::theme_pubr
 #'
 #' @description

@@ -1,3 +1,6 @@
+# Assisted-by: Claude (Anthropic). Reviewed and validated by S. Gregoricchio.
+
+
 #' ConsensusRegions class
 #'
 #' @description
