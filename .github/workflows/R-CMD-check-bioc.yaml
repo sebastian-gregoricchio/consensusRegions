@@ -7,13 +7,18 @@
 # release gives Bioconductor release. pak resolves the Bioconductor dependencies
 # from biocViews, so no repository has to be declared by hand. BiocCheck runs once,
 # on devel, since that is the branch a submission is reviewed against.
+#
+# The workflows live on 'devel-tools' because Bioconductor requires the default
+# branch to hold the package source only. A push to 'main' therefore cannot start
+# anything: GitHub reads the workflow definitions from the branch that received the
+# push. The run is started by hand or by the weekly schedule, and the checkout step
+# below pulls 'main', so the package source is what gets checked.
 name: R-CMD-check-bioc
 
 on:
-  push:
-    branches: [main, master, devel]
-  pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'
 
 permissions: read-all
 
@@ -39,7 +44,12 @@ jobs:
       NOT_CRAN: true
 
     steps:
+      # 'ref' points at the package source. 'fetch-depth: 0' is needed by
+      # BiocCheckGitClone, which reads the history and not only the working tree
       - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
 
       # Required to knit the vignette during the check
       - uses: r-lib/actions/setup-pandoc@v2
