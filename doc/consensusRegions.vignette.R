@@ -69,6 +69,15 @@ relaxed <- buildConsensus(peaks, combinationMethod = "rankProduct",
                           adjustmentFamily = "confirmed", verbose = FALSE)
 length(relaxed)
 
+## ----minReplicates------------------------------------------------------------
+c(byTotal = length(buildConsensus(peaks, minReplicates = 3,
+                                  verbose = FALSE)),
+  bySupport = length(buildConsensus(peaks, minSupport = 2,
+                                    verbose = FALSE)))
+
+## ----minReplicatesPercent-----------------------------------------------------
+length(buildConsensus(peaks, minReplicates = "60%", verbose = FALSE))
+
 ## ----adjustmentFamily---------------------------------------------------------
 tested <- buildConsensus(peaks, verbose = FALSE)
 mspcStyle <- buildConsensus(peaks, adjustmentFamily = "confirmed",

@@ -150,3 +150,73 @@ test_that("calibration uses the same settings as the analysis", {
                                        verbose = FALSE)
     expect_true(withFraction$threshold > 0)
 })
+
+
+test_that("minReplicates counts the peak's own replicate as MSPC does", {
+    peaks <- examplePeaks()
+
+    ## two of three replicates is one supporting replicate
+    byTotal <- buildConsensus(peaks, minReplicates = 2, verbose = FALSE)
+    bySupport <- buildConsensus(peaks, minSupport = 1, verbose = FALSE)
+    expect_equal(length(byTotal), length(bySupport))
+
+    ## all three is two supporting replicates
+    allThree <- buildConsensus(peaks, minReplicates = 3, verbose = FALSE)
+    twoOthers <- buildConsensus(peaks, minSupport = 2, verbose = FALSE)
+    expect_equal(length(allThree), length(twoOthers))
+    expect_lte(length(allThree), length(byTotal))
+})
+
+
+test_that("proportions and percentages resolve the same way", {
+    ## rounded up, so two thirds of three replicates asks for two
+    expect_equal(consensusRegions:::.parseReplicateCount(0.66, 3), 2L)
+    expect_equal(consensusRegions:::.parseReplicateCount("66%", 3), 2L)
+    expect_equal(consensusRegions:::.parseReplicateCount("75%", 8), 6L)
+    expect_equal(consensusRegions:::.parseReplicateCount(0.75, 8), 6L)
+
+    ## anything at or above one is taken literally
+    expect_equal(consensusRegions:::.parseReplicateCount(5, 8), 5L)
+    expect_equal(consensusRegions:::.parseReplicateCount("5", 8), 5L)
+
+    ## a percentage stays a share even at the top of the range
+    expect_equal(consensusRegions:::.parseReplicateCount("100%", 3), 3L)
+    expect_equal(consensusRegions:::.parseReplicateCount("50%", 2), 1L)
+
+    expect_error(consensusRegions:::.parseReplicateCount("150%", 3),
+                 "not a percentage")
+})
+
+
+test_that("a percentage runs end to end", {
+    peaks <- examplePeaks()
+
+    ## 60% of three replicates rounds up to two, so one supporter
+    byPercent <- buildConsensus(peaks, minReplicates = "60%",
+                                verbose = FALSE)
+    expect_equal(length(byPercent),
+                 length(buildConsensus(peaks, minSupport = 1,
+                                       verbose = FALSE)))
+})
+
+
+test_that("contradictory or impossible requirements are refused", {
+    peaks <- examplePeaks()
+
+    expect_error(
+        buildConsensus(peaks, minSupport = 1, minReplicates = 2,
+                       verbose = FALSE),
+        "not both")
+
+    expect_error(
+        buildConsensus(peaks, minReplicates = 1, verbose = FALSE),
+        "not a consensus")
+
+    expect_error(
+        buildConsensus(peaks, minReplicates = 5, verbose = FALSE),
+        "5 replicates in total but only 3")
+
+    expect_error(
+        buildConsensus(peaks, minReplicates = "many", verbose = FALSE),
+        "could not read")
+})

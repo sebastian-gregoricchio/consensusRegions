@@ -24,7 +24,8 @@ buildConsensus(
   weakThreshold = 1e-04,
   combinedThreshold = NULL,
   alpha = 0.05,
-  minSupport = 1L,
+  minSupport = NULL,
+  minReplicates = NULL,
   minSupportWeight = NULL,
   adjustmentFamily = c("tested", "confirmed"),
   minOverlap = 1L,
@@ -85,6 +86,15 @@ buildConsensus(
 
   Number of \*other\* replicates that must hold an overlapping peak.
   This is a count of replicates and weights never substitute for it.
+  Give this or \`minReplicates\`, not both.
+
+- minReplicates:
+
+  How many replicates in total must hold the peak, counting the one it
+  came from. This is the way the requirement is usually spoken about,
+  and it matches MSPC's \`-c\`. Accepts a count (\`5\`), a proportion
+  (\`0.75\`) or a percentage (\`"75 rounded up. \`minReplicates = 2\`
+  and \`minSupport = 1\` are the same requirement.
 
 - minSupportWeight:
 

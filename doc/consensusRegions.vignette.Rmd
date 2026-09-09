@@ -54,8 +54,8 @@ library(consensusRegions)
 ```
 
 
-
 <br>
+
 
 
 # **Reading peaks** {#read_peaks}
@@ -90,6 +90,7 @@ intersection with extra steps. Call at something like `p < 1e-3` and let
 exactly this.
 
 <br>
+
 
 
 
@@ -178,9 +179,8 @@ consensusStats(weighted)
 plotJaccard(weighted)
 ```
 
+
 <br>
-
-
 
 # **Choosing the combination** {#choosing_combination}
 
@@ -242,6 +242,48 @@ Judge it on your own data, not here.
 
 <br>
 
+
+
+# **How many replicates have to agree** {#how_many_replicates}
+The requirement can be stated either way round, because both readings are
+natural and mixing them up is easy.
+
+`minSupport` counts the *other* replicates that must hold an overlapping
+peak, which is what the confirmation step actually works with.
+`minReplicates` counts all of them including the one the peak came from,
+which is how the requirement is usually spoken about, and it matches
+MSPC's `-c`. Give one or the other, never both.
+
+```{r minReplicates}
+c(byTotal = length(buildConsensus(peaks, minReplicates = 3,
+                                  verbose = FALSE)),
+  bySupport = length(buildConsensus(peaks, minSupport = 2,
+                                    verbose = FALSE)))
+```
+
+`minReplicates` also takes a proportion or a percentage, rounded up, so
+the requirement can be written the way it is usually described:
+
+```{r minReplicatesPercent}
+length(buildConsensus(peaks, minReplicates = "60%", verbose = FALSE))
+```
+
+| Requirement | MSPC | `minReplicates` | `minSupport` |
+|---|---|---|---|
+| 2 of 3 | `-c 2` | `2` | `1` |
+| 3 of 3 | `-c 3` | `3` or `"100%"` | `2` |
+| 5 of 8 | `-c 5` | `5` | `4` |
+| 75% of 8 | `-c 75%` | `"75%"` or `0.75` | `5` |
+
+If you are coming from MSPC, use `minReplicates` and pass the same value
+you passed to `-c`. Setting `minSupport` to that value instead asks for
+one replicate more than you meant, which is a quiet way to lose peaks.
+
+Note that `replicateType = "technical"` overrides both and demands every
+replicate, on the grounds that technical replicates have no reason to
+disagree.
+
+<br>
 
 # **Multiple testing** {#multiple_testing}
 Peaks that clear the combined threshold are corrected within each
@@ -322,6 +364,7 @@ regions where real peaks cluster too.
 <br>
 
 
+
 # **Input without statistics** {#input_no_stats}
 Sometimes all that survives of an old analysis is a folder of BED3 files.
 There is no p-value to combine, so the package says so and switches to a
@@ -343,6 +386,7 @@ analysisParameters(minimalResult)$presenceOnly
 This is a fallback, not an equivalent. Without per-peak statistics
 nothing can be rescued, and the result is reproducibility filtering
 rather than combined evidence.
+
 
 
 <br>
@@ -389,6 +433,7 @@ discards the thing being measured.
 <br>
 
 
+
 # **Handing over to a differential analysis**
 If the consensus is a step on the way to differential binding rather than
 the endpoint, convert it and count reads over the row ranges with csaw,
@@ -412,6 +457,7 @@ peak set is the deliverable.
 <br>
 
 
+
 # **Blacklisting**
 Filter after the consensus, not before. Removing regions upfront distorts
 the rank distributions the combination relies on, which is why
@@ -424,6 +470,7 @@ result <- buildConsensus(peaks, excludeRegions = blacklistGRanges)
 <br>
 
 
+
 # **Checking the result**
 Nothing in this package can tell you whether your consensus set is any
 good. Validate it against something orthogonal: central motif enrichment
@@ -432,9 +479,9 @@ correlation with expression for activating marks. If the rescued peaks
 are motif-poor and TSS-depleted, the settings are too permissive
 regardless of what the statistics say.
 
+<br>
 
-
----------------------------------
+----------------------------------------------------
 
 # **Session info**
 ```{r sessionInfo, echo=FALSE}

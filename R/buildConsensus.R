@@ -31,7 +31,13 @@
 #' @param alpha Level for the within-replicate Benjamini-Hochberg step.
 #' @param minSupport Number of *other* replicates that must hold an
 #'   overlapping peak. This is a count of replicates and weights never
-#'   substitute for it.
+#'   substitute for it. Give this or `minReplicates`, not both.
+#' @param minReplicates How many replicates in total must hold the peak,
+#'   counting the one it came from. This is the way the requirement is
+#'   usually spoken about, and it matches MSPC's `-c`. Accepts a count
+#'   (`5`), a proportion (`0.75`) or a percentage (`"75%"`), the last two
+#'   rounded up. `minReplicates = 2` and `minSupport = 1` are the same
+#'   requirement.
 #' @param minSupportWeight Optional additional requirement on the summed
 #'   weight of the supporting replicates. Applied on top of `minSupport`,
 #'   never instead of it. Only meaningful when weights are not equal.
@@ -123,7 +129,8 @@ buildConsensus <- function(peakList,
                            weakThreshold = 1e-4,
                            combinedThreshold = NULL,
                            alpha = 0.05,
-                           minSupport = 1L,
+                           minSupport = NULL,
+                           minReplicates = NULL,
                            minSupportWeight = NULL,
                            adjustmentFamily = c("tested", "confirmed"),
                            minOverlap = 1L,
@@ -171,14 +178,17 @@ buildConsensus <- function(peakList,
     replicateNames <- names(peakList)
 
     requiredSupport <- if (replicateType == "technical") {
+        ## technical replicates are expected to agree everywhere
         nReplicates - 1L
     } else {
-        minSupport
+        .resolveRequiredSupport(minSupport = minSupport,
+                                minReplicates = minReplicates,
+                                nReplicates = nReplicates)
     }
     if (requiredSupport > nReplicates - 1L) {
-        stop("'minSupport' asks for ", requiredSupport,
-             " supporting replicates but only ", nReplicates - 1L,
-             " are available")
+        stop("the requested support asks for ", requiredSupport + 1L,
+             " replicates in total but only ", nReplicates,
+             " were supplied")
     }
 
     ## ---- weights -----------------------------------------------------
@@ -337,6 +347,7 @@ buildConsensus <- function(peakList,
             combinedThreshold = combinedThreshold,
             alpha = alpha,
             minSupport = requiredSupport,
+            minReplicates = requiredSupport + 1L,
             minSupportWeight = minSupportWeight,
             adjustmentFamily = adjustmentFamily,
             minOverlap = minOverlap,
@@ -349,6 +360,96 @@ buildConsensus <- function(peakList,
         stats = .replicateSummary(retained, replicateNames),
         calibration = if (is.null(calibration)) list() else calibration
     )
+}
+
+
+#' Work out how many supporting replicates are required
+#'
+#' @description
+#' The requirement can be given either way round. `minSupport` counts the
+#' other replicates, which is what the confirmation step works with;
+#' `minReplicates` counts all of them including the peak's own, which is
+#' how people describe it out loud and how MSPC's `-c` is defined. This
+#' resolves whichever was supplied to the former.
+#'
+#' @param minSupport Supporting replicates, or `NULL`.
+#' @param minReplicates Total replicates, a count, a proportion or a
+#'   percentage string, or `NULL`.
+#' @param nReplicates Number of replicates in the experiment.
+#'
+#' @return Integer, the number of supporting replicates required.
+#'
+#' @author Sebastian Gregoricchio
+#'
+#' @keywords internal
+#' @noRd
+.resolveRequiredSupport <- function(minSupport, minReplicates,
+                                    nReplicates) {
+    if (!is.null(minSupport) && !is.null(minReplicates)) {
+        stop("give either 'minSupport' or 'minReplicates', not both: ",
+             "they state the same requirement, one counting the other ",
+             "replicates and one counting all of them")
+    }
+
+    if (is.null(minReplicates)) {
+        return(as.integer(if (is.null(minSupport)) 1L else minSupport))
+    }
+
+    total <- .parseReplicateCount(minReplicates, nReplicates)
+    if (total < 2L) {
+        stop("'minReplicates' resolved to ", total,
+             "; a peak supported by no other replicate is not a consensus")
+    }
+
+    ## the peak's own replicate is one of the total, the rest must support
+    total - 1L
+}
+
+
+#' Read a replicate requirement given as a count, a proportion or a
+#' percentage
+#'
+#' @param value The user supplied requirement.
+#' @param nReplicates Number of replicates in the experiment.
+#'
+#' @return Integer count of replicates.
+#'
+#' @author Sebastian Gregoricchio
+#'
+#' @keywords internal
+#' @noRd
+.parseReplicateCount <- function(value, nReplicates) {
+    if (is.character(value)) {
+        trimmed <- trimws(value)
+        number <- suppressWarnings(as.numeric(sub("%$", "", trimmed)))
+        if (is.na(number)) {
+            stop("could not read '", value,
+                 "' as a count, a proportion or a percentage")
+        }
+
+        ## a percentage is always a share of the experiment, including
+        ## when it is the whole of it; falling through to the branch
+        ## below would read "100%" as a single replicate
+        if (grepl("%$", trimmed)) {
+            if (number <= 0 || number > 100) {
+                stop("'", value, "' is not a percentage between 0 and 100")
+            }
+            return(as.integer(ceiling(number / 100 * nReplicates)))
+        }
+    } else {
+        number <- as.numeric(value)
+    }
+
+    if (!is.finite(number) || number <= 0) {
+        stop("the replicate requirement must be a positive number")
+    }
+
+    ## anything below one is read as a share of the experiment, rounded
+    ## up so that 0.75 of four replicates asks for three and not two
+    if (number < 1) {
+        return(as.integer(ceiling(number * nReplicates)))
+    }
+    as.integer(round(number))
 }
 
 

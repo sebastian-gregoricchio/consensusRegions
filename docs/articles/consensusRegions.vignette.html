@@ -421,6 +421,76 @@ comfortably. Judge it on your own data, not here.</p>
 <p><br></p>
 </div>
 <div class="section level2">
+<h2 id="how_many_replicates">
+<strong>How many replicates have to agree</strong><a class="anchor" aria-label="anchor" href="#how_many_replicates"></a>
+</h2>
+<p>The requirement can be stated either way round, because both readings
+are natural and mixing them up is easy.</p>
+<p><code>minSupport</code> counts the <em>other</em> replicates that
+must hold an overlapping peak, which is what the confirmation step
+actually works with. <code>minReplicates</code> counts all of them
+including the one the peak came from, which is how the requirement is
+usually spoken about, and it matches MSPC’s <code>-c</code>. Give one or
+the other, never both.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">c</span>(<span class="at">byTotal =</span> <span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks, <span class="at">minReplicates =</span> <span class="dv">3</span>,</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>                                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)),</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">bySupport =</span> <span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks, <span class="at">minSupport =</span> <span class="dv">2</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>                                    <span class="at">verbose =</span> <span class="cn">FALSE</span>)))</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="sc">&gt;</span>   byTotal bySupport </span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="sc">&gt;</span>       <span class="dv">292</span>       <span class="dv">292</span></span></code></pre></div>
+<p><code>minReplicates</code> also takes a proportion or a percentage,
+rounded up, so the requirement can be written the way it is usually
+described:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks, <span class="at">minReplicates =</span> <span class="st">"60%"</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">292</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th>Requirement</th>
+<th>MSPC</th>
+<th><code>minReplicates</code></th>
+<th><code>minSupport</code></th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>2 of 3</td>
+<td><code>-c 2</code></td>
+<td><code>2</code></td>
+<td><code>1</code></td>
+</tr>
+<tr class="even">
+<td>3 of 3</td>
+<td><code>-c 3</code></td>
+<td>
+<code>3</code> or <code>"100%"</code>
+</td>
+<td><code>2</code></td>
+</tr>
+<tr class="odd">
+<td>5 of 8</td>
+<td><code>-c 5</code></td>
+<td><code>5</code></td>
+<td><code>4</code></td>
+</tr>
+<tr class="even">
+<td>75% of 8</td>
+<td><code>-c 75%</code></td>
+<td>
+<code>"75%"</code> or <code>0.75</code>
+</td>
+<td><code>5</code></td>
+</tr>
+</tbody>
+</table>
+<p>If you are coming from MSPC, use <code>minReplicates</code> and pass
+the same value you passed to <code>-c</code>. Setting
+<code>minSupport</code> to that value instead asks for one replicate
+more than you meant, which is a quiet way to lose peaks.</p>
+<p>Note that <code>replicateType = "technical"</code> overrides both and
+demands every replicate, on the grounds that technical replicates have
+no reason to disagree.</p>
+<p><br></p>
+</div>
+<div class="section level2">
 <h2 id="multiple_testing">
 <strong>Multiple testing</strong><a class="anchor" aria-label="anchor" href="#multiple_testing"></a>
 </h2>
@@ -434,13 +504,13 @@ Benjamini-Hochberg guarantee does not carry over to it, and the
 resulting values can be optimistic.
 <code>adjustmentFamily = "tested"</code>, the default here, instead
 corrects across every peak that entered the analysis.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>tested <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>mspcStyle <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">adjustmentFamily =</span> <span class="st">"confirmed"</span>,</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>                            <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="fu">c</span>(<span class="at">tested =</span> <span class="fu">length</span>(tested), <span class="at">confirmed =</span> <span class="fu">length</span>(mspcStyle))</span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="sc">&gt;</span>    tested confirmed </span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="sc">&gt;</span>       <span class="dv">292</span>       <span class="dv">292</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>tested <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>mspcStyle <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">adjustmentFamily =</span> <span class="st">"confirmed"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>                            <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="fu">c</span>(<span class="at">tested =</span> <span class="fu">length</span>(tested), <span class="at">confirmed =</span> <span class="fu">length</span>(mspcStyle))</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="sc">&gt;</span>    tested confirmed </span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="sc">&gt;</span>       <span class="dv">292</span>       <span class="dv">292</span></span></code></pre></div>
 <p>On this data the two agree, and that is the normal case: when the
 combined evidence is strong the correction is a rounding error against
 it. The choice only bites where the evidence was marginal, which is
@@ -469,20 +539,20 @@ so any overlap between the shuffled replicates arises by chance. Running
 the combination on those gives a null, and the threshold is read off
 where the expected number of null peaks falls to a chosen fraction of
 the observed count.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> <span class="fu">calibrateThreshold</span>(peaks, <span class="at">nPermutations =</span> <span class="dv">10</span>,</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>                                  <span class="at">targetFDR =</span> <span class="fl">0.05</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>                                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>calibration<span class="sc">$</span>threshold</span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="fl">4.242908e-11</span></span></code></pre></div>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> <span class="fu">calibrateThreshold</span>(peaks, <span class="at">nPermutations =</span> <span class="dv">10</span>,</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>                                  <span class="at">targetFDR =</span> <span class="fl">0.05</span>, <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>                                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>calibration<span class="sc">$</span>threshold</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="fl">4.242908e-11</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotCalibration.html">plotCalibration</a></span><span class="op">(</span><span class="va">calibration</span><span class="op">)</span></span></code></pre></div>
 <p><img src="consensusRegions.vignette_files/figure-html/plotCalibration-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>calibrated <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks,</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>                             <span class="at">combinedThreshold =</span> calibration<span class="sc">$</span>threshold,</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>                             <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="fu">length</span>(calibrated)</span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">292</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>calibrated <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>                             <span class="at">combinedThreshold =</span> calibration<span class="sc">$</span>threshold,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>                             <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="fu">length</span>(calibrated)</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">292</span></span></code></pre></div>
 <p>Ten permutations is enough for a demonstration; fifty is a reasonable
 working number. Passing a blacklist through <code>excludeRegions</code>
 makes the null more honest, because shuffled peaks otherwise land in
@@ -498,15 +568,15 @@ files. There is no p-value to combine, so the package says so and
 switches to a weighted presence rule: a region is kept when the weights
 of the replicates supporting it sum to at least <code>minSupport</code>.
 With equal weights that is the familiar k-of-n rule.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>minimalFile <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">"extdata"</span>, <span class="st">"rep1_minimal.bed"</span>,</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>                           <span class="at">package =</span> <span class="st">"consensusRegions"</span>)</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>minimal <span class="ot">&lt;-</span> <span class="fu">readPeakSets</span>(<span class="fu">rep</span>(minimalFile, <span class="dv">3</span>),</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>                        <span class="at">sampleNames =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>))</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a></span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>minimalResult <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(minimal, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="fu">analysisParameters</span>(minimalResult)<span class="sc">$</span>presenceOnly</span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="cn">TRUE</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>minimalFile <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">"extdata"</span>, <span class="st">"rep1_minimal.bed"</span>,</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>                           <span class="at">package =</span> <span class="st">"consensusRegions"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>minimal <span class="ot">&lt;-</span> <span class="fu">readPeakSets</span>(<span class="fu">rep</span>(minimalFile, <span class="dv">3</span>),</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>                        <span class="at">sampleNames =</span> <span class="fu">c</span>(<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>))</span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a>minimalResult <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(minimal, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="fu">analysisParameters</span>(minimalResult)<span class="sc">$</span>presenceOnly</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="cn">TRUE</span></span></code></pre></div>
 <p>This is a fallback, not an equivalent. Without per-peak statistics
 nothing can be rescued, and the result is reproducibility filtering
 rather than combined evidence.</p>
@@ -525,15 +595,15 @@ regions and rebuilds only those. <code>mergeMethod = "iterative"</code>
 avoids the problem entirely by seeding on the most significant peak,
 claiming what it overlaps, and repeating, which is the approach the
 ATAC-seq peak atlases use.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>seeded <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">mergeMethod =</span> <span class="st">"iterative"</span>,</span>
-<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>                         <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a></span>
-<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a><span class="fu">summary</span>(GenomicRanges<span class="sc">::</span><span class="fu">width</span>(<span class="fu">consensusRanges</span>(result)))</span>
-<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a><span class="sc">&gt;</span>    Min. <span class="dv">1</span>st Qu.  Median    Mean <span class="dv">3</span>rd Qu.    Max. </span>
-<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a><span class="sc">&gt;</span>   <span class="fl">418.0</span>   <span class="fl">633.5</span>   <span class="fl">786.5</span>   <span class="fl">814.7</span>   <span class="fl">883.2</span>  <span class="fl">2200.0</span></span>
-<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a><span class="fu">summary</span>(GenomicRanges<span class="sc">::</span><span class="fu">width</span>(<span class="fu">consensusRanges</span>(seeded)))</span>
-<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a><span class="sc">&gt;</span>    Min. <span class="dv">1</span>st Qu.  Median    Mean <span class="dv">3</span>rd Qu.    Max. </span>
-<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="sc">&gt;</span>   <span class="fl">418.0</span>   <span class="fl">631.5</span>   <span class="fl">794.0</span>   <span class="fl">784.7</span>   <span class="fl">888.5</span>  <span class="fl">1400.0</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>seeded <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">mergeMethod =</span> <span class="st">"iterative"</span>,</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>                         <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="fu">summary</span>(GenomicRanges<span class="sc">::</span><span class="fu">width</span>(<span class="fu">consensusRanges</span>(result)))</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="sc">&gt;</span>    Min. <span class="dv">1</span>st Qu.  Median    Mean <span class="dv">3</span>rd Qu.    Max. </span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="sc">&gt;</span>   <span class="fl">418.0</span>   <span class="fl">633.5</span>   <span class="fl">786.5</span>   <span class="fl">814.7</span>   <span class="fl">883.2</span>  <span class="fl">2200.0</span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="fu">summary</span>(GenomicRanges<span class="sc">::</span><span class="fu">width</span>(<span class="fu">consensusRanges</span>(seeded)))</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="sc">&gt;</span>    Min. <span class="dv">1</span>st Qu.  Median    Mean <span class="dv">3</span>rd Qu.    Max. </span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a><span class="sc">&gt;</span>   <span class="fl">418.0</span>   <span class="fl">631.5</span>   <span class="fl">794.0</span>   <span class="fl">784.7</span>   <span class="fl">888.5</span>  <span class="fl">1400.0</span></span></code></pre></div>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -546,21 +616,21 @@ downstream: a wider region collects more reads and more motif matches
 for reasons that have nothing to do with biology. For transcription
 factors and ATAC data, recentre on the summit and use a common
 width.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>fixed <span class="ot">&lt;-</span> <span class="fu">recentrePeaks</span>(result, <span class="at">width =</span> <span class="dv">400</span>, <span class="at">summitSource =</span> <span class="st">"best"</span>)</span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">head</span>(fixed, <span class="dv">3</span>)</span>
-<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="sc">&gt;</span> GRanges object with <span class="dv">3</span> ranges and <span class="dv">5</span> metadata columns<span class="sc">:</span></span>
-<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="er">&gt;</span>       seqnames        ranges strand <span class="sc">|</span> nReplicates    nPeaks     replicates</span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a><span class="sc">&gt;</span>          <span class="er">&lt;</span>Rle<span class="sc">&gt;</span>     <span class="er">&lt;</span>IRanges<span class="sc">&gt;</span>  <span class="er">&lt;</span>Rle<span class="sc">&gt;</span> <span class="er">|</span>   <span class="er">&lt;</span>integer<span class="sc">&gt;</span> <span class="er">&lt;</span>integer<span class="sc">&gt;</span>    <span class="er">&lt;</span>character<span class="sc">&gt;</span></span>
-<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a><span class="er">&gt;</span>   [<span class="dv">1</span>]     chr1   <span class="dv">57617-58016</span>      <span class="sc">*</span> <span class="er">|</span>           <span class="dv">3</span>         <span class="dv">3</span> rep1,rep2,rep3</span>
-<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">2</span>]     chr1 <span class="dv">102389-102788</span>      <span class="sc">*</span> <span class="er">|</span>           <span class="dv">3</span>         <span class="dv">3</span> rep1,rep2,rep3</span>
-<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">3</span>]     chr1 <span class="dv">145949-146348</span>      <span class="sc">*</span> <span class="er">|</span>           <span class="dv">3</span>         <span class="dv">3</span> rep1,rep2,rep3</span>
-<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a><span class="sc">&gt;</span>       combinedNegLog10P    summit</span>
-<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a><span class="sc">&gt;</span>               <span class="er">&lt;</span>numeric<span class="sc">&gt;</span> <span class="er">&lt;</span>numeric<span class="sc">&gt;</span></span>
-<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a><span class="er">&gt;</span>   [<span class="dv">1</span>]           <span class="fl">25.2442</span>     <span class="dv">57817</span></span>
-<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">2</span>]           <span class="fl">22.3973</span>    <span class="dv">102589</span></span>
-<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">3</span>]           <span class="fl">26.9232</span>    <span class="dv">146149</span></span>
-<span id="cb21-14"><a href="#cb21-14" tabindex="-1"></a><span class="sc">&gt;</span>   <span class="sc">-------</span></span>
-<span id="cb21-15"><a href="#cb21-15" tabindex="-1"></a><span class="er">&gt;</span>   seqinfo<span class="sc">:</span> <span class="dv">2</span> sequences from an unspecified genome; no seqlengths</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>fixed <span class="ot">&lt;-</span> <span class="fu">recentrePeaks</span>(result, <span class="at">width =</span> <span class="dv">400</span>, <span class="at">summitSource =</span> <span class="st">"best"</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="fu">head</span>(fixed, <span class="dv">3</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="sc">&gt;</span> GRanges object with <span class="dv">3</span> ranges and <span class="dv">5</span> metadata columns<span class="sc">:</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="er">&gt;</span>       seqnames        ranges strand <span class="sc">|</span> nReplicates    nPeaks     replicates</span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="sc">&gt;</span>          <span class="er">&lt;</span>Rle<span class="sc">&gt;</span>     <span class="er">&lt;</span>IRanges<span class="sc">&gt;</span>  <span class="er">&lt;</span>Rle<span class="sc">&gt;</span> <span class="er">|</span>   <span class="er">&lt;</span>integer<span class="sc">&gt;</span> <span class="er">&lt;</span>integer<span class="sc">&gt;</span>    <span class="er">&lt;</span>character<span class="sc">&gt;</span></span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a><span class="er">&gt;</span>   [<span class="dv">1</span>]     chr1   <span class="dv">57617-58016</span>      <span class="sc">*</span> <span class="er">|</span>           <span class="dv">3</span>         <span class="dv">3</span> rep1,rep2,rep3</span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">2</span>]     chr1 <span class="dv">102389-102788</span>      <span class="sc">*</span> <span class="er">|</span>           <span class="dv">3</span>         <span class="dv">3</span> rep1,rep2,rep3</span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">3</span>]     chr1 <span class="dv">145949-146348</span>      <span class="sc">*</span> <span class="er">|</span>           <span class="dv">3</span>         <span class="dv">3</span> rep1,rep2,rep3</span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a><span class="sc">&gt;</span>       combinedNegLog10P    summit</span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a><span class="sc">&gt;</span>               <span class="er">&lt;</span>numeric<span class="sc">&gt;</span> <span class="er">&lt;</span>numeric<span class="sc">&gt;</span></span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a><span class="er">&gt;</span>   [<span class="dv">1</span>]           <span class="fl">25.2442</span>     <span class="dv">57817</span></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">2</span>]           <span class="fl">22.3973</span>    <span class="dv">102589</span></span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a><span class="sc">&gt;</span>   [<span class="dv">3</span>]           <span class="fl">26.9232</span>    <span class="dv">146149</span></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a><span class="sc">&gt;</span>   <span class="sc">-------</span></span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a><span class="er">&gt;</span>   seqinfo<span class="sc">:</span> <span class="dv">2</span> sequences from an unspecified genome; no seqlengths</span></code></pre></div>
 <p>Do not do this to broad histone domains. Collapsing a domain to a
 point discards the thing being measured.</p>
 <p><br></p>
@@ -572,17 +642,17 @@ point discards the thing being measured.</p>
 <p>If the consensus is a step on the way to differential binding rather
 than the endpoint, convert it and count reads over the row ranges with
 csaw, DiffBind or edgeR.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>se <span class="ot">&lt;-</span> <span class="fu">asSummarizedExperiment</span>(result)</span>
-<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>se</span>
-<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="sc">&gt;</span> class<span class="sc">:</span> RangedSummarizedExperiment </span>
-<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="sc">&gt;</span> dim<span class="sc">:</span> <span class="dv">292</span> <span class="dv">3</span> </span>
-<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">metadata</span>(<span class="dv">17</span>)<span class="sc">:</span> scoreType combinationMethod ... maxConsensusWidth</span>
-<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="sc">&gt;</span>   presenceOnly</span>
-<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">assays</span>(<span class="dv">2</span>)<span class="sc">:</span> negLog10P detected</span>
-<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="sc">&gt;</span> rownames<span class="sc">:</span> <span class="cn">NULL</span></span>
-<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a><span class="sc">&gt;</span> rowData <span class="fu">names</span>(<span class="dv">4</span>)<span class="sc">:</span> nReplicates nPeaks replicates combinedNegLog10P</span>
-<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">colnames</span>(<span class="dv">3</span>)<span class="sc">:</span> rep1 rep2 rep3</span>
-<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="sc">&gt;</span> colData <span class="fu">names</span>(<span class="dv">2</span>)<span class="sc">:</span> replicate weight</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>se <span class="ot">&lt;-</span> <span class="fu">asSummarizedExperiment</span>(result)</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>se</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="sc">&gt;</span> class<span class="sc">:</span> RangedSummarizedExperiment </span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a><span class="sc">&gt;</span> dim<span class="sc">:</span> <span class="dv">292</span> <span class="dv">3</span> </span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">metadata</span>(<span class="dv">18</span>)<span class="sc">:</span> scoreType combinationMethod ... maxConsensusWidth</span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a><span class="sc">&gt;</span>   presenceOnly</span>
+<span id="cb24-7"><a href="#cb24-7" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">assays</span>(<span class="dv">2</span>)<span class="sc">:</span> negLog10P detected</span>
+<span id="cb24-8"><a href="#cb24-8" tabindex="-1"></a><span class="sc">&gt;</span> rownames<span class="sc">:</span> <span class="cn">NULL</span></span>
+<span id="cb24-9"><a href="#cb24-9" tabindex="-1"></a><span class="sc">&gt;</span> rowData <span class="fu">names</span>(<span class="dv">4</span>)<span class="sc">:</span> nReplicates nPeaks replicates combinedNegLog10P</span>
+<span id="cb24-10"><a href="#cb24-10" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">colnames</span>(<span class="dv">3</span>)<span class="sc">:</span> rep1 rep2 rep3</span>
+<span id="cb24-11"><a href="#cb24-11" tabindex="-1"></a><span class="sc">&gt;</span> colData <span class="fu">names</span>(<span class="dv">2</span>)<span class="sc">:</span> replicate weight</span></code></pre></div>
 <p>The assay holds per-replicate significance, not counts. It is useful
 for spotting a replicate that disagrees with the others; it is not a
 substitute for counting reads.</p>
@@ -601,7 +671,7 @@ peak set is the deliverable.</p>
 distorts the rank distributions the combination relies on, which is why
 <code>excludeRegions</code> is applied at the end of
 <code><a href="../reference/buildConsensus.html">buildConsensus()</a></code>.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/buildConsensus.html">buildConsensus</a></span><span class="op">(</span><span class="va">peaks</span>, excludeRegions <span class="op">=</span> <span class="va">blacklistGRanges</span><span class="op">)</span></span></code></pre></div>
 <p><br></p>
 </div>
@@ -615,6 +685,7 @@ enrichment for a transcription factor, TSS enrichment and cCRE overlap
 for ATAC, correlation with expression for activating marks. If the
 rescued peaks are motif-poor and TSS-depleted, the settings are too
 permissive regardless of what the statistics say.</p>
+<p><br></p>
 <hr>
 </div>
 <div class="section level2">

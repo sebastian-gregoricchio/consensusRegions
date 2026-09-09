@@ -137,7 +137,7 @@ test_that("thresholds the wrong way round are refused", {
 test_that("asking for more support than exists is refused", {
     expect_error(
         buildConsensus(examplePeaks(), minSupport = 5, verbose = FALSE),
-        "supporting replicates")
+        "6 replicates in total but only 3")
 })
 
 

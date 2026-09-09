@@ -12,7 +12,8 @@ calibrateThreshold(
   targetFDR = 0.05,
   stringencyThreshold = 1e-08,
   weakThreshold = 1e-04,
-  minSupport = 1L,
+  minSupport = NULL,
+  minReplicates = NULL,
   minOverlap = 1L,
   minOverlapFraction = NULL,
   recursive = TRUE,
@@ -40,7 +41,12 @@ calibrateThreshold(
 
 \item{weakThreshold}{Background p-value cut.}
 
-\item{minSupport}{Minimum supporting replicates.}
+\item{minSupport}{Minimum supporting replicates. Give this or
+`minReplicates`, not both.}
+
+\item{minReplicates}{Total replicates that must hold the peak, counting
+its own. Accepts a count, a proportion or a percentage string, as in
+[buildConsensus()]. Must match the value used there.}
 
 \item{minOverlap}{Minimum overlap in base pairs.}
 

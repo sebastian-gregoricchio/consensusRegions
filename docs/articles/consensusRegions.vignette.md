@@ -370,6 +370,51 @@ Judge it on your own data, not here.
 
   
 
+## **How many replicates have to agree**
+
+The requirement can be stated either way round, because both readings
+are natural and mixing them up is easy.
+
+`minSupport` counts the *other* replicates that must hold an overlapping
+peak, which is what the confirmation step actually works with.
+`minReplicates` counts all of them including the one the peak came from,
+which is how the requirement is usually spoken about, and it matches
+MSPC’s `-c`. Give one or the other, never both.
+
+``` r
+c(byTotal = length(buildConsensus(peaks, minReplicates = 3,
+                                  verbose = FALSE)),
+  bySupport = length(buildConsensus(peaks, minSupport = 2,
+                                    verbose = FALSE)))
+>   byTotal bySupport 
+>       292       292
+```
+
+`minReplicates` also takes a proportion or a percentage, rounded up, so
+the requirement can be written the way it is usually described:
+
+``` r
+length(buildConsensus(peaks, minReplicates = "60%", verbose = FALSE))
+> [1] 292
+```
+
+| Requirement | MSPC     | `minReplicates`   | `minSupport` |
+|-------------|----------|-------------------|--------------|
+| 2 of 3      | `-c 2`   | `2`               | `1`          |
+| 3 of 3      | `-c 3`   | `3` or `"100%"`   | `2`          |
+| 5 of 8      | `-c 5`   | `5`               | `4`          |
+| 75% of 8    | `-c 75%` | `"75%"` or `0.75` | `5`          |
+
+If you are coming from MSPC, use `minReplicates` and pass the same value
+you passed to `-c`. Setting `minSupport` to that value instead asks for
+one replicate more than you meant, which is a quiet way to lose peaks.
+
+Note that `replicateType = "technical"` overrides both and demands every
+replicate, on the grounds that technical replicates have no reason to
+disagree.
+
+  
+
 ## **Multiple testing**
 
 Peaks that clear the combined threshold are corrected within each
@@ -547,7 +592,7 @@ se <- asSummarizedExperiment(result)
 se
 > class: RangedSummarizedExperiment 
 > dim: 292 3 
-> metadata(17): scoreType combinationMethod ... maxConsensusWidth
+> metadata(18): scoreType combinationMethod ... maxConsensusWidth
 >   presenceOnly
 > assays(2): negLog10P detected
 > rownames: NULL
@@ -590,6 +635,8 @@ for a transcription factor, TSS enrichment and cCRE overlap for ATAC,
 correlation with expression for activating marks. If the rescued peaks
 are motif-poor and TSS-depleted, the settings are too permissive
 regardless of what the statistics say.
+
+  
 
 ------------------------------------------------------------------------
 

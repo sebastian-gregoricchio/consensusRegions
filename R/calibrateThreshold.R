@@ -22,7 +22,11 @@
 #' @param stringencyThreshold Stringent p-value cut, as in
 #'   [buildConsensus()].
 #' @param weakThreshold Background p-value cut.
-#' @param minSupport Minimum supporting replicates.
+#' @param minSupport Minimum supporting replicates. Give this or
+#'   `minReplicates`, not both.
+#' @param minReplicates Total replicates that must hold the peak, counting
+#'   its own. Accepts a count, a proportion or a percentage string, as in
+#'   [buildConsensus()]. Must match the value used there.
 #' @param minOverlap Minimum overlap in base pairs.
 #' @param minOverlapFraction Optional fractional overlap requirement.
 #'   Must match the value used in [buildConsensus()].
@@ -87,7 +91,8 @@ calibrateThreshold <- function(peakList,
                                targetFDR = 0.05,
                                stringencyThreshold = 1e-8,
                                weakThreshold = 1e-4,
-                               minSupport = 1L,
+                               minSupport = NULL,
+                               minReplicates = NULL,
                                minOverlap = 1L,
                                minOverlapFraction = NULL,
                                recursive = TRUE,
@@ -114,6 +119,11 @@ calibrateThreshold <- function(peakList,
     if (!is.null(seed)) {
         set.seed(seed)
     }
+
+    ## the null has to be filtered by the same support rule as the data
+    minSupport <- .resolveRequiredSupport(minSupport = minSupport,
+                                          minReplicates = minReplicates,
+                                          nReplicates = length(peakList))
 
     replicateNames <- names(peakList)
     if (is.null(weights)) {
