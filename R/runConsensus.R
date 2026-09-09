@@ -1,3 +1,5 @@
+# Assisted-by: Claude (Anthropic). Reviewed and validated by S. Gregoricchio.
+
 #' Run the whole analysis in one call
 #'
 #' @description

@@ -1,3 +1,5 @@
+# Assisted-by: Claude (Anthropic). Reviewed and validated by S. Gregoricchio.
+
 #' Hand the consensus over to a differential analysis
 #'
 #' @description

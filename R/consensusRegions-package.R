@@ -1,3 +1,5 @@
+# Assisted-by: Claude (Anthropic). Reviewed and validated by S. Gregoricchio.
+
 #' consensusRegions: consensus peaks across replicated experiments
 #'
 #' @description

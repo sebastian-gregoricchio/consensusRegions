@@ -1,3 +1,5 @@
+# Assisted-by: Claude (Anthropic). Reviewed and validated by S. Gregoricchio.
+
 #' Combine the evidence carried by overlapping peaks
 #'
 #' @description

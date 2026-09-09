@@ -1,3 +1,5 @@
+# Assisted-by: Claude (Anthropic). Reviewed and validated by S. Gregoricchio.
+
 ## Internal helpers. None of these are exported.
 
 
