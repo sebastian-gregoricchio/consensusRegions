@@ -80,6 +80,8 @@ exercise into an intersection with extra steps. Something around
 <span>  combinedThreshold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  minSupport <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  minSupportWeight <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  adjustmentFamily <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tested"</span>, <span class="st">"confirmed"</span><span class="op">)</span>,</span>
 <span>  minOverlap <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  minOverlapFraction <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  multipleIntersections <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lowest"</span>, <span class="st">"highest"</span><span class="op">)</span>,</span>
@@ -87,6 +89,7 @@ exercise into an intersection with extra steps. Something around
 <span>  maxIterations <span class="op">=</span> <span class="fl">10L</span>,</span>
 <span>  mergeMethod <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"reduce"</span>, <span class="st">"iterative"</span><span class="op">)</span>,</span>
 <span>  maxConsensusWidth <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  calibration <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  excludeRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -138,7 +141,21 @@ usually needs a far more permissive threshold.</p></dd>
 
 <dt id="arg-minsupport">minSupport<a class="anchor" aria-label="anchor" href="#arg-minsupport"></a></dt>
 <dd><p>Number of *other* replicates that must hold an
-overlapping peak.</p></dd>
+overlapping peak. This is a count of replicates and weights never
+substitute for it.</p></dd>
+
+
+<dt id="arg-minsupportweight">minSupportWeight<a class="anchor" aria-label="anchor" href="#arg-minsupportweight"></a></dt>
+<dd><p>Optional additional requirement on the summed
+weight of the supporting replicates. Applied on top of `minSupport`,
+never instead of it. Only meaningful when weights are not equal.</p></dd>
+
+
+<dt id="arg-adjustmentfamily">adjustmentFamily<a class="anchor" aria-label="anchor" href="#arg-adjustmentfamily"></a></dt>
+<dd><p>Which peaks form the family for the
+Benjamini-Hochberg step. `"tested"` corrects across every peak that
+entered the analysis; `"confirmed"` corrects only across the peaks
+that cleared `combinedThreshold`, which is what MSPC does.</p></dd>
 
 
 <dt id="arg-minoverlap">minOverlap<a class="anchor" aria-label="anchor" href="#arg-minoverlap"></a></dt>
@@ -174,6 +191,12 @@ overlaps, then repeats.</p></dd>
 <dt id="arg-maxconsensuswidth">maxConsensusWidth<a class="anchor" aria-label="anchor" href="#arg-maxconsensuswidth"></a></dt>
 <dd><p>Optional cap in base pairs. Merged regions
 wider than this are rebuilt with the iterative rule.</p></dd>
+
+
+<dt id="arg-calibration">calibration<a class="anchor" aria-label="anchor" href="#arg-calibration"></a></dt>
+<dd><p>Optional output of [calibrateThreshold()]. When
+supplied its threshold is used, overriding `combinedThreshold`, and
+the whole calibration is kept with the result.</p></dd>
 
 
 <dt id="arg-excluderegions">excludeRegions<a class="anchor" aria-label="anchor" href="#arg-excluderegions"></a></dt>

@@ -57,7 +57,7 @@ se <- asSummarizedExperiment(result)
 se
 #> class: RangedSummarizedExperiment 
 #> dim: 292 3 
-#> metadata(15): scoreType combinationMethod ... maxConsensusWidth
+#> metadata(17): scoreType combinationMethod ... maxConsensusWidth
 #>   presenceOnly
 #> assays(2): negLog10P detected
 #> rownames: NULL
