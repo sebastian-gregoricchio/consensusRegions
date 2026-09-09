@@ -81,7 +81,8 @@ it falls to `targetFDR` of the observed number.</p>
 <span>  targetFDR <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  stringencyThreshold <span class="op">=</span> <span class="fl">1e-08</span>,</span>
 <span>  weakThreshold <span class="op">=</span> <span class="fl">1e-04</span>,</span>
-<span>  minSupport <span class="op">=</span> <span class="fl">1L</span>,</span>
+<span>  minSupport <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  minReplicates <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  minOverlap <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  minOverlapFraction <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  recursive <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -128,7 +129,14 @@ it falls to `targetFDR` of the observed number.</p>
 
 
 <dt id="arg-minsupport">minSupport<a class="anchor" aria-label="anchor" href="#arg-minsupport"></a></dt>
-<dd><p>Minimum supporting replicates.</p></dd>
+<dd><p>Minimum supporting replicates. Give this or
+`minReplicates`, not both.</p></dd>
+
+
+<dt id="arg-minreplicates">minReplicates<a class="anchor" aria-label="anchor" href="#arg-minreplicates"></a></dt>
+<dd><p>Total replicates that must hold the peak, counting
+its own. Accepts a count, a proportion or a percentage string, as in
+[buildConsensus()]. Must match the value used there.</p></dd>
 
 
 <dt id="arg-minoverlap">minOverlap<a class="anchor" aria-label="anchor" href="#arg-minoverlap"></a></dt>
