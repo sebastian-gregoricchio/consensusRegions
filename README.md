@@ -1,8 +1,8 @@
 <!-- badges: start -->
 ![release](https://img.shields.io/github/v/release/sebastian-gregoricchio/consensusRegions?sort=semver)
 [![license](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://sebastian-gregoricchio.github.io/consensusRegions/LICENSE.md/LICENSE)
-[![R-CMD-check-bioc](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/R-CMD-check-bioc.yaml/badge.svg)](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/R-CMD-check-bioc.yaml)
-[![pkgdown](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/pkgdown.yaml)
+[![R-CMD-check-bioc](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/R-CMD-check-bioc.yaml/badge.svg?branch=devel-tools)](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/R-CMD-check-bioc.yaml?query=branch%3Adevel-tools)
+[![pkgdown](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/pkgdown.yaml/badge.svg?branch=devel-tools)](https://github.com/sebastian-gregoricchio/consensusRegions/actions/workflows/pkgdown.yaml)
 [![Codecov](https://codecov.io/gh/sebastian-gregoricchio/consensusRegions/branch/main/graph/badge.svg)](https://app.codecov.io/gh/sebastian-gregoricchio/consensusRegions)
 [![forks](https://img.shields.io/github/forks/sebastian-gregoricchio/consensusRegions?style=social)](https://github.com/sebastian-gregoricchio/consensusRegions/fork)
 
