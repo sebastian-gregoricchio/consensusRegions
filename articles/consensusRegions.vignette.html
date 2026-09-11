@@ -64,7 +64,7 @@ Gregoricchio, Ph.D.</h4>
 Netherlands<br><a class="author_email" href="mailto:#"></a><a href="mailto:s.gregoricchio@nki.nl" class="email">s.gregoricchio@nki.nl</a>
       </address>
                   
-            <h4 data-toc-skip class="date">Last update: 09<sup>th</sup>
+            <h4 data-toc-skip class="date">Last update: 11<sup>th</sup>
 September, 2026</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/sebastian-gregoricchio/consensusRegions/blob/devel-tools/vignettes/consensusRegions.vignette.Rmd" class="external-link"><code>vignettes/consensusRegions.vignette.Rmd</code></a></small>
@@ -242,18 +242,18 @@ repaired.</p>
 <div class="section level3">
 <h3 id="call-peaks-permissively">Call peaks permissively<a class="anchor" aria-label="anchor" href="#call-peaks-permissively"></a>
 </h3>
-<p>This is the mistake that ruins the whole exercise, so it is worth
-saying plainly. If you call peaks at <code>q &lt; 0.05</code> and run
-the consensus on what survives, there is nothing left to rescue and you
-have written an intersection with extra steps. Call at something like
-<code>p &lt; 1e-3</code> and let <code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> do the
-thresholding. The two-tier design assumes exactly this.</p>
+<p>This is a critical issue that can substantially affect the validity
+of the entire analyses. If you call peaks at <code>q &lt; 0.05</code>
+and run the consensus on what survives, there is nothing left to rescue
+and you have written an intersection with extra steps. Call at something
+like <code>p &lt; 0.001</code> and let <code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> do
+the thresholding. The two-tier design assumes exactly this.</p>
 <p><br></p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="first_run">
-<strong>A first run</strong><a class="anchor" aria-label="anchor" href="#first_run"></a>
+<h2 id="quick_start">
+<strong>Quick start</strong><a class="anchor" aria-label="anchor" href="#quick_start"></a>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>result</span>
@@ -320,56 +320,148 @@ measured directly:</p>
 <span>    bamFiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rep1.bam"</span>, <span class="st">"rep2.bam"</span>, <span class="st">"rep3.bam"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>More often the alignments are long gone and only the numbers survive
 in an old QC report. Pass them in:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>weights <span class="ot">&lt;-</span> <span class="fu">computeReplicateWeights</span>(peaks, <span class="at">method =</span> <span class="st">"frip"</span>,</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                                   <span class="at">frip =</span> <span class="fu">c</span>(<span class="fl">0.21</span>, <span class="fl">0.19</span>, <span class="fl">0.06</span>),</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                                   <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>weights</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="sc">&gt;</span>      rep1      rep2      rep3 </span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fl">1.3695652</span> <span class="fl">1.2391304</span> <span class="fl">0.3913043</span> </span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">attr</span>(,<span class="st">"metrics"</span>)</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="co"># A tibble: 3 × 3 [39m</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="sc">&gt;</span>   replicate  frip librarySize</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="sc">&gt;</span>    [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>chr<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m      [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>dbl<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m        [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>dbl<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m1 [<span class="dv">39</span>m rep1       <span class="fl">0.21</span>           [<span class="dv">31</span>mNA [<span class="dv">39</span>m</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m2 [<span class="dv">39</span>m rep2       <span class="fl">0.19</span>           [<span class="dv">31</span>mNA [<span class="dv">39</span>m</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m3 [<span class="dv">39</span>m rep3       <span class="fl">0.06</span>           [<span class="dv">31</span>mNA [<span class="dv">39</span>m</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>weights <span class="ot">&lt;-</span> <span class="fu">computeReplicateWeights</span>(peaks,</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                                   <span class="at">method =</span> <span class="st">"frip"</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                                   <span class="at">frip =</span> <span class="fu">c</span>(<span class="fl">0.21</span>, <span class="fl">0.19</span>, <span class="fl">0.06</span>),</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                                   <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>weights</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="sc">&gt;</span>      rep1      rep2      rep3 </span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fl">1.3695652</span> <span class="fl">1.2391304</span> <span class="fl">0.3913043</span> </span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">attr</span>(,<span class="st">"metrics"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="co"># A tibble: 3 × 3 [39m</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="sc">&gt;</span>   replicate  frip librarySize</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="sc">&gt;</span>    [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>chr<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m      [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>dbl<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m        [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>dbl<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m1 [<span class="dv">39</span>m rep1       <span class="fl">0.21</span>           [<span class="dv">31</span>mNA [<span class="dv">39</span>m</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m2 [<span class="dv">39</span>m rep2       <span class="fl">0.19</span>           [<span class="dv">31</span>mNA [<span class="dv">39</span>m</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m3 [<span class="dv">39</span>m rep3       <span class="fl">0.06</span>           [<span class="dv">31</span>mNA [<span class="dv">39</span>m</span></code></pre></div>
 <p>And when there is nothing but the peaks themselves, each replicate
 can be scored by how well it agrees with the others:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">computeReplicateWeights</span>(peaks, <span class="at">method =</span> <span class="st">"intrinsic"</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="sc">&gt;</span>      rep1      rep2      rep3 </span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fl">0.9925346</span> <span class="fl">1.0069021</span> <span class="fl">1.0005633</span> </span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">attr</span>(,<span class="st">"metrics"</span>)</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="co"># A tibble: 3 × 2 [39m</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="sc">&gt;</span>   replicate jaccard</span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="sc">&gt;</span>    [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>chr<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m        [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>dbl<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m</span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m1 [<span class="dv">39</span>m rep1        <span class="fl">0.525</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m2 [<span class="dv">39</span>m rep2        <span class="fl">0.533</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m3 [<span class="dv">39</span>m rep3        <span class="fl">0.529</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">computeReplicateWeights</span>(peaks,</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>                        <span class="at">method =</span> <span class="st">"intrinsic"</span>,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>                        <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="sc">&gt;</span>      rep1      rep2      rep3 </span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fl">0.9925346</span> <span class="fl">1.0069021</span> <span class="fl">1.0005633</span> </span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">attr</span>(,<span class="st">"metrics"</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="co"># A tibble: 3 × 2 [39m</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="sc">&gt;</span>   replicate jaccard</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="sc">&gt;</span>    [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>chr<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m        [<span class="dv">3</span>m [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">246</span>m<span class="sc">&lt;</span>dbl<span class="sc">&gt;</span> [<span class="dv">39</span>m [<span class="dv">23</span>m</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m1 [<span class="dv">39</span>m rep1        <span class="fl">0.525</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m2 [<span class="dv">39</span>m rep2        <span class="fl">0.533</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">38</span>;<span class="dv">5</span>;<span class="dv">250</span>m3 [<span class="dv">39</span>m rep3        <span class="fl">0.529</span></span></code></pre></div>
 <p>That last measure is circular, since agreement is also what the
 consensus is testing. Use it when there is no alternative, not in
 preference to FRiP.</p>
 <p>Weights only reach the combination through Stouffer’s Z or
 Lancaster’s method. Fisher and the rank product ignore them.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>weighted <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">weights =</span> weights,</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>                           <span class="at">combinationMethod =</span> <span class="st">"stouffer"</span>,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>                           <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="fu">consensusStats</span>(weighted)</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="sc">&gt;</span>   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">1</span>      rep1     <span class="dv">430</span>        <span class="dv">241</span>   <span class="dv">189</span>        <span class="dv">340</span>       <span class="dv">99</span>              <span class="dv">0</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">2</span>      rep2     <span class="dv">430</span>        <span class="dv">240</span>   <span class="dv">190</span>        <span class="dv">340</span>      <span class="dv">100</span>              <span class="dv">0</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">3</span>      rep3     <span class="dv">430</span>         <span class="dv">30</span>   <span class="dv">400</span>        <span class="dv">340</span>      <span class="dv">310</span>              <span class="dv">0</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="sc">&gt;</span>   nDiscarded rescueRate</span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">1</span>         <span class="dv">90</span>  <span class="fl">0.2911765</span></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">2</span>         <span class="dv">90</span>  <span class="fl">0.2941176</span></span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">3</span>         <span class="dv">90</span>  <span class="fl">0.9117647</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>weighted <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>                           <span class="at">weights =</span> weights,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>                           <span class="at">combinationMethod =</span> <span class="st">"stouffer"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>                           <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="fu">consensusStats</span>(weighted)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="sc">&gt;</span>   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive</span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">1</span>      rep1     <span class="dv">430</span>        <span class="dv">241</span>   <span class="dv">189</span>        <span class="dv">340</span>       <span class="dv">99</span>              <span class="dv">0</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">2</span>      rep2     <span class="dv">430</span>        <span class="dv">240</span>   <span class="dv">190</span>        <span class="dv">340</span>      <span class="dv">100</span>              <span class="dv">0</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">3</span>      rep3     <span class="dv">430</span>         <span class="dv">30</span>   <span class="dv">400</span>        <span class="dv">340</span>      <span class="dv">310</span>              <span class="dv">0</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="sc">&gt;</span>   nDiscarded rescueRate</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">1</span>         <span class="dv">90</span>  <span class="fl">0.2911765</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">2</span>         <span class="dv">90</span>  <span class="fl">0.2941176</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="sc">&gt;</span> <span class="dv">3</span>         <span class="dv">90</span>  <span class="fl">0.9117647</span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotJaccard.html">plotJaccard</a></span><span class="op">(</span><span class="va">weighted</span><span class="op">)</span></span></code></pre></div>
 <p><img src="consensusRegions.vignette_files/figure-html/jaccard-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p><br></p>
+<div class="section level3">
+<h3 id="which-weighting-method-to-use">Which weighting method to use<a class="anchor" aria-label="anchor" href="#which-weighting-method-to-use"></a>
+</h3>
+<p>The five settings differ in what they score a replicate on, and in
+what they cost you to obtain.</p>
+<table class="table">
+<colgroup>
+<col width="12%">
+<col width="28%">
+<col width="34%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th><code>method</code></th>
+<th>Scores each replicate by</th>
+<th>Needs</th>
+<th>Weight proportional to</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><code>"equal"</code></td>
+<td>nothing, all count the same</td>
+<td>nothing</td>
+<td>
+<code>1</code> throughout</td>
+</tr>
+<tr class="even">
+<td><code>"frip"</code></td>
+<td>signal against background</td>
+<td>
+<code>bamFiles</code>, or <code>frip</code> from an old QC
+report</td>
+<td>the fraction itself</td>
+</tr>
+<tr class="odd">
+<td><code>"librarySize"</code></td>
+<td>sequencing depth</td>
+<td>
+<code>bamFiles</code>, or <code>librarySize</code>
+</td>
+<td>the square root of the depth</td>
+</tr>
+<tr class="even">
+<td><code>"intrinsic"</code></td>
+<td>agreement with the other replicates</td>
+<td>the peak sets alone</td>
+<td>the mean pairwise Jaccard index</td>
+</tr>
+<tr class="odd">
+<td><code>"custom"</code></td>
+<td>whatever you decide it should</td>
+<td>a numeric vector passed to <code>weights</code>
+</td>
+<td>the values you pass</td>
+</tr>
+</tbody>
+</table>
+<p>Whichever you pick, the weights are rescaled to average one, so the
+combined statistics stay on the scale they would have had unweighted and
+a threshold carries across runs.</p>
+<p>A few extra details:</p>
+<ul>
+<li>
+<code>"equal"</code> is the default and the reproducible choice.
+Nothing about the data steers the result, which is what you want unless
+you have a reason to think one replicate deserves less say than
+another.</li>
+<li>
+<code>"frip"</code> is the one to reach for when the alignments, or
+the numbers someone once computed from them, still exist. It measures
+the thing you care about: how much of the sequencing landed in
+peaks.</li>
+<li>
+<code>"librarySize"</code> counts depth twice to some extent,
+because peak-caller p-values already respond to it. Prefer
+<code>"frip"</code> when both are at hand.</li>
+<li>
+<code>"intrinsic"</code> is circular. It scores a replicate on the
+agreement that the consensus then goes on to test, so strong agreement
+earns a large weight which in turn makes the agreement look stronger. It
+is there for the case where all that survives is a folder of BED files,
+not as an alternative to FRiP.</li>
+<li>There is no <code>"drop"</code>. Removing a bad replicate is
+something you do before <code><a href="../reference/readPeakSets.html">readPeakSets()</a></code> ever sees it, and
+weighting exists so that you usually do not have to.</li>
+</ul>
+<p><br></p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="choosing_combination">
-<strong>Choosing the combination</strong><a class="anchor" aria-label="anchor" href="#choosing_combination"></a>
+<strong>Choosing the combination method</strong><a class="anchor" aria-label="anchor" href="#choosing_combination"></a>
 </h2>
 <table class="table">
 <colgroup>
@@ -421,15 +513,19 @@ attainable combined p-value is around <code>1e-4</code>, and asking for
 <code>1e-8</code> would return nothing at all.
 <code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> checks for this and refuses rather than
 handing back an empty result:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">buildConsensus</span>(peaks, <span class="at">combinationMethod =</span> <span class="st">"rankProduct"</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">1</span>m [<span class="dv">33</span>mError [<span class="dv">39</span>m <span class="cf">in</span> <span class="st">`</span><span class="at">buildConsensus()</span><span class="st">`</span><span class="sc">:</span> [<span class="dv">22</span>m</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">33</span>m<span class="sc">!</span> [<span class="dv">39</span>m the rank product cannot reach a combined p<span class="sc">-</span>value of <span class="fl">1e-08</span> with these peak sets<span class="sc">:</span> the smallest attainable is <span class="fl">7.07e-05</span>, because the statistic is bounded by the number of peaks per replicate. Lower <span class="st">'combinedThreshold'</span>, or let <span class="fu">calibrateThreshold</span>() choose one</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>               <span class="at">combinationMethod =</span> <span class="st">"rankProduct"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>               <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">1</span>m [<span class="dv">33</span>mError [<span class="dv">39</span>m <span class="cf">in</span> <span class="st">`</span><span class="at">buildConsensus()</span><span class="st">`</span><span class="sc">:</span> [<span class="dv">22</span>m</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="sc">&gt;</span>  [<span class="dv">33</span>m<span class="sc">!</span> [<span class="dv">39</span>m the rank product cannot reach a combined p<span class="sc">-</span>value of <span class="fl">1e-08</span> with these peak sets<span class="sc">:</span> the smallest attainable is <span class="fl">7.07e-05</span>, because the statistic is bounded by the number of peaks per replicate. Lower <span class="st">'combinedThreshold'</span>, or let <span class="fu">calibrateThreshold</span>() choose one</span></code></pre></div>
 <p>Give it a threshold on its own scale, or let the calibration below
 pick one:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>ranked <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">combinationMethod =</span> <span class="st">"rankProduct"</span>,</span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>                         <span class="at">combinedThreshold =</span> <span class="fl">0.05</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="fu">length</span>(ranked)</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">0</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>ranked <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>                         <span class="at">combinationMethod =</span> <span class="st">"rankProduct"</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>                         <span class="at">combinedThreshold =</span> <span class="fl">0.05</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>                         <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="fu">length</span>(ranked)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">0</span></span></code></pre></div>
 <p>Nothing survives, and the reason is the size of the example rather
 than any weakness in the method. With only a few hundred peaks per
 replicate the finest relative rank available is about 1/430, which is
@@ -437,11 +533,13 @@ not a small number, so no peak accumulates much evidence however well it
 ranks. What little it does accumulate is then spent on the multiple
 testing correction described in the next section. Relax that correction
 to the one MSPC uses and the peaks reappear:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>relaxed <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">combinationMethod =</span> <span class="st">"rankProduct"</span>,</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>                          <span class="at">combinedThreshold =</span> <span class="fl">0.05</span>,</span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>                          <span class="at">adjustmentFamily =</span> <span class="st">"confirmed"</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="fu">length</span>(relaxed)</span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">38</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>relaxed <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>                          <span class="at">combinationMethod =</span> <span class="st">"rankProduct"</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>                          <span class="at">combinedThreshold =</span> <span class="fl">0.05</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>                          <span class="at">adjustmentFamily =</span> <span class="st">"confirmed"</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>                          <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="fu">length</span>(relaxed)</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">38</span></span></code></pre></div>
 <p>On a real peak set of 10^5 calls the ranks are three orders of
 magnitude finer and the rank product survives the stricter correction
 comfortably. Judge it on your own data, not here.</p>
@@ -459,17 +557,21 @@ actually works with. <code>minReplicates</code> counts all of them
 including the one the peak came from, which is how the requirement is
 usually spoken about, and it matches MSPC’s <code>-c</code>. Give one or
 the other, never both.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">c</span>(<span class="at">byTotal =</span> <span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks, <span class="at">minReplicates =</span> <span class="dv">3</span>,</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>                                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)),</span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">bySupport =</span> <span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks, <span class="at">minSupport =</span> <span class="dv">2</span>,</span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>                                    <span class="at">verbose =</span> <span class="cn">FALSE</span>)))</span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="sc">&gt;</span>   byTotal bySupport </span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="sc">&gt;</span>       <span class="dv">292</span>       <span class="dv">292</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">c</span>(<span class="at">byTotal =</span> <span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>                                  <span class="at">minReplicates =</span> <span class="dv">3</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>                                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)),</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">bySupport =</span> <span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>                                    <span class="at">minSupport =</span> <span class="dv">2</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>                                    <span class="at">verbose =</span> <span class="cn">FALSE</span>)))</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="sc">&gt;</span>   byTotal bySupport </span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="sc">&gt;</span>       <span class="dv">292</span>       <span class="dv">292</span></span></code></pre></div>
 <p><code>minReplicates</code> also takes a proportion or a percentage,
 rounded up, so the requirement can be written the way it is usually
 described:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks, <span class="at">minReplicates =</span> <span class="st">"60%"</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>))</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">292</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">length</span>(<span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>                      <span class="at">minReplicates =</span> <span class="st">"60%"</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>                      <span class="at">verbose =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">292</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th>Requirement</th>
@@ -532,12 +634,14 @@ resulting values can be optimistic.
 <code>adjustmentFamily = "tested"</code>, the default here, instead
 corrects across every peak that entered the analysis.</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>tested <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>mspcStyle <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks, <span class="at">adjustmentFamily =</span> <span class="st">"confirmed"</span>,</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>                            <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a></span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="fu">c</span>(<span class="at">tested =</span> <span class="fu">length</span>(tested), <span class="at">confirmed =</span> <span class="fu">length</span>(mspcStyle))</span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="sc">&gt;</span>    tested confirmed </span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="sc">&gt;</span>       <span class="dv">292</span>       <span class="dv">292</span></span></code></pre></div>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a>mspcStyle <span class="ot">&lt;-</span> <span class="fu">buildConsensus</span>(peaks,</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>                            <span class="at">adjustmentFamily =</span> <span class="st">"confirmed"</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>                            <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="fu">c</span>(<span class="at">tested =</span> <span class="fu">length</span>(tested), <span class="at">confirmed =</span> <span class="fu">length</span>(mspcStyle))</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="sc">&gt;</span>    tested confirmed </span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="sc">&gt;</span>       <span class="dv">292</span>       <span class="dv">292</span></span></code></pre></div>
 <p>On this data the two agree, and that is the normal case: when the
 combined evidence is strong the correction is a rounding error against
 it. The choice only bites where the evidence was marginal, which is
@@ -567,11 +671,13 @@ the combination on those gives a null, and the threshold is read off
 where the expected number of null peaks falls to a chosen fraction of
 the observed count.</p>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> <span class="fu">calibrateThreshold</span>(peaks, <span class="at">nPermutations =</span> <span class="dv">10</span>,</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>                                  <span class="at">targetFDR =</span> <span class="fl">0.05</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a></span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>calibration<span class="sc">$</span>threshold</span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="fl">4.242908e-11</span></span></code></pre></div>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>calibration <span class="ot">&lt;-</span> <span class="fu">calibrateThreshold</span>(peaks,</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>                                  <span class="at">nPermutations =</span> <span class="dv">10</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>                                  <span class="at">targetFDR =</span> <span class="fl">0.05</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>                                  <span class="at">verbose =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>calibration<span class="sc">$</span>threshold</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="fl">4.242908e-11</span></span></code></pre></div>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotCalibration.html">plotCalibration</a></span><span class="op">(</span><span class="va">calibration</span><span class="op">)</span></span></code></pre></div>
 <p><img src="consensusRegions.vignette_files/figure-html/plotCalibration-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
@@ -598,7 +704,8 @@ reproducible: the workers draw from their own random streams, so
 travel with the backend instead.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">calibration</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calibrateThreshold.html">calibrateThreshold</a></span><span class="op">(</span></span>
-<span>    <span class="va">peaks</span>, nPermutations <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>    <span class="va">peaks</span>,</span>
+<span>    nPermutations <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>    BPPARAM <span class="op">=</span> <span class="fu">BiocParallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/BiocParallel/man/MulticoreParam-class.html" class="external-link">MulticoreParam</a></span><span class="op">(</span>workers <span class="op">=</span> <span class="fl">8</span>, RNGseed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>The default is a single core, so that <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> behaves
 as described above unless you ask for more.</p>

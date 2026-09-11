@@ -38,6 +38,13 @@ column.
 
   recovers summits and returns fixed-width regions.
 
+## Provenance
+
+A substantial part of the code in this package was written with AI
+assistance (Assisted-by: Claude, Anthropic). The methods, design and
+validation are the author's, who maintains the package and is
+responsible for its correctness.
+
 ## References
 
 Jalili V., Matteucci M., Masseroli M., Morelli M.J. (2015). Using

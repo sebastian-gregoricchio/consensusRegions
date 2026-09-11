@@ -176,16 +176,17 @@ the mismatch than have it quietly repaired.
 
 ### Call peaks permissively
 
-This is the mistake that ruins the whole exercise, so it is worth saying
-plainly. If you call peaks at `q < 0.05` and run the consensus on what
-survives, there is nothing left to rescue and you have written an
-intersection with extra steps. Call at something like `p < 1e-3` and let
+This is a critical issue that can substantially affect the validity of
+the entire analyses. If you call peaks at `q < 0.05` and run the
+consensus on what survives, there is nothing left to rescue and you have
+written an intersection with extra steps. Call at something like
+`p < 0.001` and let
 [`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md)
 do the thresholding. The two-tier design assumes exactly this.
 
   
 
-## **A first run**
+## **Quick start**
 
 ``` r
 result <- buildConsensus(peaks, verbose = FALSE)
@@ -273,7 +274,8 @@ More often the alignments are long gone and only the numbers survive in
 an old QC report. Pass them in:
 
 ``` r
-weights <- computeReplicateWeights(peaks, method = "frip",
+weights <- computeReplicateWeights(peaks,
+                                   method = "frip",
                                    frip = c(0.21, 0.19, 0.06),
                                    verbose = FALSE)
 weights
@@ -292,7 +294,9 @@ And when there is nothing but the peaks themselves, each replicate can
 be scored by how well it agrees with the others:
 
 ``` r
-computeReplicateWeights(peaks, method = "intrinsic", verbose = FALSE)
+computeReplicateWeights(peaks,
+                        method = "intrinsic",
+                        verbose = FALSE)
 >      rep1      rep2      rep3 
 > 0.9925346 1.0069021 1.0005633 
 > attr(,"metrics")
@@ -312,7 +316,8 @@ Weights only reach the combination through Stouffer’s Z or Lancaster’s
 method. Fisher and the rank product ignore them.
 
 ``` r
-weighted <- buildConsensus(peaks, weights = weights,
+weighted <- buildConsensus(peaks,
+                           weights = weights,
                            combinationMethod = "stouffer",
                            verbose = FALSE)
 consensusStats(weighted)
@@ -335,7 +340,46 @@ plotJaccard(weighted)
 
   
 
-## **Choosing the combination**
+### Which weighting method to use
+
+The five settings differ in what they score a replicate on, and in what
+they cost you to obtain.
+
+| `method` | Scores each replicate by | Needs | Weight proportional to |
+|----|----|----|----|
+| `"equal"` | nothing, all count the same | nothing | `1` throughout |
+| `"frip"` | signal against background | `bamFiles`, or `frip` from an old QC report | the fraction itself |
+| `"librarySize"` | sequencing depth | `bamFiles`, or `librarySize` | the square root of the depth |
+| `"intrinsic"` | agreement with the other replicates | the peak sets alone | the mean pairwise Jaccard index |
+| `"custom"` | whatever you decide it should | a numeric vector passed to `weights` | the values you pass |
+
+Whichever you pick, the weights are rescaled to average one, so the
+combined statistics stay on the scale they would have had unweighted and
+a threshold carries across runs.
+
+A few extra details:
+
+- `"equal"` is the default and the reproducible choice. Nothing about
+  the data steers the result, which is what you want unless you have a
+  reason to think one replicate deserves less say than another.
+- `"frip"` is the one to reach for when the alignments, or the numbers
+  someone once computed from them, still exist. It measures the thing
+  you care about: how much of the sequencing landed in peaks.
+- `"librarySize"` counts depth twice to some extent, because peak-caller
+  p-values already respond to it. Prefer `"frip"` when both are at hand.
+- `"intrinsic"` is circular. It scores a replicate on the agreement that
+  the consensus then goes on to test, so strong agreement earns a large
+  weight which in turn makes the agreement look stronger. It is there
+  for the case where all that survives is a folder of BED files, not as
+  an alternative to FRiP.
+- There is no `"drop"`. Removing a bad replicate is something you do
+  before
+  [`readPeakSets()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/readPeakSets.md)
+  ever sees it, and weighting exists so that you usually do not have to.
+
+  
+
+## **Choosing the combination method**
 
 | Method | Weights | Use it when |
 |----|----|----|
@@ -363,7 +407,9 @@ would return nothing at all.
 checks for this and refuses rather than handing back an empty result:
 
 ``` r
-buildConsensus(peaks, combinationMethod = "rankProduct", verbose = FALSE)
+buildConsensus(peaks,
+               combinationMethod = "rankProduct",
+               verbose = FALSE)
 >  [1m [33mError [39m in `buildConsensus()`: [22m
 >  [33m! [39m the rank product cannot reach a combined p-value of 1e-08 with these peak sets: the smallest attainable is 7.07e-05, because the statistic is bounded by the number of peaks per replicate. Lower 'combinedThreshold', or let calibrateThreshold() choose one
 ```
@@ -372,8 +418,10 @@ Give it a threshold on its own scale, or let the calibration below pick
 one:
 
 ``` r
-ranked <- buildConsensus(peaks, combinationMethod = "rankProduct",
-                         combinedThreshold = 0.05, verbose = FALSE)
+ranked <- buildConsensus(peaks,
+                         combinationMethod = "rankProduct",
+                         combinedThreshold = 0.05,
+                         verbose = FALSE)
 length(ranked)
 > [1] 0
 ```
@@ -387,9 +435,11 @@ correction described in the next section. Relax that correction to the
 one MSPC uses and the peaks reappear:
 
 ``` r
-relaxed <- buildConsensus(peaks, combinationMethod = "rankProduct",
+relaxed <- buildConsensus(peaks,
+                          combinationMethod = "rankProduct",
                           combinedThreshold = 0.05,
-                          adjustmentFamily = "confirmed", verbose = FALSE)
+                          adjustmentFamily = "confirmed",
+                          verbose = FALSE)
 length(relaxed)
 > [1] 38
 ```
@@ -412,9 +462,11 @@ which is how the requirement is usually spoken about, and it matches
 MSPC’s `-c`. Give one or the other, never both.
 
 ``` r
-c(byTotal = length(buildConsensus(peaks, minReplicates = 3,
+c(byTotal = length(buildConsensus(peaks,
+                                  minReplicates = 3,
                                   verbose = FALSE)),
-  bySupport = length(buildConsensus(peaks, minSupport = 2,
+  bySupport = length(buildConsensus(peaks,
+                                    minSupport = 2,
                                     verbose = FALSE)))
 >   byTotal bySupport 
 >       292       292
@@ -424,7 +476,9 @@ c(byTotal = length(buildConsensus(peaks, minReplicates = 3,
 the requirement can be written the way it is usually described:
 
 ``` r
-length(buildConsensus(peaks, minReplicates = "60%", verbose = FALSE))
+length(buildConsensus(peaks,
+                      minReplicates = "60%",
+                      verbose = FALSE))
 > [1] 292
 ```
 
@@ -460,7 +514,9 @@ corrects across every peak that entered the analysis.
 
 ``` r
 tested <- buildConsensus(peaks, verbose = FALSE)
-mspcStyle <- buildConsensus(peaks, adjustmentFamily = "confirmed",
+
+mspcStyle <- buildConsensus(peaks,
+                            adjustmentFamily = "confirmed",
                             verbose = FALSE)
 
 c(tested = length(tested), confirmed = length(mspcStyle))
@@ -500,8 +556,10 @@ null peaks falls to a chosen fraction of the observed count.
 
 ``` r
 set.seed(42)
-calibration <- calibrateThreshold(peaks, nPermutations = 10,
-                                  targetFDR = 0.05, verbose = FALSE)
+calibration <- calibrateThreshold(peaks,
+                                  nPermutations = 10,
+                                  targetFDR = 0.05,
+                                  verbose = FALSE)
 
 calibration$threshold
 > [1] 4.242908e-11
@@ -548,7 +606,8 @@ result and the seed has to travel with the backend instead.
 ``` r
 
 calibration <- calibrateThreshold(
-    peaks, nPermutations = 50,
+    peaks,
+    nPermutations = 50,
     BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
 ```
 
