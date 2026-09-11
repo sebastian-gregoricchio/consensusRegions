@@ -75,7 +75,7 @@ Default: \code{1}.}
 }
 \value{
 A [ConsensusRegions-class] object. When `recentre = TRUE` the
-  consensus it carries is the fixed-width version.
+consensus it carries is the fixed-width version.
 }
 \description{
 Chains the steps that a consensus analysis almost always performs in
@@ -91,32 +91,34 @@ across experiments.
 }
 \examples{
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
+    c("rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"),
+    package = "consensusRegions")
 
 result <- runConsensus(peakFiles,
-                       sampleNames = c("r1", "r2", "r3"),
-                       minReplicates = 2,
-                       verbose = FALSE)
+    sampleNames = c("r1", "r2", "r3"),
+    minReplicates = 2,
+    verbose = FALSE)
 result
 
-## the same with measured weights and a calibrated threshold
-\donttest{
+## the same with measured weights and a calibrated threshold. Five
+## permutations are enough to show the shape of it; fifty is the
+## working number, and the positions are drawn at random, so the seed
+## is what brings the same threshold back.
 set.seed(42)
 calibrated <- runConsensus(peakFiles,
-                           sampleNames = c("r1", "r2", "r3"),
-                           weightMethod = "frip",
-                           frip = c(0.21, 0.19, 0.06),
-                           calibrate = TRUE,
-                           nPermutations = 10,
-                           verbose = FALSE)
-}
+    sampleNames = c("r1", "r2", "r3"),
+    weightMethod = "frip",
+    frip = c(0.21, 0.19, 0.06),
+    calibrate = TRUE,
+    nPermutations = 5,
+    verbose = FALSE)
+calibrated
 
 }
 \seealso{
 [readPeakSets()], [computeReplicateWeights()],
-  [calibrateThreshold()], [buildConsensus()], [recentrePeaks()]
+[calibrateThreshold()], [buildConsensus()], [recentrePeaks()]
 }
 \author{
 Sebastian Gregoricchio

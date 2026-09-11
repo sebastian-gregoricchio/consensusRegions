@@ -1,22 +1,24 @@
 ---
 title: "Consensus regions across replicated experiments"
 author:
-- name: "Sebastian Gregoricchio, Ph.D."
-  affiliation:
-    - "Netherlands Cancer Institute, Oncogenomics division, Amsterdam - Netherlands"
-  email: 's.gregoricchio@nki.nl'
+    -   name: "Sebastian Gregoricchio, Ph.D."
+        affiliation:
+            -   >-
+                Netherlands Cancer Institute, Oncogenomics division,
+                Amsterdam - Netherlands
+        email: 's.gregoricchio@nki.nl'
 date: "Last update: `r format(Sys.time(), '%d<sup>th</sup> %B, %Y')`"
 output:
-  BiocStyle::html_document:
-    toc: true
-    toc_float: true
-    toc_depth: 3
-    number_sections: true
-    fig_caption: true
+    BiocStyle::html_document:
+        toc: true
+        toc_float: true
+        toc_depth: 3
+        number_sections: true
+        fig_caption: true
 vignette: >
-  %\VignetteIndexEntry{consensusRegions: consensus regions across replicated experiments}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{Consensus regions across replicated experiments}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
 ---
 
 <style>
@@ -26,8 +28,8 @@ text-align: justify}
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = ">",
-                      warning = FALSE, message = FALSE, fig.align = "center",
-                      dev = "png", dpi = 96, fig.width = 7, fig.height = 4.5)
+    warning = FALSE, message = FALSE, fig.align = "center",
+    dev = "png", dpi = 96, fig.width = 7, fig.height = 4.5)
 ```
 
 
@@ -65,10 +67,10 @@ deliberately shallow third sample.
 
 ```{r read}
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak",
-                           "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
+    c("rep1.narrowPeak",
+        "rep2.narrowPeak",
+        "rep3.narrowPeak"),
+    package = "consensusRegions")
 
 peaks <- readPeakSets(peakFiles, sampleNames = c("rep1", "rep2", "rep3"))
 peaks
@@ -98,7 +100,7 @@ withoutChr <- GenomicRanges::GRanges(
     "1", IRanges::IRanges(start = c(1100, 20100), width = 500))
 
 mixed <- readPeakSets(list(a = withChr, b = withoutChr),
-                      seqlevelsStyle = "UCSC")
+    seqlevelsStyle = "UCSC")
 GenomeInfoDb::seqlevels(mixed[["b"]])
 ```
 
@@ -110,11 +112,12 @@ the mismatch than have it quietly repaired.
 <br>
 
 ## Call peaks permissively
-This is a critical issue that can substantially affect the validity of the entire analyses.
-If you call peaks at `q < 0.05` and run the consensus on what
-survives, there is nothing left to rescue and you have written an
-intersection with extra steps. Call at something like `p < 0.001` and let
-`buildConsensus()` do the thresholding. The two-tier design assumes exactly this.
+This is a critical issue that can substantially affect the validity of
+the entire analysis. If you call peaks at `q < 0.05` and run the
+consensus on what survives, there is nothing left to rescue and you have
+written an intersection with extra steps. Call at something like
+`p < 0.001` and let `buildConsensus()` do the thresholding. The two-tier
+design assumes exactly this.
 
 <br>
 
@@ -176,9 +179,9 @@ an old QC report. Pass them in:
 
 ```{r weightsFrip}
 weights <- computeReplicateWeights(peaks,
-                                   method = "frip",
-                                   frip = c(0.21, 0.19, 0.06),
-                                   verbose = FALSE)
+    method = "frip",
+    frip = c(0.21, 0.19, 0.06),
+    verbose = FALSE)
 weights
 ```
 
@@ -187,8 +190,8 @@ scored by how well it agrees with the others:
 
 ```{r weightsIntrinsic}
 computeReplicateWeights(peaks,
-                        method = "intrinsic",
-                        verbose = FALSE)
+    method = "intrinsic",
+    verbose = FALSE)
 ```
 
 That last measure is circular, since agreement is also what the
@@ -200,9 +203,9 @@ method. Fisher and the rank product ignore them.
 
 ```{r weighted}
 weighted <- buildConsensus(peaks,
-                           weights = weights,
-                           combinationMethod = "stouffer",
-                           verbose = FALSE)
+    weights = weights,
+    combinationMethod = "stouffer",
+    verbose = FALSE)
 consensusStats(weighted)
 ```
 
@@ -216,13 +219,17 @@ plotJaccard(weighted)
 The five settings differ in what they score a replicate on, and in what
 they cost you to obtain.
 
-| `method`        | Scores each replicate by            | Needs                                       | Weight proportional to          |
-|-----------------|-------------------------------------|---------------------------------------------|---------------------------------|
-| `"equal"`       | nothing, all count the same         | nothing                                     | `1` throughout                  |
-| `"frip"`        | signal against background           | `bamFiles`, or `frip` from an old QC report | the fraction itself             |
-| `"librarySize"` | sequencing depth                    | `bamFiles`, or `librarySize`                | the square root of the depth    |
-| `"intrinsic"`   | agreement with the other replicates | the peak sets alone                         | the mean pairwise Jaccard index |
-| `"custom"`      | whatever you decide it should       | a numeric vector passed to `weights`        | the values you pass             |
+| `method`        | Scored on | Needs                    | Weight is      |
+|-----------------|-----------|--------------------------|----------------|
+| `"equal"`       | nothing   | nothing                  | `1` throughout |
+| `"frip"`        | signal    | `bamFiles` or `frip`     | the fraction   |
+| `"librarySize"` | depth     | `bamFiles`/`librarySize` | sqrt of depth  |
+| `"intrinsic"`   | agreement | the peak sets alone      | mean Jaccard   |
+| `"custom"`      | your call | a numeric vector         | what you pass  |
+
+`"frip"` takes the fraction straight from an old QC report when the
+alignments are gone, and `"intrinsic"` scores a replicate on its mean
+pairwise Jaccard index with the others.
 
 Whichever you pick, the weights are rescaled to average one, so the
 combined statistics stay on the scale they would have had unweighted and
@@ -230,22 +237,22 @@ a threshold carries across runs.
 
 A few extra details:
 
-* `"equal"` is the default and the reproducible choice. Nothing about the
-  data steers the result, which is what you want unless you have a reason
-  to think one replicate deserves less say than another.
-* `"frip"` is the one to reach for when the alignments, or the numbers
-  someone once computed from them, still exist. It measures the thing you
-  care about: how much of the sequencing landed in peaks.
-* `"librarySize"` counts depth twice to some extent, because peak-caller
-  p-values already respond to it. Prefer `"frip"` when both are at hand.
-* `"intrinsic"` is circular. It scores a replicate on the agreement that
-  the consensus then goes on to test, so strong agreement earns a large
-  weight which in turn makes the agreement look stronger. It is there for
-  the case where all that survives is a folder of BED files, not as an
-  alternative to FRiP.
-* There is no `"drop"`. Removing a bad replicate is something you do
-  before `readPeakSets()` ever sees it, and weighting exists so that you
-  usually do not have to.
+*   `"equal"` is the default and the reproducible choice. Nothing about the
+    data steers the result, which is what you want unless you have a reason
+    to think one replicate deserves less say than another.
+*   `"frip"` is the one to reach for when the alignments, or the numbers
+    someone once computed from them, still exist. It measures the thing you
+    care about: how much of the sequencing landed in peaks.
+*   `"librarySize"` counts depth twice to some extent, because peak-caller
+    p-values already respond to it. Prefer `"frip"` when both are at hand.
+*   `"intrinsic"` is circular. It scores a replicate on the agreement that
+    the consensus then goes on to test, so strong agreement earns a large
+    weight which in turn makes the agreement look stronger. It is there for
+    the case where all that survives is a folder of BED files, not as an
+    alternative to FRiP.
+*   There is no `"drop"`. Removing a bad replicate is something you do
+    before `readPeakSets()` ever sees it, and weighting exists so that you
+    usually do not have to.
 
 <br>
 
@@ -255,12 +262,12 @@ A few extra details:
 
 # **Choosing the combination method** {#choosing_combination}
 
-| Method        | Weights | Use it when                                                |
-|---------------|---------|------------------------------------------------------------|
-| `fisher`      | no      | Reproducing MSPC, or replicates really are comparable      |
-| `stouffer`    | yes     | Default. Replicate quality varies                          |
-| `lancaster`   | yes     | Weights wanted, Fisher-like sensitivity to one strong peak |
-| `rankProduct` | no      | Only scores available, or p-values you do not trust        |
+| Method        | Weights | Use it when                                     |
+|---------------|---------|-------------------------------------------------|
+| `fisher`      | no      | Reproducing MSPC, or replicates are comparable  |
+| `stouffer`    | yes     | Default. Replicate quality varies               |
+| `lancaster`   | yes     | Weights, with Fisher's pull from one strong peak |
+| `rankProduct` | no      | Only scores, or p-values you do not trust       |
 
 One caveat about Fisher that matters more than it usually gets credit
 for: the combined statistic keeps accumulating as replicates are added.
@@ -281,8 +288,8 @@ refuses rather than handing back an empty result:
 
 ```{r rankProductScale, error = TRUE}
 buildConsensus(peaks,
-               combinationMethod = "rankProduct",
-               verbose = FALSE)
+    combinationMethod = "rankProduct",
+    verbose = FALSE)
 ```
 
 Give it a threshold on its own scale, or let the calibration below pick
@@ -290,9 +297,9 @@ one:
 
 ```{r rankProductWorking}
 ranked <- buildConsensus(peaks,
-                         combinationMethod = "rankProduct",
-                         combinedThreshold = 0.05,
-                         verbose = FALSE)
+    combinationMethod = "rankProduct",
+    combinedThreshold = 0.05,
+    verbose = FALSE)
 length(ranked)
 ```
 
@@ -306,10 +313,10 @@ one MSPC uses and the peaks reappear:
 
 ```{r rankProductRelaxed}
 relaxed <- buildConsensus(peaks,
-                          combinationMethod = "rankProduct",
-                          combinedThreshold = 0.05,
-                          adjustmentFamily = "confirmed",
-                          verbose = FALSE)
+    combinationMethod = "rankProduct",
+    combinedThreshold = 0.05,
+    adjustmentFamily = "confirmed",
+    verbose = FALSE)
 length(relaxed)
 ```
 
@@ -333,11 +340,11 @@ MSPC's `-c`. Give one or the other, never both.
 
 ```{r minReplicates}
 c(byTotal = length(buildConsensus(peaks,
-                                  minReplicates = 3,
-                                  verbose = FALSE)),
-  bySupport = length(buildConsensus(peaks,
-                                    minSupport = 2,
-                                    verbose = FALSE)))
+            minReplicates = 3,
+            verbose = FALSE)),
+    bySupport = length(buildConsensus(peaks,
+            minSupport = 2,
+            verbose = FALSE)))
 ```
 
 `minReplicates` also takes a proportion or a percentage, rounded up, so
@@ -345,8 +352,8 @@ the requirement can be written the way it is usually described:
 
 ```{r minReplicatesPercent}
 length(buildConsensus(peaks,
-                      minReplicates = "60%",
-                      verbose = FALSE))
+        minReplicates = "60%",
+        verbose = FALSE))
 ```
 
 | Requirement | MSPC     | `minReplicates`   | `minSupport` |
@@ -382,8 +389,8 @@ corrects across every peak that entered the analysis.
 tested <- buildConsensus(peaks, verbose = FALSE)
 
 mspcStyle <- buildConsensus(peaks,
-                            adjustmentFamily = "confirmed",
-                            verbose = FALSE)
+    adjustmentFamily = "confirmed",
+    verbose = FALSE)
 
 c(tested = length(tested), confirmed = length(mspcStyle))
 ```
@@ -421,9 +428,9 @@ number of null peaks falls to a chosen fraction of the observed count.
 ```{r calibrate}
 set.seed(42)
 calibration <- calibrateThreshold(peaks,
-                                  nPermutations = 10,
-                                  targetFDR = 0.05,
-                                  verbose = FALSE)
+    nPermutations = 10,
+    targetFDR = 0.05,
+    verbose = FALSE)
 
 calibration$threshold
 ```
@@ -434,8 +441,8 @@ plotCalibration(calibration)
 
 ```{r calibrated}
 calibrated <- buildConsensus(peaks,
-                             combinedThreshold = calibration$threshold,
-                             verbose = FALSE)
+    combinedThreshold = calibration$threshold,
+    verbose = FALSE)
 length(calibrated)
 ```
 
@@ -487,10 +494,10 @@ that is the familiar k-of-n rule.
 
 ```{r bed3}
 minimalFile <- system.file("extdata", "rep1_minimal.bed",
-                           package = "consensusRegions")
+    package = "consensusRegions")
 
 minimal <- readPeakSets(rep(minimalFile, 3),
-                        sampleNames = c("a", "b", "c"))
+    sampleNames = c("a", "b", "c"))
 
 minimalResult <- buildConsensus(minimal, verbose = FALSE)
 analysisParameters(minimalResult)$presenceOnly
@@ -517,7 +524,7 @@ repeating, which is the approach the ATAC-seq peak atlases use.
 
 ```{r merge}
 seeded <- buildConsensus(peaks, mergeMethod = "iterative",
-                         verbose = FALSE)
+    verbose = FALSE)
 
 summary(GenomicRanges::width(consensusRanges(result)))
 summary(GenomicRanges::width(consensusRanges(seeded)))
@@ -603,9 +610,9 @@ recentre, optionally write out.
 
 ```{r wrapper}
 result <- runConsensus(peakFiles,
-                       sampleNames = c("rep1", "rep2", "rep3"),
-                       minReplicates = 2,
-                       verbose = FALSE)
+    sampleNames = c("rep1", "rep2", "rep3"),
+    minReplicates = 2,
+    verbose = FALSE)
 length(result)
 ```
 
@@ -615,17 +622,17 @@ Anything it does not name itself is passed through to
 
 ```{r wrapperOptions, eval = FALSE}
 result <- runConsensus(peakFiles,
-                       sampleNames = c("rep1", "rep2", "rep3"),
-                       weightMethod = "frip",
-                       bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
-                       calibrate = TRUE,
-                       nPermutations = 50,
-                       combinationMethod = "stouffer",
-                       minReplicates = "75%",
-                       recentre = TRUE, width = 400,
-                       excludeRegions = blacklist,
-                       outputFile = "consensus.bed",
-                       BPPARAM = 8)
+    sampleNames = c("rep1", "rep2", "rep3"),
+    weightMethod = "frip",
+    bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
+    calibrate = TRUE,
+    nPermutations = 50,
+    combinationMethod = "stouffer",
+    minReplicates = "75%",
+    recentre = TRUE, width = 400,
+    excludeRegions = blacklist,
+    outputFile = "consensus.bed",
+    BPPARAM = 8)
 ```
 
 Use the individual functions when a step needs looking at before the next

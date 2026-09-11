@@ -49,38 +49,40 @@
 #'   `combinationMethod`, `minReplicates` or `mergeMethod`.
 #'
 #' @return A [ConsensusRegions-class] object. When `recentre = TRUE` the
-#'   consensus it carries is the fixed-width version.
+#' consensus it carries is the fixed-width version.
 #'
 #' @author Sebastian Gregoricchio
 #'
 #' @seealso [readPeakSets()], [computeReplicateWeights()],
-#'   [calibrateThreshold()], [buildConsensus()], [recentrePeaks()]
+#' [calibrateThreshold()], [buildConsensus()], [recentrePeaks()]
 #'
 #' @importFrom methods slot slot<-
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
+#'     c("rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"),
+#'     package = "consensusRegions")
 #'
 #' result <- runConsensus(peakFiles,
-#'                        sampleNames = c("r1", "r2", "r3"),
-#'                        minReplicates = 2,
-#'                        verbose = FALSE)
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     minReplicates = 2,
+#'     verbose = FALSE)
 #' result
 #'
-#' ## the same with measured weights and a calibrated threshold
-#' \donttest{
+#' ## the same with measured weights and a calibrated threshold. Five
+#' ## permutations are enough to show the shape of it; fifty is the
+#' ## working number, and the positions are drawn at random, so the seed
+#' ## is what brings the same threshold back.
 #' set.seed(42)
 #' calibrated <- runConsensus(peakFiles,
-#'                            sampleNames = c("r1", "r2", "r3"),
-#'                            weightMethod = "frip",
-#'                            frip = c(0.21, 0.19, 0.06),
-#'                            calibrate = TRUE,
-#'                            nPermutations = 10,
-#'                            verbose = FALSE)
-#' }
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     weightMethod = "frip",
+#'     frip = c(0.21, 0.19, 0.06),
+#'     calibrate = TRUE,
+#'     nPermutations = 5,
+#'     verbose = FALSE)
+#' calibrated
 #'
 #' @export
 runConsensus <- function(peaks,
@@ -101,60 +103,60 @@ runConsensus <- function(peaks,
                          BPPARAM = 1,
                          verbose = TRUE,
                          ...) {
-    weightMethod <- match.arg(weightMethod)
+  weightMethod <- match.arg(weightMethod)
 
-    ## ---- read ---------------------------------------------------------
-    .messageIf(verbose, "1/", if (isTRUE(calibrate)) "4" else "3",
-               " Reading peaks")
-    peakList <- readPeakSets(peaks,
-                             sampleNames = sampleNames,
-                             seqlevelsStyle = seqlevelsStyle,
-                             verbose = verbose)
+  ## ---- read ---------------------------------------------------------
+  .messageIf(verbose, "1/", if (isTRUE(calibrate)) "4" else "3",
+             " Reading peaks")
+  peakList <- readPeakSets(peaks,
+                           sampleNames = sampleNames,
+                           seqlevelsStyle = seqlevelsStyle,
+                           verbose = verbose)
 
-    ## ---- weights ------------------------------------------------------
-    .messageIf(verbose, "2/", if (isTRUE(calibrate)) "4" else "3",
-               " Deriving replicate weights (", weightMethod, ")")
-    weights <- computeReplicateWeights(peakList,
-                                       method = weightMethod,
-                                       bamFiles = bamFiles,
-                                       frip = frip,
-                                       librarySize = librarySize,
-                                       verbose = verbose)
+  ## ---- weights ------------------------------------------------------
+  .messageIf(verbose, "2/", if (isTRUE(calibrate)) "4" else "3",
+             " Deriving replicate weights (", weightMethod, ")")
+  weights <- computeReplicateWeights(peakList,
+                                     method = weightMethod,
+                                     bamFiles = bamFiles,
+                                     frip = frip,
+                                     librarySize = librarySize,
+                                     verbose = verbose)
 
-    ## ---- calibration --------------------------------------------------
-    calibration <- NULL
-    if (isTRUE(calibrate)) {
-        .messageIf(verbose, "3/4 Calibrating the combined threshold")
-        calibration <- calibrateThreshold(peakList,
-                                          weights = weights,
-                                          nPermutations = nPermutations,
-                                          targetFDR = targetFDR,
-                                          excludeRegions = excludeRegions,
-                                          BPPARAM = BPPARAM,
-                                          verbose = verbose)
-    }
+  ## ---- calibration --------------------------------------------------
+  calibration <- NULL
+  if (isTRUE(calibrate)) {
+    .messageIf(verbose, "3/4 Calibrating the combined threshold")
+    calibration <- calibrateThreshold(peakList,
+                                      weights = weights,
+                                      nPermutations = nPermutations,
+                                      targetFDR = targetFDR,
+                                      excludeRegions = excludeRegions,
+                                      BPPARAM = BPPARAM,
+                                      verbose = verbose)
+  }
 
-    ## ---- consensus ----------------------------------------------------
-    .messageIf(verbose, if (isTRUE(calibrate)) "4/4" else "3/3",
-               " Building the consensus")
-    result <- buildConsensus(peakList,
-                             weights = weights,
-                             calibration = calibration,
-                             excludeRegions = excludeRegions,
-                             verbose = verbose,
-                             ...)
+  ## ---- consensus ----------------------------------------------------
+  .messageIf(verbose, if (isTRUE(calibrate)) "4/4" else "3/3",
+             " Building the consensus")
+  result <- buildConsensus(peakList,
+                           weights = weights,
+                           calibration = calibration,
+                           excludeRegions = excludeRegions,
+                           verbose = verbose,
+                           ...)
 
-    ## ---- optional post-processing -------------------------------------
-    if (isTRUE(recentre)) {
-        .messageIf(verbose, "Recentring on summits at ", width, " bp")
-        methods::slot(result, "consensus") <- recentrePeaks(result,
-                                                            width = width)
-        result@parameters$recentred <- width
-    }
+  ## ---- optional post-processing -------------------------------------
+  if (isTRUE(recentre)) {
+    .messageIf(verbose, "Recentring on summits at ", width, " bp")
+    methods::slot(result, "consensus") <- recentrePeaks(result,
+                                                        width = width)
+    result@parameters$recentred <- width
+  }
 
-    if (!is.null(outputFile)) {
-        exportConsensus(result, file = outputFile, verbose = verbose)
-    }
+  if (!is.null(outputFile)) {
+    exportConsensus(result, file = outputFile, verbose = verbose)
+  }
 
-    result
+  result
 }
