@@ -31,6 +31,13 @@
 #'     regions.}
 #' }
 #'
+#'
+#' @section Provenance:
+#' A substantial part of the code in this package was written with AI
+#' assistance (Assisted-by: Claude, Anthropic). The methods, design and
+#' validation are the author's, who maintains the package and is
+#' responsible for its correctness.
+#'
 #' @author Sebastian Gregoricchio
 #'
 #' @references
