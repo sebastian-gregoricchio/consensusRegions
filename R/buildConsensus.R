@@ -657,7 +657,7 @@ buildConsensus <- function(peakList,
 #'
 #' @author Sebastian Gregoricchio
 #'
-#' @importFrom dplyr filter group_by slice_max slice_min ungroup summarise
+#' @importFrom dplyr filter arrange desc distinct
 #'   tibble bind_rows left_join select mutate n_distinct
 #' @importFrom S4Vectors mcols
 #' @importFrom rlang .data
@@ -697,28 +697,34 @@ buildConsensus <- function(peakList,
             dplyr::distinct(currentOverlaps, .data$queryHits,
                             .data$subjectReplicate, .keep_all = TRUE)
         } else {
-            grouped <- dplyr::group_by(currentOverlaps, .data$queryHits,
-                                       .data$subjectReplicate)
-            picked <- if (multipleIntersections == "lowest") {
-                dplyr::slice_max(grouped, order_by = .data$subjectNegLog10P,
-                                 n = 1, with_ties = FALSE)
+            ## Sorting once and keeping the first row of every pair picks
+            ## the same peak as a grouped slice_max(), ties included since
+            ## both sorts are stable, without evaluating tens of thousands
+            ## of groups one at a time
+            ordered <- if (multipleIntersections == "lowest") {
+                dplyr::arrange(currentOverlaps, .data$queryHits,
+                               .data$subjectReplicate,
+                               dplyr::desc(.data$subjectNegLog10P))
             } else {
-                dplyr::slice_min(grouped, order_by = .data$subjectNegLog10P,
-                                 n = 1, with_ties = FALSE)
+                dplyr::arrange(currentOverlaps, .data$queryHits,
+                               .data$subjectReplicate,
+                               .data$subjectNegLog10P)
             }
-            dplyr::ungroup(picked)
+            dplyr::distinct(ordered, .data$queryHits,
+                            .data$subjectReplicate, .keep_all = TRUE)
         }
 
-        support <- dplyr::summarise(
-            dplyr::group_by(selected, .data$queryHits),
-            nSupport = dplyr::n_distinct(.data$subjectReplicate),
-            supportWeight = sum(.data$subjectWeight),
-            .groups = "drop")
+        ## one row per peak and supporting replicate is left, so the
+        ## replicates of a peak are its rows; split() and sum() give
+        ## the values the grouped summarise() gave, bit for bit, without
+        ## evaluating every group through a data mask
+        supportSplit <- split(selected$subjectWeight, selected$queryHits)
+        supportIndex <- as.integer(names(supportSplit))
 
         nSupport <- integer(nPeaks)
         supportWeight <- numeric(nPeaks)
-        nSupport[support$queryHits] <- support$nSupport
-        supportWeight[support$queryHits] <- support$supportWeight
+        nSupport[supportIndex] <- lengths(supportSplit)
+        supportWeight[supportIndex] <- vapply(supportSplit, sum, numeric(1))
 
         ## presence mode never combines anything, it only counts weight
         combined <- if (presenceOnly) {
@@ -788,7 +794,7 @@ buildConsensus <- function(peakList,
 #'
 #' @author Sebastian Gregoricchio
 #'
-#' @importFrom dplyr tibble bind_rows group_by summarise mutate select
+#' @importFrom dplyr tibble bind_rows mutate
 #' @importFrom S4Vectors mcols
 #' @importFrom rlang .data
 #'
@@ -819,18 +825,16 @@ buildConsensus <- function(peakList,
                              term = terms$term,
                              scale = terms$scale)
 
-    aggregated <- dplyr::summarise(
-        dplyr::group_by(members, .data$queryHits),
-        sumTerm = sum(.data$term),
-        sumScale = sum(.data$scale),
-        nMembers = dplyr::n(),
-        .groups = "drop")
+    ## split() and sum() rather than a grouped summarise(): the same
+    ## sums, without a data mask evaluated once per peak
+    termSplit <- split(members$term, members$queryHits)
+    scaleSplit <- split(members$scale, members$queryHits)
 
     combined <- numeric(nPeaks)
-    combined[aggregated$queryHits] <- .closeCombination(
-        sumTerm = aggregated$sumTerm,
-        sumScale = aggregated$sumScale,
-        nMembers = aggregated$nMembers,
+    combined[as.integer(names(termSplit))] <- .closeCombination(
+        sumTerm = vapply(termSplit, sum, numeric(1)),
+        sumScale = vapply(scaleSplit, sum, numeric(1)),
+        nMembers = lengths(termSplit),
         method = combinationMethod)
 
     combined
