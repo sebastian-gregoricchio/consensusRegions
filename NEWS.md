@@ -1,3 +1,18 @@
+# consensusRegions 0.99.1
+
+## Performance
+
+* The confirmation step of `buildConsensus()` is about four times faster
+  on genome-scale peak sets. It picked the supporting peak of every
+  replicate with a grouped `slice_max()` and summed the evidence with a
+  grouped `summarise()`, which dplyr evaluates one group at a time, tens
+  of thousands of times per iteration. A single sort followed by
+  `distinct()`, and `split()` with `sum()`, give the same peaks and the
+  same sums to the last bit, so the consensus is unchanged. Three
+  replicates of about 12,000 peaks each went from 16 s to 4.4 s. The
+  calibration gains as much, since every permutation runs the same step.
+
+
 # consensusRegions 0.99.0
 
 First release.
