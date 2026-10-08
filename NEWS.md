@@ -1,3 +1,22 @@
+# consensusRegions 0.99.2
+
+## Reproducibility
+
+* `calibrateThreshold()` and `runConsensus()` take `seed`, which seeds the
+  random positions of the shuffled peaks. It goes to the `BiocParallel`
+  backend built from `BPPARAM` as its `RNGseed`, so the same seed returns
+  the same threshold on one core or on many, and the random numbers of
+  the session are left as they were. The calibration keeps the `seed` and
+  its `seedSource`, and the object prints it.
+* The documentation said that `set.seed()` before the call brought the
+  same threshold back on a single core. It does not: `BiocParallel` draws
+  from random numbers of its own, which `set.seed()` does not reach, so
+  two identical calls could calibrate two different thresholds. The
+  examples, the vignette and the tests use `seed` now. A
+  `BiocParallelParam` passed as `BPPARAM` is still used untouched, and
+  carries its own `RNGseed`; `seed` is ignored with it, with a warning.
+
+
 # consensusRegions 0.99.1
 
 ## Performance

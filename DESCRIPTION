@@ -1,7 +1,7 @@
 Package: consensusRegions
 Type: Package
 Title: Consensus Regions from Replicated ChIP-seq and ATAC-seq Experiments
-Version: 0.99.1
+Version: 0.99.2
 Authors@R: person("Sebastian", "Gregoricchio",
                   email = "s.gregoricchio@nki.nl",
                   role = c("aut", "cre"),

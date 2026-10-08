@@ -18,7 +18,8 @@
 #' @slot parameters A list with the call arguments.
 #' @slot stats A `data.frame` summarising each replicate.
 #' @slot calibration A list holding the output of [calibrateThreshold()]
-#'   when one was supplied, empty otherwise.
+#'   when one was supplied, the seed of its permutations included, empty
+#'   otherwise.
 #'
 #' @author Sebastian Gregoricchio
 #'

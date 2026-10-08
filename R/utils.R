@@ -242,10 +242,15 @@
 #' Naming a number of cores is how most people think about this, so a bare
 #' number is accepted and turned into the right backend for the platform.
 #' A `BiocParallelParam` object is passed through untouched, which is what
-#' you need for anything beyond the core count, a fixed random seed above
-#' all.
+#' you need for anything beyond the core count. A seed goes to the backend
+#' built from a number of cores as its `RNGseed`, the only way
+#' `BiocParallel` takes one: `set.seed()` does not reach its workers.
 #'
 #' @param BPPARAM A number of cores or a `BiocParallelParam` object.
+#' @param seed Number seeding the random numbers of the workers, or
+#'   `NULL`. Ignored, with a warning, when `BPPARAM` is a
+#'   `BiocParallelParam` object, which is never modified.
+#'   Default: \code{NULL}.
 #'
 #' @return A `BiocParallelParam` object.
 #'
@@ -256,8 +261,20 @@
 #'
 #' @keywords internal
 #' @noRd
-.resolveBPPARAM <- function(BPPARAM) {
+.resolveBPPARAM <- function(BPPARAM, seed = NULL) {
+    if (!is.null(seed) &&
+        (!is.numeric(seed) || length(seed) != 1 || !is.finite(seed))) {
+        stop("'seed' must be a single number, or NULL")
+    }
+
+    ## a backend of the user is a reference object, so setting its seed
+    ## here would change it behind the user's back
     if (methods::is(BPPARAM, "BiocParallelParam")) {
+        if (!is.null(seed)) {
+            warning("'seed' is ignored when 'BPPARAM' is a ",
+                    "BiocParallelParam object; give it the seed as ",
+                    "RNGseed instead")
+        }
         return(BPPARAM)
     }
 
@@ -269,14 +286,14 @@
 
     nCores <- as.integer(BPPARAM)
     if (nCores == 1L) {
-        return(BiocParallel::SerialParam())
+        return(BiocParallel::SerialParam(RNGseed = seed))
     }
 
     ## forking is unavailable on Windows, where a socket cluster is the
     ## equivalent arrangement
     if (.Platform$OS.type == "windows") {
-        BiocParallel::SnowParam(workers = nCores)
+        BiocParallel::SnowParam(workers = nCores, RNGseed = seed)
     } else {
-        BiocParallel::MulticoreParam(workers = nCores)
+        BiocParallel::MulticoreParam(workers = nCores, RNGseed = seed)
     }
 }

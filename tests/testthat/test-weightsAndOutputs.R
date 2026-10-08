@@ -66,9 +66,8 @@ test_that("missing inputs are reported rather than guessed", {
 
 
 test_that("calibration returns a usable threshold", {
-  set.seed(42)
   calibration <- calibrateThreshold(examplePeaks(), nPermutations = 5,
-                                    verbose = FALSE)
+                                    seed = 42, verbose = FALSE)
 
   expect_true(calibration$threshold > 0)
   expect_true(calibration$threshold < 1)
@@ -77,17 +76,33 @@ test_that("calibration returns a usable threshold", {
 })
 
 
-test_that("calibration repeats when the stream is seeded the same way", {
-  ## the function deliberately does not seed itself, so this also
-  ## checks that it leaves the caller in charge of the stream
-  set.seed(7)
-  first <- calibrateThreshold(examplePeaks(), nPermutations = 3,
+test_that("calibration repeats with the same seed and leaves the session alone", {
+  ## the random numbers of the session go on as if nothing had been drawn
+  set.seed(1)
+  expectedDraws <- stats::runif(3)
+  set.seed(1)
+  first <- calibrateThreshold(examplePeaks(), nPermutations = 3, seed = 7,
                               verbose = FALSE)
-  set.seed(7)
-  second <- calibrateThreshold(examplePeaks(), nPermutations = 3,
-                               verbose = FALSE)
+  expect_identical(stats::runif(3), expectedDraws)
 
-  expect_equal(first$threshold, second$threshold)
+  ## the null draws themselves come back, not only the threshold read
+  ## off them, which is often the same for any draw on a small example
+  second <- calibrateThreshold(examplePeaks(), nPermutations = 3,
+                               seed = 7, verbose = FALSE)
+  expect_identical(second$null, first$null)
+  expect_identical(second$threshold, first$threshold)
+
+  expect_equal(first$seed, 7)
+  expect_identical(first$seedSource, "seed")
+})
+
+
+test_that("a calibration without a seed says so", {
+  unseeded <- calibrateThreshold(examplePeaks(), nPermutations = 3,
+                                 verbose = FALSE)
+
+  expect_null(unseeded$seed)
+  expect_identical(unseeded$seedSource, "unseeded")
 })
 
 
@@ -157,8 +172,7 @@ test_that("the plots build without error", {
   expect_s3_class(plotRescue(result, proportion = TRUE), "ggplot")
   expect_s3_class(plotJaccard(result), "ggplot")
 
-  set.seed(3)
   calibration <- calibrateThreshold(examplePeaks(), nPermutations = 3,
-                                    verbose = FALSE)
+                                    seed = 3, verbose = FALSE)
   expect_s3_class(plotCalibration(calibration), "ggplot")
 })

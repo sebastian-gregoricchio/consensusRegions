@@ -377,8 +377,7 @@ plotUpset <- function(object, minSize = 0) {
 #'                          package = "consensusRegions")
 #' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
 #'                       verbose = FALSE)
-#' set.seed(42)
-#' calibration <- calibrateThreshold(peaks, nPermutations = 5,
+#' calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 42,
 #'                                   verbose = FALSE)
 #'
 #' plotCalibration(calibration)

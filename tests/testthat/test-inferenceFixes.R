@@ -112,9 +112,8 @@ test_that("the BH family defaults to every peak that was tested", {
 
 
 test_that("calibration can choose a cut below the median statistic", {
-  set.seed(11)
   peaks <- examplePeaks()
-  calibration <- calibrateThreshold(peaks, nPermutations = 5,
+  calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 11,
                                     verbose = FALSE)
 
   medianObserved <- stats::median(calibration$observed, na.rm = TRUE)
@@ -123,9 +122,8 @@ test_that("calibration can choose a cut below the median statistic", {
 
 
 test_that("a finite permutation never reports an FDR of exactly zero", {
-  set.seed(11)
   peaks <- examplePeaks()
-  calibration <- calibrateThreshold(peaks, nPermutations = 5,
+  calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 11,
                                     verbose = FALSE)
 
   expect_true(all(calibration$fdrCurve$expectedNull > 0))
@@ -137,14 +135,13 @@ test_that("a finite permutation never reports an FDR of exactly zero", {
 
 
 test_that("calibration uses the same settings as the analysis", {
-  set.seed(11)
   peaks <- examplePeaks()
 
   ## recursive is TRUE by default in buildConsensus, so a calibration
   ## hard-coded to FALSE would be describing a different procedure
   expect_silent(
     calibration <- calibrateThreshold(peaks, nPermutations = 3,
-                                      recursive = TRUE,
+                                      recursive = TRUE, seed = 11,
                                       verbose = FALSE))
   expect_true(calibration$threshold > 0)
 
@@ -316,6 +313,23 @@ test_that("BPPARAM accepts a plain number of cores", {
 })
 
 
+test_that("a seed goes to the backend built from a core count, and only there", {
+  expect_equal(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(1, seed = 5)), 5)
+  expect_equal(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(4, seed = 5)), 5)
+  expect_null(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(1)))
+
+  ## a backend of the user is a reference object, it is left as it came
+  supplied <- BiocParallel::SerialParam()
+  expect_warning(resolved <- consensusRegions:::.resolveBPPARAM(supplied, seed = 5),
+                 "'seed' is ignored")
+  expect_identical(resolved, supplied)
+  expect_null(BiocParallel::bpRNGseed(supplied))
+
+  expect_error(consensusRegions:::.resolveBPPARAM(1, seed = "five"), "'seed' must be")
+  expect_error(consensusRegions:::.resolveBPPARAM(1, seed = c(1, 2)), "'seed' must be")
+})
+
+
 test_that("a nonsensical core count is refused", {
   expect_error(consensusRegions:::.resolveBPPARAM("many"),
                "number of cores")
@@ -329,15 +343,44 @@ test_that("a nonsensical core count is refused", {
 test_that("calibration runs whichever way BPPARAM is given", {
   peaks <- examplePeaks()
 
-  set.seed(1)
   byNumber <- calibrateThreshold(peaks, nPermutations = 3, BPPARAM = 1,
-                                 verbose = FALSE)
-  set.seed(1)
+                                 seed = 1, verbose = FALSE)
   byObject <- calibrateThreshold(peaks, nPermutations = 3,
-                                 BPPARAM = BiocParallel::SerialParam(),
+                                 BPPARAM = BiocParallel::SerialParam(RNGseed = 1),
                                  verbose = FALSE)
 
-  ## a core count of one and SerialParam are the same thing, so a seeded
-  ## run has to land in the same place
+  ## a core count of one and SerialParam are the same thing, so the same
+  ## seed has to draw the same peaks
+  expect_identical(byNumber$null, byObject$null)
   expect_equal(byNumber$threshold, byObject$threshold)
+  expect_identical(byNumber$seedSource, "seed")
+  expect_identical(byObject$seedSource, "BPPARAM")
+  expect_equal(byObject$seed, 1)
+})
+
+
+test_that("the same seed draws the same peaks on any number of cores", {
+  skip_on_os("windows")
+  peaks <- examplePeaks()
+
+  oneCore <- calibrateThreshold(peaks, nPermutations = 4, BPPARAM = 1,
+                                seed = 9, verbose = FALSE)
+  twoCores <- calibrateThreshold(peaks, nPermutations = 4, BPPARAM = 2,
+                                 seed = 9, verbose = FALSE)
+
+  expect_identical(twoCores$null, oneCore$null)
+})
+
+
+test_that("runConsensus passes the seed on and keeps it with the calibration", {
+  result <- runConsensus(examplePeaks(), calibrate = TRUE, nPermutations = 3,
+                         seed = 5, verbose = FALSE)
+
+  expect_equal(result@calibration$seed, 5)
+  expect_identical(result@calibration$seedSource, "seed")
+  expect_output(show(result), "\\(seed 5\\)")
+
+  again <- runConsensus(examplePeaks(), calibrate = TRUE, nPermutations = 3,
+                        seed = 5, verbose = FALSE)
+  expect_identical(again@calibration$null, result@calibration$null)
 })

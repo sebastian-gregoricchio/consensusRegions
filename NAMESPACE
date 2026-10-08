@@ -33,6 +33,7 @@ importFrom(BiocParallel,
   MulticoreParam,
   SerialParam,
   SnowParam,
+  bpRNGseed,
   bplapply,
   bpnworkers
 )

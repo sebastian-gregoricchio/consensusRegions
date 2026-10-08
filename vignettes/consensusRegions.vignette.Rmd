@@ -426,10 +426,10 @@ on those gives a null, and the threshold is read off where the expected
 number of null peaks falls to a chosen fraction of the observed count.
 
 ```{r calibrate}
-set.seed(42)
 calibration <- calibrateThreshold(peaks,
     nPermutations = 10,
     targetFDR = 0.05,
+    seed = 42,
     verbose = FALSE)
 
 calibration$threshold
@@ -447,9 +447,12 @@ length(calibrated)
 ```
 
 Ten permutations is enough for a demonstration; fifty is a reasonable
-working number. The positions are drawn at random and the function does
-not seed the stream itself, so call `set.seed()` beforehand when you want
-the same threshold back.
+working number. The positions are drawn at random, and `seed` is what
+brings the same threshold back. The draws happen inside `BiocParallel`,
+which keeps its random numbers apart from those of the session, so a
+`set.seed()` before the call does not reach them. The seed is kept with
+the result, in `calibration$seed`, and the random numbers of the session
+are left as they were.
 
 The permutations are independent of one another and are where nearly all
 the time goes, so they are handed to `BiocParallel`. On a genome-scale
@@ -457,14 +460,15 @@ peak set a single round takes tens of seconds, which makes fifty of them
 most of an afternoon in series:
 
 ```{r parallel, eval = FALSE}
-calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8)
+calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8,
+    seed = 42)
 ```
 
 `BPPARAM` takes the number of cores directly, which is how the question
-usually gets asked. A `BiocParallelParam` object is accepted too, and is
-what you need when a parallel run has to be reproducible: the workers
-draw from their own random streams, so `set.seed()` no longer governs the
-result and the seed has to travel with the backend instead.
+usually gets asked, and the same seed returns the same threshold on one
+core or on eight. A `BiocParallelParam` object is accepted too, for finer
+control of the workers. It is used as it is, so the seed then travels with
+the backend, as its `RNGseed`, and `seed` is ignored:
 
 ```{r parallelSeed, eval = FALSE}
 calibration <- calibrateThreshold(
@@ -472,9 +476,6 @@ calibration <- calibrateThreshold(
     nPermutations = 50,
     BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
 ```
-
-The default is a single core, so that `set.seed()` behaves as described
-above unless you ask for more.
 
 Passing a blacklist through `excludeRegions` makes the
 null more honest, because shuffled peaks otherwise land in artefact

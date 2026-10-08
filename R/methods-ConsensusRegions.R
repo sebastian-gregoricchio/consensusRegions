@@ -106,7 +106,11 @@ methods::setMethod("show", "ConsensusRegions", function(object) {
     }
 
     if (length(object@calibration) > 0) {
-        cat("  calibrated at   : FDR", object@calibration$targetFDR, "\n")
+        ## calibrations made before the seed was recorded carry none
+        calibrationSeed <- object@calibration$seed
+        cat("  calibrated at   : FDR", object@calibration$targetFDR,
+            if (is.null(calibrationSeed)) "(no seed)" else
+                paste0("(seed ", calibrationSeed, ")"), "\n")
     }
 
     invisible(NULL)

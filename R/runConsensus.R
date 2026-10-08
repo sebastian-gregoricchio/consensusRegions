@@ -44,6 +44,10 @@
 #' @param BPPARAM Either the number of cores to use, or a
 #'   `BiocParallelParam` object. Only the calibration uses it.
 #'   Default: \code{1}.
+#' @param seed Number seeding the random positions of the calibration,
+#'   passed to [calibrateThreshold()], which explains why `set.seed()`
+#'   cannot do the same. It is kept with the calibration in the result.
+#'   Ignored without `calibrate`. Default: \code{NULL}, no seed.
 #' @param verbose Report progress through the steps. Default: \code{TRUE}.
 #' @param ... Further arguments passed to [buildConsensus()], for example
 #'   `combinationMethod`, `minReplicates` or `mergeMethod`.
@@ -74,13 +78,13 @@
 #' ## permutations are enough to show the shape of it; fifty is the
 #' ## working number, and the positions are drawn at random, so the seed
 #' ## is what brings the same threshold back.
-#' set.seed(42)
 #' calibrated <- runConsensus(peakFiles,
 #'     sampleNames = c("r1", "r2", "r3"),
 #'     weightMethod = "frip",
 #'     frip = c(0.21, 0.19, 0.06),
 #'     calibrate = TRUE,
 #'     nPermutations = 5,
+#'     seed = 42,
 #'     verbose = FALSE)
 #' calibrated
 #'
@@ -101,6 +105,7 @@ runConsensus <- function(peaks,
                          seqlevelsStyle = "UCSC",
                          excludeRegions = NULL,
                          BPPARAM = 1,
+                         seed = NULL,
                          verbose = TRUE,
                          ...) {
   weightMethod <- match.arg(weightMethod)
@@ -133,6 +138,7 @@ runConsensus <- function(peaks,
                                       targetFDR = targetFDR,
                                       excludeRegions = excludeRegions,
                                       BPPARAM = BPPARAM,
+                                      seed = seed,
                                       verbose = verbose)
   }
 

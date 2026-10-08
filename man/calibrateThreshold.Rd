@@ -22,6 +22,7 @@ calibrateThreshold(
   chromosomeLengths = NULL,
   excludeRegions = NULL,
   BPPARAM = 1,
+  seed = NULL,
   verbose = TRUE
 )
 }
@@ -79,12 +80,21 @@ independent of one another and are where nearly all the time goes, so
 raising this is worth it on a large peak set: a single round takes
 around half a minute on 100,000 peaks per replicate. Default: \code{1}.}
 
+\item{seed}{Number seeding the random positions of the shuffled peaks.
+It goes to the backend built from `BPPARAM` as its `RNGseed`, so the
+same seed returns the same threshold on any number of cores. Ignored,
+with a warning, when `BPPARAM` is a `BiocParallelParam` object: give
+the seed to it as `RNGseed` instead. Default: \code{NULL}, no seed.}
+
 \item{verbose}{Report progress. Default: \code{TRUE}.}
 }
 \value{
 A list with the recommended `threshold` on the p-value scale,
-  the `fdrCurve` it was read off, and the observed and null combined
-  statistics.
+  the `fdrCurve` it was read off, the observed and null combined
+  statistics, the `seed` the permutations were drawn with and its
+  `seedSource`: `"seed"` for the argument, `"BPPARAM"` for the `RNGseed`
+  of a backend passed as `BPPARAM`, `"unseeded"` when there was none, in
+  which case `seed` is `NULL`.
 }
 \description{
 The threshold on the combined p-value is normally set by hand, and
@@ -111,16 +121,15 @@ Fifty permutations are usually enough to place the threshold within a
 factor of two, which is as much precision as the choice deserves. Push
 it higher only if the curve looks ragged near `targetFDR`.
 
-The peak positions are drawn at random, so call [base::set.seed()]
-beforehand if you need the same threshold back. The function does not
-set the seed itself, since doing so would silently reset the random
-number stream the rest of your session is drawing from.
-
-This is also why the default runs on a single core. Workers draw from
-their own random streams, so `set.seed()` no longer governs the result
-once `BPPARAM` is above one, and the seed has to travel to the workers
-instead: `BiocParallel::MulticoreParam(workers = 8, RNGseed = 42)`.
-Reach for that when a parallel run has to be reproducible.
+The peak positions are drawn at random inside `BiocParallel`, which
+keeps its random numbers apart from those of the session:
+[base::set.seed()] before the call does not reach them, on one core or
+on many. `seed` is what brings the same threshold back, whatever the
+number of cores. The function never calls `set.seed()`, so the random
+numbers the rest of the session draws are left as they were. A
+`BiocParallelParam` object passed as `BPPARAM` is used as it is and
+carries its own seed, for instance
+`BiocParallel::MulticoreParam(workers = 8, RNGseed = 42)`.
 }
 \examples{
 peakFiles <- system.file("extdata",
@@ -130,8 +139,7 @@ peakFiles <- system.file("extdata",
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
                       verbose = FALSE)
 
-set.seed(42)
-calibration <- calibrateThreshold(peaks, nPermutations = 5,
+calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 42,
                                   verbose = FALSE)
 calibration$threshold
 

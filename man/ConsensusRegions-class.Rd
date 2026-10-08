@@ -27,7 +27,8 @@ peaks after classification. Each element carries the metadata columns
 \item{\code{stats}}{A `data.frame` summarising each replicate.}
 
 \item{\code{calibration}}{A list holding the output of [calibrateThreshold()]
-when one was supplied, empty otherwise.}
+when one was supplied, the seed of its permutations included, empty
+otherwise.}
 }}
 
 \author{
