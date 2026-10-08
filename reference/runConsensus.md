@@ -30,6 +30,7 @@ runConsensus(
   seqlevelsStyle = "UCSC",
   excludeRegions = NULL,
   BPPARAM = 1,
+  seed = NULL,
   verbose = TRUE,
   ...
 )
@@ -101,6 +102,13 @@ runConsensus(
   Either the number of cores to use, or a \`BiocParallelParam\` object.
   Only the calibration uses it. Default: `1`.
 
+- seed:
+
+  Number seeding the random positions of the calibration, passed to
+  \[calibrateThreshold()\], which explains why \`set.seed()\` cannot do
+  the same. It is kept with the calibration in the result. Ignored
+  without \`calibrate\`. Default: `NULL`, no seed.
+
 - verbose:
 
   Report progress through the steps. Default: `TRUE`.
@@ -151,13 +159,13 @@ result
 ## permutations are enough to show the shape of it; fifty is the
 ## working number, and the positions are drawn at random, so the seed
 ## is what brings the same threshold back.
-set.seed(42)
 calibrated <- runConsensus(peakFiles,
     sampleNames = c("r1", "r2", "r3"),
     weightMethod = "frip",
     frip = c(0.21, 0.19, 0.06),
     calibrate = TRUE,
     nPermutations = 5,
+    seed = 42,
     verbose = FALSE)
 calibrated
 #> ConsensusRegions
@@ -169,5 +177,5 @@ calibrated
 #>   consensus       : 292 regions
 #>   width (median)  : 786.5 bp
 #>   width (max)     : 2200 bp
-#>   calibrated at   : FDR 0.05 
+#>   calibrated at   : FDR 0.05 (seed 42) 
 ```

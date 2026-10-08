@@ -23,7 +23,7 @@ across experiments."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">consensusRegions</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,6 +83,7 @@ across experiments.</p>
 <span>  seqlevelsStyle <span class="op">=</span> <span class="st">"UCSC"</span>,</span>
 <span>  excludeRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  BPPARAM <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -161,6 +162,13 @@ Default: <code>NULL</code>.</p></dd>
 Default: <code>1</code>.</p></dd>
 
 
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Number seeding the random positions of the calibration,
+passed to [calibrateThreshold()], which explains why `set.seed()`
+cannot do the same. It is kept with the calibration in the result.
+Ignored without `calibrate`. Default: <code>NULL</code>, no seed.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Report progress through the steps. Default: <code>TRUE</code>.</p></dd>
 
@@ -211,13 +219,13 @@ consensus it carries is the fixed-width version.</p>
 <span class="r-in"><span><span class="co">## permutations are enough to show the shape of it; fifty is the</span></span></span>
 <span class="r-in"><span><span class="co">## working number, and the positions are drawn at random, so the seed</span></span></span>
 <span class="r-in"><span><span class="co">## is what brings the same threshold back.</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">calibrated</span> <span class="op">&lt;-</span> <span class="fu">runConsensus</span><span class="op">(</span><span class="va">peakFiles</span>,</span></span>
 <span class="r-in"><span>    sampleNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"r1"</span>, <span class="st">"r2"</span>, <span class="st">"r3"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    weightMethod <span class="op">=</span> <span class="st">"frip"</span>,</span></span>
 <span class="r-in"><span>    frip <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.21</span>, <span class="fl">0.19</span>, <span class="fl">0.06</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    calibrate <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>    nPermutations <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>    seed <span class="op">=</span> <span class="fl">42</span>,</span></span>
 <span class="r-in"><span>    verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">calibrated</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ConsensusRegions</span>
@@ -229,7 +237,7 @@ consensus it carries is the fixed-width version.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   consensus       : 292 regions</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   width (median)  : 786.5 bp</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   width (max)     : 2200 bp</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   calibrated at   : FDR 0.05 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   calibrated at   : FDR 0.05 (seed 42) </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

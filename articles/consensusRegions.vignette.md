@@ -559,10 +559,10 @@ gives a null, and the threshold is read off where the expected number of
 null peaks falls to a chosen fraction of the observed count.
 
 ``` r
-set.seed(42)
 calibration <- calibrateThreshold(peaks,
     nPermutations = 10,
     targetFDR = 0.05,
+    seed = 42,
     verbose = FALSE)
 
 calibration$threshold
@@ -585,10 +585,12 @@ length(calibrated)
 ```
 
 Ten permutations is enough for a demonstration; fifty is a reasonable
-working number. The positions are drawn at random and the function does
-not seed the stream itself, so call
-[`set.seed()`](https://rdrr.io/r/base/Random.html) beforehand when you
-want the same threshold back.
+working number. The positions are drawn at random, and `seed` is what
+brings the same threshold back. The draws happen inside `BiocParallel`,
+which keeps its random numbers apart from those of the session, so a
+[`set.seed()`](https://rdrr.io/r/base/Random.html) before the call does
+not reach them. The seed is kept with the result, in `calibration$seed`,
+and the random numbers of the session are left as they were.
 
 The permutations are independent of one another and are where nearly all
 the time goes, so they are handed to `BiocParallel`. On a genome-scale
@@ -597,15 +599,15 @@ most of an afternoon in series:
 
 ``` r
 
-calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8)
+calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8,
+    seed = 42)
 ```
 
 `BPPARAM` takes the number of cores directly, which is how the question
-usually gets asked. A `BiocParallelParam` object is accepted too, and is
-what you need when a parallel run has to be reproducible: the workers
-draw from their own random streams, so
-[`set.seed()`](https://rdrr.io/r/base/Random.html) no longer governs the
-result and the seed has to travel with the backend instead.
+usually gets asked, and the same seed returns the same threshold on one
+core or on eight. A `BiocParallelParam` object is accepted too, for
+finer control of the workers. It is used as it is, so the seed then
+travels with the backend, as its `RNGseed`, and `seed` is ignored:
 
 ``` r
 
@@ -614,10 +616,6 @@ calibration <- calibrateThreshold(
     nPermutations = 50,
     BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
 ```
-
-The default is a single core, so that
-[`set.seed()`](https://rdrr.io/r/base/Random.html) behaves as described
-above unless you ask for more.
 
 Passing a blacklist through `excludeRegions` makes the null more honest,
 because shuffled peaks otherwise land in artefact regions where real
@@ -836,8 +834,8 @@ rather than blind trust, and the wrapper gives you no chance to take it.
     > [8] base     
     > 
     > other attached packages:
-    > [1] consensusRegions_0.99.0 GenomicRanges_1.64.0    Seqinfo_1.2.0          
-    > [4] IRanges_2.46.0          S4Vectors_0.50.2        BiocGenerics_0.58.1    
+    > [1] consensusRegions_0.99.2 GenomicRanges_1.64.0    Seqinfo_1.2.0          
+    > [4] IRanges_2.46.0          S4Vectors_0.50.3        BiocGenerics_0.58.1    
     > [7] generics_0.1.4          BiocStyle_2.40.0       
     > 
     > loaded via a namespace (and not attached):
@@ -845,13 +843,13 @@ rather than blind trust, and the wrapper gives you no chance to take it.
     >  [3] farver_2.1.2                Biostrings_2.80.2          
     >  [5] S7_0.2.2                    bitops_1.1-0               
     >  [7] fastmap_1.2.0               RCurl_1.98-1.20            
-    >  [9] GenomicAlignments_1.48.0    XML_3.99-0.24              
+    >  [9] GenomicAlignments_1.48.0    XML_3.99-0.25              
     > [11] digest_0.6.39               lifecycle_1.0.5            
     > [13] magrittr_2.0.5              compiler_4.6.1             
     > [15] rlang_1.3.0                 sass_0.4.10                
     > [17] tools_4.6.1                 utf8_1.2.6                 
     > [19] yaml_2.3.12                 rtracklayer_1.72.0         
-    > [21] knitr_1.52                  S4Arrays_1.12.0            
+    > [21] knitr_1.52                  S4Arrays_1.12.1            
     > [23] labeling_0.4.3              curl_8.0.0                 
     > [25] DelayedArray_0.38.2         xml2_1.6.0                 
     > [27] RColorBrewer_1.1-3          abind_1.4-8                
@@ -882,6 +880,6 @@ rather than blind trust, and the wrapper gives you no chance to take it.
     > [77] markdown_2.0                Rsamtools_2.28.0           
     > [79] cigarillo_1.2.1             gridtext_0.1.6             
     > [81] bslib_0.12.0                Rcpp_1.1.2                 
-    > [83] SparseArray_1.12.2          xfun_0.60                  
+    > [83] SparseArray_1.12.3          xfun_0.61                  
     > [85] fs_2.1.0                    MatrixGenerics_1.24.0      
     > [87] pkgconfig_2.0.3

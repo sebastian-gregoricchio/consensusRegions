@@ -11,13 +11,13 @@ Source:
 [`DESCRIPTION`](https://github.com/sebastian-gregoricchio/consensusRegions/blob/devel-tools/DESCRIPTION)
 
 Gregoricchio S (2026). *consensusRegions: Consensus Regions from
-Replicated ChIP-seq and ATAC-seq Experiments*. R package version 0.99.0,
+Replicated ChIP-seq and ATAC-seq Experiments*. R package version 0.99.2,
 <https://github.com/sebastian-gregoricchio/consensusRegions>.
 
     @Manual{,
       title = {consensusRegions: Consensus Regions from Replicated ChIP-seq and ATAC-seq Experiments},
       author = {Sebastian Gregoricchio},
       year = {2026},
-      note = {R package version 0.99.0},
+      note = {R package version 0.99.2},
       url = {https://github.com/sebastian-gregoricchio/consensusRegions},
     }

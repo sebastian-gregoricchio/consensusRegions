@@ -33,7 +33,7 @@ that an analysis can be traced back from its output.
 - `calibration`:
 
   A list holding the output of \[calibrateThreshold()\] when one was
-  supplied, empty otherwise.
+  supplied, the seed of its permutations included, empty otherwise.
 
 ## Author
 
