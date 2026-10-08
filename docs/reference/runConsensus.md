@@ -30,6 +30,7 @@ runConsensus(
   seqlevelsStyle = "UCSC",
   excludeRegions = NULL,
   BPPARAM = 1,
+  seed = NULL,
   verbose = TRUE,
   ...
 )
@@ -101,6 +102,13 @@ runConsensus(
   Either the number of cores to use, or a \`BiocParallelParam\` object.
   Only the calibration uses it. Default: `1`.
 
+- seed:
+
+  Number seeding the random positions of the calibration, passed to
+  \[calibrateThreshold()\], which explains why \`set.seed()\` cannot do
+  the same. It is kept with the calibration in the result. Ignored
+  without \`calibrate\`. Default: `NULL`, no seed.
+
 - verbose:
 
   Report progress through the steps. Default: `TRUE`.
@@ -128,14 +136,14 @@ Sebastian Gregoricchio
 
 ``` r
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
+    c("rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"),
+    package = "consensusRegions")
 
 result <- runConsensus(peakFiles,
-                       sampleNames = c("r1", "r2", "r3"),
-                       minReplicates = 2,
-                       verbose = FALSE)
+    sampleNames = c("r1", "r2", "r3"),
+    minReplicates = 2,
+    verbose = FALSE)
 result
 #> ConsensusRegions
 #>   replicates      : 3 ( r1, r2, r3 )
@@ -147,15 +155,27 @@ result
 #>   width (median)  : 786.5 bp
 #>   width (max)     : 2200 bp
 
-## the same with measured weights and a calibrated threshold
-# \donttest{
-set.seed(42)
+## the same with measured weights and a calibrated threshold. Five
+## permutations are enough to show the shape of it; fifty is the
+## working number, and the positions are drawn at random, so the seed
+## is what brings the same threshold back.
 calibrated <- runConsensus(peakFiles,
-                           sampleNames = c("r1", "r2", "r3"),
-                           weightMethod = "frip",
-                           frip = c(0.21, 0.19, 0.06),
-                           calibrate = TRUE,
-                           nPermutations = 10,
-                           verbose = FALSE)
-# }
+    sampleNames = c("r1", "r2", "r3"),
+    weightMethod = "frip",
+    frip = c(0.21, 0.19, 0.06),
+    calibrate = TRUE,
+    nPermutations = 5,
+    seed = 42,
+    verbose = FALSE)
+calibrated
+#> ConsensusRegions
+#>   replicates      : 3 ( r1, r2, r3 )
+#>   score type      : log10pvalue 
+#>   combination     : stouffer 
+#>   combined cut    : 1.294522e-09 
+#>   weights         : r1=1.37, r2=1.239, r3=0.391 
+#>   consensus       : 292 regions
+#>   width (median)  : 786.5 bp
+#>   width (max)     : 2200 bp
+#>   calibrated at   : FDR 0.05 (seed 42) 
 ```

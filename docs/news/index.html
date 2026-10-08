@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">consensusRegions</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,22 @@
       <small>Source: <a href="https://github.com/sebastian-gregoricchio/consensusRegions/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.2" id="consensusregions-0992">consensusRegions 0.99.2<a class="anchor" aria-label="anchor" href="#consensusregions-0992"></a></h2>
+<div class="section level3">
+<h3 id="reproducibility-0-99-2">Reproducibility<a class="anchor" aria-label="anchor" href="#reproducibility-0-99-2"></a></h3>
+<ul><li>
+<code><a href="../reference/calibrateThreshold.html">calibrateThreshold()</a></code> and <code><a href="../reference/runConsensus.html">runConsensus()</a></code> take <code>seed</code>, which seeds the random positions of the shuffled peaks. It goes to the <code>BiocParallel</code> backend built from <code>BPPARAM</code> as its <code>RNGseed</code>, so the same seed returns the same threshold on one core or on many, and the random numbers of the session are left as they were. The calibration keeps the <code>seed</code> and its <code>seedSource</code>, and the object prints it.</li>
+<li>The documentation said that <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> before the call brought the same threshold back on a single core. It does not: <code>BiocParallel</code> draws from random numbers of its own, which <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> does not reach, so two identical calls could calibrate two different thresholds. The examples, the vignette and the tests use <code>seed</code> now. A <code>BiocParallelParam</code> passed as <code>BPPARAM</code> is still used untouched, and carries its own <code>RNGseed</code>; <code>seed</code> is ignored with it, with a warning.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.1" id="consensusregions-0991">consensusRegions 0.99.1<a class="anchor" aria-label="anchor" href="#consensusregions-0991"></a></h2>
+<div class="section level3">
+<h3 id="performance-0-99-1">Performance<a class="anchor" aria-label="anchor" href="#performance-0-99-1"></a></h3>
+<ul><li>The confirmation step of <code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> is about four times faster on genome-scale peak sets. It picked the supporting peak of every replicate with a grouped <code>slice_max()</code> and summed the evidence with a grouped <code>summarise()</code>, which dplyr evaluates one group at a time, tens of thousands of times per iteration. A single sort followed by <code>distinct()</code>, and <code><a href="https://rdrr.io/r/base/split.html" class="external-link">split()</a></code> with <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, give the same peaks and the same sums to the last bit, so the consensus is unchanged. Three replicates of about 12,000 peaks each went from 16 s to 4.4 s. The calibration gains as much, since every permutation runs the same step.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.0" id="consensusregions-0990">consensusRegions 0.99.0<a class="anchor" aria-label="anchor" href="#consensusregions-0990"></a></h2>
 <p>First release.</p>

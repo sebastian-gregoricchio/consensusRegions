@@ -40,3 +40,4 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+*.zip

@@ -27,7 +27,7 @@ it falls to `targetFDR` of the observed number."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">consensusRegions</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,6 +91,7 @@ it falls to `targetFDR` of the observed number.</p>
 <span>  chromosomeLengths <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  excludeRegions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  BPPARAM <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -186,6 +187,14 @@ raising this is worth it on a large peak set: a single round takes
 around half a minute on 100,000 peaks per replicate. Default: <code>1</code>.</p></dd>
 
 
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Number seeding the random positions of the shuffled peaks.
+It goes to the backend built from `BPPARAM` as its `RNGseed`, so the
+same seed returns the same threshold on any number of cores. Ignored,
+with a warning, when `BPPARAM` is a `BiocParallelParam` object: give
+the seed to it as `RNGseed` instead. Default: <code>NULL</code>, no seed.</p></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Report progress. Default: <code>TRUE</code>.</p></dd>
 
@@ -193,8 +202,11 @@ around half a minute on 100,000 peaks per replicate. Default: <code>1</code>.</p
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with the recommended `threshold` on the p-value scale,
-  the `fdrCurve` it was read off, and the observed and null combined
-  statistics.</p>
+  the `fdrCurve` it was read off, the observed and null combined
+  statistics, the `seed` the permutations were drawn with and its
+  `seedSource`: `"seed"` for the argument, `"BPPARAM"` for the `RNGseed`
+  of a backend passed as `BPPARAM`, `"unseeded"` when there was none, in
+  which case `seed` is `NULL`.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -206,15 +218,15 @@ mappable chromosomes beforehand, both help.</p>
 <p>Fifty permutations are usually enough to place the threshold within a
 factor of two, which is as much precision as the choice deserves. Push
 it higher only if the curve looks ragged near `targetFDR`.</p>
-<p>The peak positions are drawn at random, so call [base::set.seed()]
-beforehand if you need the same threshold back. The function does not
-set the seed itself, since doing so would silently reset the random
-number stream the rest of your session is drawing from.</p>
-<p>This is also why the default runs on a single core. Workers draw from
-their own random streams, so `set.seed()` no longer governs the result
-once `BPPARAM` is above one, and the seed has to travel to the workers
-instead: `BiocParallel::MulticoreParam(workers = 8, RNGseed = 42)`.
-Reach for that when a parallel run has to be reproducible.</p>
+<p>The peak positions are drawn at random inside `BiocParallel`, which
+keeps its random numbers apart from those of the session:
+[base::set.seed()] before the call does not reach them, on one core or
+on many. `seed` is what brings the same threshold back, whatever the
+number of cores. The function never calls `set.seed()`, so the random
+numbers the rest of the session draws are left as they were. A
+`BiocParallelParam` object passed as `BPPARAM` is used as it is and
+carries its own seed, for instance
+`BiocParallel::MulticoreParam(workers = 8, RNGseed = 42)`.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
@@ -230,8 +242,7 @@ Reach for that when a parallel run has to be reproducible.</p>
 <span class="r-in"><span><span class="va">peaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="readPeakSets.html">readPeakSets</a></span><span class="op">(</span><span class="va">peakFiles</span>, sampleNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"r1"</span>, <span class="st">"r2"</span>, <span class="st">"r3"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                      verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">calibration</span> <span class="op">&lt;-</span> <span class="fu">calibrateThreshold</span><span class="op">(</span><span class="va">peaks</span>, nPermutations <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span><span class="va">calibration</span> <span class="op">&lt;-</span> <span class="fu">calibrateThreshold</span><span class="op">(</span><span class="va">peaks</span>, nPermutations <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">42</span>,</span></span>
 <span class="r-in"><span>                                  verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">calibration</span><span class="op">$</span><span class="va">threshold</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4.242908e-11</span>

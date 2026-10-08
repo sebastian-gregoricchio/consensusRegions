@@ -1,5 +1,45 @@
 # Changelog
 
+## consensusRegions 0.99.2
+
+### Reproducibility
+
+- [`calibrateThreshold()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/calibrateThreshold.md)
+  and
+  [`runConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/runConsensus.md)
+  take `seed`, which seeds the random positions of the shuffled peaks.
+  It goes to the `BiocParallel` backend built from `BPPARAM` as its
+  `RNGseed`, so the same seed returns the same threshold on one core or
+  on many, and the random numbers of the session are left as they were.
+  The calibration keeps the `seed` and its `seedSource`, and the object
+  prints it.
+- The documentation said that
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) before the call
+  brought the same threshold back on a single core. It does not:
+  `BiocParallel` draws from random numbers of its own, which
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) does not reach, so
+  two identical calls could calibrate two different thresholds. The
+  examples, the vignette and the tests use `seed` now. A
+  `BiocParallelParam` passed as `BPPARAM` is still used untouched, and
+  carries its own `RNGseed`; `seed` is ignored with it, with a warning.
+
+## consensusRegions 0.99.1
+
+### Performance
+
+- The confirmation step of
+  [`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md)
+  is about four times faster on genome-scale peak sets. It picked the
+  supporting peak of every replicate with a grouped `slice_max()` and
+  summed the evidence with a grouped `summarise()`, which dplyr
+  evaluates one group at a time, tens of thousands of times per
+  iteration. A single sort followed by `distinct()`, and
+  [`split()`](https://rdrr.io/r/base/split.html) with
+  [`sum()`](https://rdrr.io/r/base/sum.html), give the same peaks and
+  the same sums to the last bit, so the consensus is unchanged. Three
+  replicates of about 12,000 peaks each went from 16 s to 4.4 s. The
+  calibration gains as much, since every permutation runs the same step.
+
 ## consensusRegions 0.99.0
 
 First release.
