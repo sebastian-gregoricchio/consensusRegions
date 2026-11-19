@@ -5,15 +5,19 @@ every count-based and enrichment-based analysis downstream, since a
 wider region collects more reads and more motif matches for reasons
 that have nothing to do with the biology.
 Recentring fixes it. Each region is reduced to a single position and
-re-expanded to a common width, which is what the ATAC-seq peak atlases
-do and what motif analysis wants."><meta property="og:description" content="Consensus regions inherit their edges from whichever peaks happened to
+re-expanded to a common width, which is what motif analysis wants and
+what the published accessibility atlases do: Corces and colleagues
+build their pan-cancer ATAC-seq atlas out of fixed-width windows taken
+around summits for the same reason."><meta property="og:description" content="Consensus regions inherit their edges from whichever peaks happened to
 be merged, so their widths vary a great deal. That variation biases
 every count-based and enrichment-based analysis downstream, since a
 wider region collects more reads and more motif matches for reasons
 that have nothing to do with the biology.
 Recentring fixes it. Each region is reduced to a single position and
-re-expanded to a common width, which is what the ATAC-seq peak atlases
-do and what motif analysis wants."></head><body>
+re-expanded to a common width, which is what motif analysis wants and
+what the published accessibility atlases do: Corces and colleagues
+build their pan-cancer ATAC-seq atlas out of fixed-width windows taken
+around summits for the same reason."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -21,7 +25,7 @@ do and what motif analysis wants."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">consensusRegions</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,8 +62,10 @@ every count-based and enrichment-based analysis downstream, since a
 wider region collects more reads and more motif matches for reasons
 that have nothing to do with the biology.</p>
 <p>Recentring fixes it. Each region is reduced to a single position and
-re-expanded to a common width, which is what the ATAC-seq peak atlases
-do and what motif analysis wants.</p>
+re-expanded to a common width, which is what motif analysis wants and
+what the published accessibility atlases do: Corces and colleagues
+build their pan-cancer ATAC-seq atlas out of fixed-width windows taken
+around summits for the same reason.</p>
     </div>
 
     <div class="section level2">
@@ -113,6 +119,11 @@ peaks. Broad histone domains should not be recentred at all, since
 collapsing a domain to a point throws away the thing being measured.</p>
     </div>
     <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Corces M.R. *et al.* (2018). The chromatin accessibility landscape of
+primary human cancers. *Science* 362(6413):eaav1898.</p>
+    </div>
+    <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>
     <p>Sebastian Gregoricchio</p>
     </div>
@@ -120,11 +131,16 @@ collapsing a domain to a point throws away the thing being measured.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">peakFiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span></span>
-<span class="r-in"><span>                         <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rep1.narrowPeak"</span>, <span class="st">"rep2.narrowPeak"</span>,</span></span>
-<span class="r-in"><span>                           <span class="st">"rep3.narrowPeak"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                         package <span class="op">=</span> <span class="st">"consensusRegions"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">peaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="readPeakSets.html">readPeakSets</a></span><span class="op">(</span><span class="va">peakFiles</span>, sampleNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"r1"</span>, <span class="st">"r2"</span>, <span class="st">"r3"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                      verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="st">"rep1.narrowPeak"</span>, <span class="st">"rep2.narrowPeak"</span>,</span></span>
+<span class="r-in"><span>        <span class="st">"rep3.narrowPeak"</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    package <span class="op">=</span> <span class="st">"consensusRegions"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">peaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="readPeakSets.html">readPeakSets</a></span><span class="op">(</span><span class="va">peakFiles</span>,</span></span>
+<span class="r-in"><span>    sampleNames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"r1"</span>, <span class="st">"r2"</span>, <span class="st">"r3"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    verbose <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="buildConsensus.html">buildConsensus</a></span><span class="op">(</span><span class="va">peaks</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">recentrePeaks</span><span class="op">(</span><span class="va">result</span>, width <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span></span>

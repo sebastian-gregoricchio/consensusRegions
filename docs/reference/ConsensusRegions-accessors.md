@@ -15,6 +15,8 @@ analysisParameters(object)
 
 consensusStats(object)
 
+calibrationResult(object)
+
 # S4 method for class 'ConsensusRegions'
 consensusRanges(object)
 
@@ -29,6 +31,9 @@ analysisParameters(object)
 
 # S4 method for class 'ConsensusRegions'
 consensusStats(object)
+
+# S4 method for class 'ConsensusRegions'
+calibrationResult(object)
 ```
 
 ## Arguments
@@ -44,6 +49,9 @@ consensusStats(object)
 \`GRangesList\`. \`replicateWeights()\` returns the named numeric vector
 of weights. \`analysisParameters()\` returns the list of settings used.
 \`consensusStats()\` returns a per-replicate summary \`data.frame\`.
+\`calibrationResult()\` returns the \[ThresholdCalibration-class\]
+object the consensus was built with, or \`NULL\` when it was built
+without one.
 
 ## Author
 
@@ -53,9 +61,12 @@ Sebastian Gregoricchio
 
 ``` r
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"))
 #> Score type in use: log10pvalue
 result <- buildConsensus(peaks, verbose = FALSE)
@@ -91,12 +102,15 @@ consensusRanges(result)
 #>   -------
 #>   seqinfo: 2 sequences from an unspecified genome; no seqlengths
 consensusStats(result)
-#>   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive
-#> 1        r1     430        241   189        340       99              0
-#> 2        r2     430        240   190        340      100              0
-#> 3        r3     430         30   400        340      310              0
-#>   nDiscarded rescueRate
-#> 1         90  0.2911765
-#> 2         90  0.2941176
-#> 3         90  0.9117647
+#> DataFrame with 3 rows and 9 columns
+#>     replicate   nTested nStringent     nWeak nConfirmed  nRescued
+#>   <character> <integer>  <integer> <integer>  <integer> <integer>
+#> 1          r1       430        241       189        340        99
+#> 2          r2       430        240       190        340       100
+#> 3          r3       430         30       400        340       310
+#>   nFalsePositive nDiscarded rescueRate
+#>        <integer>  <integer>  <numeric>
+#> 1              0         90   0.291176
+#> 2              0         90   0.294118
+#> 3              0         90   0.911765
 ```

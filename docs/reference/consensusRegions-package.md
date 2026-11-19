@@ -56,12 +56,9 @@ primary human cancers. \*Science\* 362(6413):eaav1898.
 
 ## See also
 
-Useful links:
-
-- <https://github.com/sebastian-gregoricchio/consensusRegions>
-
-- Report bugs at
-  <https://github.com/sebastian-gregoricchio/consensusRegions/issues>
+\`vignette("consensusRegions.vignette", package = "consensusRegions")\`
+walks through a full analysis, from reading the peak files to writing
+the consensus out.
 
 ## Author
 

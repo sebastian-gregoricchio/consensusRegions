@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">consensusRegions</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,34 @@
       <small>Source: <a href="https://github.com/sebastian-gregoricchio/consensusRegions/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.99.3" id="consensusregions-0993">consensusRegions 0.99.3<a class="anchor" aria-label="anchor" href="#consensusregions-0993"></a></h2>
+<div class="section level3">
+<h3 id="new-0-99-3">New<a class="anchor" aria-label="anchor" href="#new-0-99-3"></a></h3>
+<ul><li>
+<code>ThresholdCalibration</code> class. <code><a href="../reference/calibrateThreshold.html">calibrateThreshold()</a></code> returned a plain list, which <code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> then had to check by looking for a <code>threshold</code> element. It now returns an S4 object with a validity method, so a malformed calibration is refused where it is made rather than surfacing later as an empty consensus. Accessors are <code><a href="../reference/ThresholdCalibration-accessors.html">calibrationThreshold()</a></code>, <code><a href="../reference/ThresholdCalibration-accessors.html">calibrationThresholdNegLog10()</a></code>, <code><a href="../reference/ThresholdCalibration-accessors.html">calibrationCurve()</a></code>, <code><a href="../reference/ThresholdCalibration-accessors.html">calibrationTargetFDR()</a></code>, <code><a href="../reference/ThresholdCalibration-accessors.html">calibrationAchievedFDR()</a></code>, <code><a href="../reference/ThresholdCalibration-accessors.html">calibrationSeed()</a></code>, <code><a href="../reference/ThresholdCalibration-accessors.html">nullStatistics()</a></code> and <code><a href="../reference/ThresholdCalibration-accessors.html">observedStatistics()</a></code>, and there is a <code>show()</code> method. <code>$</code> still reaches the components by name, so code written against the list keeps working.</li>
+<li>
+<code><a href="../reference/ConsensusRegions-accessors.html">calibrationResult()</a></code> returns the calibration of a <code>ConsensusRegions</code> object, so that every slot now has an accessor. A consensus built without calibration carries <code>NULL</code> rather than an empty list.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changes-0-99-3">Changes<a class="anchor" aria-label="anchor" href="#changes-0-99-3"></a></h3>
+<ul><li>The components of a <code>ConsensusRegions</code> object are read through their accessors throughout, so <code>@</code> appears only in the class definition and in the methods themselves.</li>
+<li>The <code>stats</code> slot is an <code><a href="https://rdrr.io/pkg/S4Vectors/man/DataFrame-class.html" class="external-link">S4Vectors::DataFrame</a></code> rather than a <code>data.frame</code>.</li>
+<li>
+<code>BPPARAM</code> defaults to <code>NULL</code>, which builds a <code><a href="https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html" class="external-link">BiocParallel::SerialParam()</a></code> seeded from <code>seed</code>, so nothing runs in parallel unasked. A <code>BiocParallelParam</code> is used untouched and a number of cores is still accepted as a shorthand.</li>
+<li>
+<code><a href="../reference/buildConsensus.html">buildConsensus()</a></code> hands its argument checking to <code>.resolveBuildSettings()</code>, which can be read and tested on its own.</li>
+<li>
+<code><a href="../reference/plotCalibration.html">plotCalibration()</a></code> labels its axis with a plotmath expression, and <code>ggtext</code> is no longer a dependency.</li>
+<li>
+<code>.pairwiseJaccard()</code> computes the upper triangle only and mirrors it, rather than every ordered pair. A set still scores 1 against itself, and 0 when it covers no bases at all.</li>
+<li>The package man page is no longer marked internal, so <code><a href="../reference/consensusRegions-package.html">?consensusRegions</a></code> is reachable from the help index, and points at the vignette.</li>
+<li>The vignette has an installation section, says how the approach relates to MSPC and to the consensus options already in Bioconductor, and evaluates the parallel and blacklist examples instead of showing them unevaluated.</li>
+<li>
+<code>LICENSE</code> is no longer shipped in the tarball, since <code>GPL-3</code> needs no copy of its text.</li>
+<li>The chromosome-name fallback credits <code>RegionSetDE</code>, by the same author, and links to it.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.2" id="consensusregions-0992">consensusRegions 0.99.2<a class="anchor" aria-label="anchor" href="#consensusregions-0992"></a></h2>
 <div class="section level3">

@@ -29,7 +29,7 @@ runConsensus(
   outputFile = NULL,
   seqlevelsStyle = "UCSC",
   excludeRegions = NULL,
-  BPPARAM = 1,
+  BPPARAM = NULL,
   seed = NULL,
   verbose = TRUE,
   ...
@@ -99,8 +99,10 @@ runConsensus(
 
 - BPPARAM:
 
-  Either the number of cores to use, or a \`BiocParallelParam\` object.
-  Only the calibration uses it. Default: `1`.
+  A \`BiocParallelParam\` object, or a number of cores as a shorthand
+  for one. Only the calibration uses it. Default: `NULL`, a
+  [`BiocParallel::SerialParam()`](https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html)
+  seeded from `seed`.
 
 - seed:
 
@@ -136,14 +138,18 @@ Sebastian Gregoricchio
 
 ``` r
 peakFiles <- system.file("extdata",
-    c("rep1.narrowPeak", "rep2.narrowPeak",
-        "rep3.narrowPeak"),
-    package = "consensusRegions")
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
 
 result <- runConsensus(peakFiles,
     sampleNames = c("r1", "r2", "r3"),
     minReplicates = 2,
-    verbose = FALSE)
+    verbose = FALSE
+)
 result
 #> ConsensusRegions
 #>   replicates      : 3 ( r1, r2, r3 )
@@ -166,7 +172,8 @@ calibrated <- runConsensus(peakFiles,
     calibrate = TRUE,
     nPermutations = 5,
     seed = 42,
-    verbose = FALSE)
+    verbose = FALSE
+)
 calibrated
 #> ConsensusRegions
 #>   replicates      : 3 ( r1, r2, r3 )

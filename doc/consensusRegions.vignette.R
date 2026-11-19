@@ -3,27 +3,38 @@ knitr::opts_chunk$set(collapse = TRUE, comment = ">",
     warning = FALSE, message = FALSE, fig.align = "center",
     dev = "png", dpi = 96, fig.width = 7, fig.height = 4.5)
 
+## ----install, eval = FALSE----------------------------------------------------
+# if (!requireNamespace("BiocManager", quietly = TRUE)) {
+#     install.packages("BiocManager")
+# }
+# 
+# BiocManager::install("consensusRegions")
+
 ## ----load---------------------------------------------------------------------
 library(consensusRegions)
 
 ## ----read---------------------------------------------------------------------
 peakFiles <- system.file("extdata",
-    c("rep1.narrowPeak",
-        "rep2.narrowPeak",
-        "rep3.narrowPeak"),
-    package = "consensusRegions")
+                         c("rep1.narrowPeak",
+                           "rep2.narrowPeak",
+                           "rep3.narrowPeak"),
+                         package = "consensusRegions")
 
 peaks <- readPeakSets(peakFiles, sampleNames = c("rep1", "rep2", "rep3"))
 peaks
 
 ## ----seqlevels----------------------------------------------------------------
-withChr <- GenomicRanges::GRanges(
-    "chr1", IRanges::IRanges(start = c(1000, 20000), width = 500))
-withoutChr <- GenomicRanges::GRanges(
-    "1", IRanges::IRanges(start = c(1100, 20100), width = 500))
+withChr <- GenomicRanges::GRanges("chr1",
+                                  IRanges::IRanges(start = c(1000, 20000),
+                                                   width = 500))
+
+withoutChr <- GenomicRanges::GRanges("1",
+                                     IRanges::IRanges(start = c(1100, 20100),
+                                                      width = 500))
 
 mixed <- readPeakSets(list(a = withChr, b = withoutChr),
-    seqlevelsStyle = "UCSC")
+                      seqlevelsStyle = "UCSC")
+
 GenomeInfoDb::seqlevels(mixed[["b"]])
 
 ## ----basic--------------------------------------------------------------------
@@ -40,28 +51,29 @@ plotRescue(result)
 head(consensusRanges(result), 3)
 
 ## ----weightsBam, eval = FALSE-------------------------------------------------
-# weights <- computeReplicateWeights(
-#     peaks,
-#     method = "frip",
-#     bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"))
+# weights <- computeReplicateWeights(peaks,
+#                                    method = "frip",
+#                                    bamFiles = c("rep1.bam",
+#                                                 "rep2.bam",
+#                                                 "rep3.bam"))
 
 ## ----weightsFrip--------------------------------------------------------------
 weights <- computeReplicateWeights(peaks,
-    method = "frip",
-    frip = c(0.21, 0.19, 0.06),
-    verbose = FALSE)
+                                   method = "frip",
+                                   frip = c(0.21, 0.19, 0.06),
+                                   verbose = FALSE)
 weights
 
 ## ----weightsIntrinsic---------------------------------------------------------
 computeReplicateWeights(peaks,
-    method = "intrinsic",
-    verbose = FALSE)
+                        method = "intrinsic",
+                        verbose = FALSE)
 
 ## ----weighted-----------------------------------------------------------------
 weighted <- buildConsensus(peaks,
-    weights = weights,
-    combinationMethod = "stouffer",
-    verbose = FALSE)
+                           weights = weights,
+                           combinationMethod = "stouffer",
+                           verbose = FALSE)
 consensusStats(weighted)
 
 ## ----jaccard------------------------------------------------------------------
@@ -70,88 +82,99 @@ plotJaccard(weighted)
 ## ----rankProductScale, error = TRUE-------------------------------------------
 try({
 buildConsensus(peaks,
-    combinationMethod = "rankProduct",
-    verbose = FALSE)
+               combinationMethod = "rankProduct",
+               verbose = FALSE)
 })
 
 ## ----rankProductWorking-------------------------------------------------------
 ranked <- buildConsensus(peaks,
-    combinationMethod = "rankProduct",
-    combinedThreshold = 0.05,
-    verbose = FALSE)
+                         combinationMethod = "rankProduct",
+                         combinedThreshold = 0.05,
+                         verbose = FALSE)
 length(ranked)
 
 ## ----rankProductRelaxed-------------------------------------------------------
 relaxed <- buildConsensus(peaks,
-    combinationMethod = "rankProduct",
-    combinedThreshold = 0.05,
-    adjustmentFamily = "confirmed",
-    verbose = FALSE)
+                          combinationMethod = "rankProduct",
+                          combinedThreshold = 0.05,
+                          adjustmentFamily = "confirmed",
+                          verbose = FALSE)
 length(relaxed)
 
 ## ----minReplicates------------------------------------------------------------
 c(byTotal = length(buildConsensus(peaks,
-            minReplicates = 3,
-            verbose = FALSE)),
-    bySupport = length(buildConsensus(peaks,
-            minSupport = 2,
-            verbose = FALSE)))
+                                  minReplicates = 3,
+                                  verbose = FALSE)),
+  bySupport = length(buildConsensus(peaks,
+                                    minSupport = 2,
+                                    verbose = FALSE)))
 
 ## ----minReplicatesPercent-----------------------------------------------------
 length(buildConsensus(peaks,
-        minReplicates = "60%",
-        verbose = FALSE))
+                      minReplicates = "60%",
+                      verbose = FALSE))
 
 ## ----adjustmentFamily---------------------------------------------------------
 tested <- buildConsensus(peaks, verbose = FALSE)
 
 mspcStyle <- buildConsensus(peaks,
-    adjustmentFamily = "confirmed",
-    verbose = FALSE)
+                            adjustmentFamily = "confirmed",
+                            verbose = FALSE)
 
 c(tested = length(tested), confirmed = length(mspcStyle))
 
 ## ----calibrate----------------------------------------------------------------
 calibration <- calibrateThreshold(peaks,
-    nPermutations = 10,
-    targetFDR = 0.05,
-    seed = 42,
-    verbose = FALSE)
+                                  nPermutations = 10,
+                                  targetFDR = 0.05,
+                                  seed = 42,
+                                  verbose = FALSE)
 
-calibration$threshold
+calibration
+
+## ----calibrationAccessors-----------------------------------------------------
+calibrationThreshold(calibration)
+calibrationAchievedFDR(calibration)
+head(calibrationCurve(calibration), 3)
 
 ## ----plotCalibration----------------------------------------------------------
 plotCalibration(calibration)
 
 ## ----calibrated---------------------------------------------------------------
 calibrated <- buildConsensus(peaks,
-    combinedThreshold = calibration$threshold,
-    verbose = FALSE)
+                             calibration = calibration,
+                             verbose = FALSE)
 length(calibrated)
 
-## ----parallel, eval = FALSE---------------------------------------------------
-# calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8,
-#     seed = 42)
+## ----parallel-----------------------------------------------------------------
+calibration <- calibrateThreshold(peaks,
+                                  nPermutations = 5,
+                                  BPPARAM = 1,
+                                  seed = 42)
 
-## ----parallelSeed, eval = FALSE-----------------------------------------------
-# calibration <- calibrateThreshold(
-#     peaks,
-#     nPermutations = 50,
-#     BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
+calibrationSeed(calibration)
+
+## ----parallelSeed-------------------------------------------------------------
+calibration <- calibrateThreshold(peaks,
+                                  nPermutations = 5,
+                                  BPPARAM = BiocParallel::SerialParam(RNGseed = 42))
+
+calibration$seedSource
 
 ## ----bed3---------------------------------------------------------------------
 minimalFile <- system.file("extdata", "rep1_minimal.bed",
-    package = "consensusRegions")
+                           package = "consensusRegions")
 
 minimal <- readPeakSets(rep(minimalFile, 3),
-    sampleNames = c("a", "b", "c"))
+                        sampleNames = c("a", "b", "c"))
 
 minimalResult <- buildConsensus(minimal, verbose = FALSE)
 analysisParameters(minimalResult)$presenceOnly
 
 ## ----merge--------------------------------------------------------------------
-seeded <- buildConsensus(peaks, mergeMethod = "iterative",
-    verbose = FALSE)
+seeded <- buildConsensus(peaks,
+                         mergeMethod = "iterative",
+                         verbose = FALSE)
 
 summary(GenomicRanges::width(consensusRanges(result)))
 summary(GenomicRanges::width(consensusRanges(seeded)))
@@ -164,29 +187,38 @@ head(fixed, 3)
 se <- asSummarizedExperiment(result)
 se
 
-## ----blacklist, eval = FALSE--------------------------------------------------
-# result <- buildConsensus(peaks, excludeRegions = blacklistGRanges)
+## ----blacklist----------------------------------------------------------------
+blacklist <- GenomicRanges::GRanges(seqnames = c("chr1", "chr2"),
+                                    ranges = IRanges::IRanges(start = c(1e5, 2e6),
+                                                              width = 5e5))
+
+filtered <- buildConsensus(peakList = peaks,
+                           excludeRegions = blacklist,
+                           verbose = FALSE)
+
+length(consensusRanges(result))
+length(consensusRanges(filtered))
 
 ## ----wrapper------------------------------------------------------------------
-result <- runConsensus(peakFiles,
-    sampleNames = c("rep1", "rep2", "rep3"),
-    minReplicates = 2,
-    verbose = FALSE)
+result <- runConsensus(peaks = peakFiles,
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       minReplicates = 2,
+                       verbose = FALSE)
 length(result)
 
 ## ----wrapperOptions, eval = FALSE---------------------------------------------
 # result <- runConsensus(peakFiles,
-#     sampleNames = c("rep1", "rep2", "rep3"),
-#     weightMethod = "frip",
-#     bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
-#     calibrate = TRUE,
-#     nPermutations = 50,
-#     combinationMethod = "stouffer",
-#     minReplicates = "75%",
-#     recentre = TRUE, width = 400,
-#     excludeRegions = blacklist,
-#     outputFile = "consensus.bed",
-#     BPPARAM = 8)
+#                        sampleNames = c("rep1", "rep2", "rep3"),
+#                        weightMethod = "frip",
+#                        bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
+#                        calibrate = TRUE,
+#                        nPermutations = 50,
+#                        combinationMethod = "stouffer",
+#                        minReplicates = "75%",
+#                        recentre = TRUE, width = 400,
+#                        excludeRegions = blacklist,
+#                        outputFile = "consensus.bed",
+#                        BPPARAM = 8)
 
 ## ----sessionInfo, echo=FALSE--------------------------------------------------
 sessionInfo()

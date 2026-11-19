@@ -39,7 +39,7 @@ poorly calibrated."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">consensusRegions</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -155,8 +155,10 @@ genes. *FEBS Letters* 573(1-3):83-92.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6.62626</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## the same peaks, but the third replicate is known to be poor</span></span></span>
-<span class="r-in"><span><span class="fu">combineEvidence</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">3.2</span>, <span class="fl">2.8</span><span class="op">)</span>, weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.3</span>, <span class="fl">1.3</span>, <span class="fl">0.4</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                method <span class="op">=</span> <span class="st">"stouffer"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">combineEvidence</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">3.2</span>, <span class="fl">2.8</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.3</span>, <span class="fl">1.3</span>, <span class="fl">0.4</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    method <span class="op">=</span> <span class="st">"stouffer"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 6.521142</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
