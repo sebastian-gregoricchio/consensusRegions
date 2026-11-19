@@ -33,7 +33,7 @@ calibrateThreshold(
   multipleIntersections = c("lowest", "highest"),
   chromosomeLengths = NULL,
   excludeRegions = NULL,
-  BPPARAM = 1,
+  BPPARAM = NULL,
   seed = NULL,
   verbose = TRUE
 )
@@ -116,11 +116,15 @@ calibrateThreshold(
 
 - BPPARAM:
 
-  Either the number of cores to use, or a \`BiocParallelParam\` object
-  for finer control. The permutations are independent of one another and
-  are where nearly all the time goes, so raising this is worth it on a
-  large peak set: a single round takes around half a minute on 100,000
-  peaks per replicate. Default: `1`.
+  A \`BiocParallelParam\` object, used as it is. A single number is
+  accepted as a shorthand for that many cores, since asking for more
+  cores and nothing else is the common case. The permutations are
+  independent of one another and are where nearly all the time goes, so
+  raising this is worth it on a large peak set: a single round takes
+  around half a minute on 100,000 peaks per replicate. Default: `NULL`,
+  a
+  [`BiocParallel::SerialParam()`](https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html)
+  seeded from `seed`, so that nothing runs in parallel unasked.
 
 - seed:
 
@@ -136,12 +140,15 @@ calibrateThreshold(
 
 ## Value
 
-A list with the recommended \`threshold\` on the p-value scale, the
-\`fdrCurve\` it was read off, the observed and null combined statistics,
-the \`seed\` the permutations were drawn with and its \`seedSource\`:
-\`"seed"\` for the argument, \`"BPPARAM"\` for the \`RNGseed\` of a
-backend passed as \`BPPARAM\`, \`"unseeded"\` when there was none, in
-which case \`seed\` is \`NULL\`.
+A \[ThresholdCalibration-class\] object, holding the recommended
+\`threshold\` on the p-value scale, the \`fdrCurve\` it was read off,
+the observed and null combined statistics, the \`seed\` the permutations
+were drawn with and its \`seedSource\`: \`"seed"\` for the argument,
+\`"BPPARAM"\` for the \`RNGseed\` of a backend passed as \`BPPARAM\`,
+\`"unseeded"\` when there was none, in which case \`seed\` is \`NULL\`.
+Its components are reached with the accessors documented in
+\[ThresholdCalibration-accessors\], and \`\$\` still reaches them by
+name, as it did when this was a plain list.
 
 ## Details
 
@@ -173,18 +180,26 @@ Sebastian Gregoricchio
 
 ``` r
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
-peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                      verbose = FALSE)
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
+peaks <- readPeakSets(peakFiles,
+    sampleNames = c("r1", "r2", "r3"),
+    verbose = FALSE
+)
 
-calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 42,
-                                  verbose = FALSE)
+calibration <- calibrateThreshold(peaks,
+    nPermutations = 5, seed = 42,
+    verbose = FALSE
+)
 calibration$threshold
 #> [1] 4.242908e-11
 
 result <- buildConsensus(peaks,
-                         combinedThreshold = calibration$threshold,
-                         verbose = FALSE)
+    combinedThreshold = calibration$threshold,
+    verbose = FALSE
+)
 ```

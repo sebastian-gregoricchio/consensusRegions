@@ -7,8 +7,10 @@ wider region collects more reads and more motif matches for reasons that
 have nothing to do with the biology.
 
 Recentring fixes it. Each region is reduced to a single position and
-re-expanded to a common width, which is what the ATAC-seq peak atlases
-do and what motif analysis wants.
+re-expanded to a common width, which is what motif analysis wants and
+what the published accessibility atlases do: Corces and colleagues build
+their pan-cancer ATAC-seq atlas out of fixed-width windows taken around
+summits for the same reason.
 
 ## Usage
 
@@ -58,6 +60,11 @@ Widths between 200 and 500 bp suit transcription factors and ATAC peaks.
 Broad histone domains should not be recentred at all, since collapsing a
 domain to a point throws away the thing being measured.
 
+## References
+
+Corces M.R. \*et al.\* (2018). The chromatin accessibility landscape of
+primary human cancers. \*Science\* 362(6413):eaav1898.
+
 ## Author
 
 Sebastian Gregoricchio
@@ -66,11 +73,16 @@ Sebastian Gregoricchio
 
 ``` r
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
-peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                      verbose = FALSE)
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
+peaks <- readPeakSets(peakFiles,
+    sampleNames = c("r1", "r2", "r3"),
+    verbose = FALSE
+)
 result <- buildConsensus(peaks, verbose = FALSE)
 
 recentrePeaks(result, width = 400)

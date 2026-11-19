@@ -7,6 +7,7 @@
   [`replicateWeights()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ConsensusRegions-accessors.md)
   [`analysisParameters()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ConsensusRegions-accessors.md)
   [`consensusStats()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ConsensusRegions-accessors.md)
+  [`calibrationResult()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ConsensusRegions-accessors.md)
   : Accessors for ConsensusRegions objects
 - [`ConsensusRegions-class`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ConsensusRegions-class.md)
   : ConsensusRegions class
@@ -14,6 +15,18 @@
   : Number of consensus regions
 - [`show(`*`<ConsensusRegions>`*`)`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ConsensusRegions-show.md)
   : Display a ConsensusRegions object
+- [`calibrationThreshold()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`calibrationThresholdNegLog10()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`calibrationCurve()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`calibrationTargetFDR()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`calibrationAchievedFDR()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`calibrationSeed()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`nullStatistics()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`observedStatistics()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  [`` `$`( ``*`<ThresholdCalibration>`*`)`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  : Accessors for ThresholdCalibration objects
+- [`ThresholdCalibration-class`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-class.md)
+  : ThresholdCalibration class
 - [`asSummarizedExperiment()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/asSummarizedExperiment.md)
   : Hand the consensus over to a differential analysis
 - [`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md)
@@ -24,6 +37,9 @@
   : Combine the evidence carried by overlapping peaks
 - [`computeReplicateWeights()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/computeReplicateWeights.md)
   : Derive per-replicate weights
+- [`consensusRegions`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/consensusRegions-package.md)
+  [`consensusRegions-package`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/consensusRegions-package.md)
+  : consensusRegions: consensus peaks across replicated experiments
 - [`exportConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/exportConsensus.md)
   : Write the results to disk
 - [`plotCalibration()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/plotCalibration.md)
@@ -40,3 +56,5 @@
   : Recover summits and return fixed-width regions
 - [`runConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/runConsensus.md)
   : Run the whole analysis in one call
+- [`show(`*`<ThresholdCalibration>`*`)`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/show-ThresholdCalibration-method.md)
+  : Summary of a threshold calibration

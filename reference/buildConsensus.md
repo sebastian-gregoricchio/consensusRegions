@@ -140,7 +140,8 @@ buildConsensus(
 - mergeMethod:
 
   \`"reduce"\` merges anything that touches; \`"iterative"\` seeds on
-  the most significant peak and removes what it overlaps, then repeats.
+  the most significant peak and removes what it overlaps, then repeats,
+  which is the iterative removal procedure of Corces and colleagues.
   Default: `"reduce"`.
 
 - maxConsensusWidth:
@@ -187,6 +188,11 @@ and a weighted presence rule is applied instead: a peak is kept when the
 weights of the replicates supporting it sum to at least \`minSupport\`.
 With equal weights this is the familiar k-of-n rule.
 
+## References
+
+Corces M.R. \*et al.\* (2018). The chromatin accessibility landscape of
+primary human cancers. \*Science\* 362(6413):eaav1898.
+
 ## Author
 
 Sebastian Gregoricchio
@@ -195,11 +201,16 @@ Sebastian Gregoricchio
 
 ``` r
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
-peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                      verbose = FALSE)
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
+peaks <- readPeakSets(peakFiles,
+    sampleNames = c("r1", "r2", "r3"),
+    verbose = FALSE
+)
 
 result <- buildConsensus(peaks, verbose = FALSE)
 consensusRanges(result)
@@ -236,17 +247,23 @@ consensusRanges(result)
 ## down-weighting a replicate known to be poor
 weighted <- buildConsensus(
     peaks,
-    weights = computeReplicateWeights(peaks, method = "frip",
-                                      frip = c(0.2, 0.18, 0.05)),
+    weights = computeReplicateWeights(peaks,
+        method = "frip",
+        frip = c(0.2, 0.18, 0.05)
+    ),
     combinationMethod = "stouffer",
-    verbose = FALSE)
+    verbose = FALSE
+)
 consensusStats(weighted)
-#>   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive
-#> 1        r1     430        241   189        340       99              0
-#> 2        r2     430        240   190        340      100              0
-#> 3        r3     430         30   400        340      310              0
-#>   nDiscarded rescueRate
-#> 1         90  0.2911765
-#> 2         90  0.2941176
-#> 3         90  0.9117647
+#> DataFrame with 3 rows and 9 columns
+#>     replicate   nTested nStringent     nWeak nConfirmed  nRescued
+#>   <character> <integer>  <integer> <integer>  <integer> <integer>
+#> 1          r1       430        241       189        340        99
+#> 2          r2       430        240       190        340       100
+#> 3          r3       430         30       400        340       310
+#>   nFalsePositive nDiscarded rescueRate
+#>        <integer>  <integer>  <numeric>
+#> 1              0         90   0.291176
+#> 2              0         90   0.294118
+#> 3              0         90   0.911765
 ```

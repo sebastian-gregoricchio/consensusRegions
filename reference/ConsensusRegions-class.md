@@ -28,12 +28,12 @@ that an analysis can be traced back from its output.
 
 - `stats`:
 
-  A \`data.frame\` summarising each replicate.
+  A \`DataFrame\` summarising each replicate.
 
 - `calibration`:
 
-  A list holding the output of \[calibrateThreshold()\] when one was
-  supplied, the seed of its permutations included, empty otherwise.
+  A \[ThresholdCalibration-class\] object when the consensus was built
+  with one, \`NULL\` otherwise.
 
 ## Author
 

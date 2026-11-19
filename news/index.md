@@ -1,5 +1,67 @@
 # Changelog
 
+## consensusRegions 0.99.3
+
+### New
+
+- `ThresholdCalibration` class.
+  [`calibrateThreshold()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/calibrateThreshold.md)
+  returned a plain list, which
+  [`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md)
+  then had to check by looking for a `threshold` element. It now returns
+  an S4 object with a validity method, so a malformed calibration is
+  refused where it is made rather than surfacing later as an empty
+  consensus. Accessors are
+  [`calibrationThreshold()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md),
+  [`calibrationThresholdNegLog10()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md),
+  [`calibrationCurve()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md),
+  [`calibrationTargetFDR()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md),
+  [`calibrationAchievedFDR()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md),
+  [`calibrationSeed()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md),
+  [`nullStatistics()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md)
+  and
+  [`observedStatistics()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ThresholdCalibration-accessors.md),
+  and there is a `show()` method. `$` still reaches the components by
+  name, so code written against the list keeps working.
+- [`calibrationResult()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/ConsensusRegions-accessors.md)
+  returns the calibration of a `ConsensusRegions` object, so that every
+  slot now has an accessor. A consensus built without calibration
+  carries `NULL` rather than an empty list.
+
+### Changes
+
+- The components of a `ConsensusRegions` object are read through their
+  accessors throughout, so `@` appears only in the class definition and
+  in the methods themselves.
+- The `stats` slot is an
+  [`S4Vectors::DataFrame`](https://rdrr.io/pkg/S4Vectors/man/DataFrame-class.html)
+  rather than a `data.frame`.
+- `BPPARAM` defaults to `NULL`, which builds a
+  [`BiocParallel::SerialParam()`](https://rdrr.io/pkg/BiocParallel/man/SerialParam-class.html)
+  seeded from `seed`, so nothing runs in parallel unasked. A
+  `BiocParallelParam` is used untouched and a number of cores is still
+  accepted as a shorthand.
+- [`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md)
+  hands its argument checking to `.resolveBuildSettings()`, which can be
+  read and tested on its own.
+- [`plotCalibration()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/plotCalibration.md)
+  labels its axis with a plotmath expression, and `ggtext` is no longer
+  a dependency.
+- `.pairwiseJaccard()` computes the upper triangle only and mirrors it,
+  rather than every ordered pair. A set still scores 1 against itself,
+  and 0 when it covers no bases at all.
+- The package man page is no longer marked internal, so
+  [`?consensusRegions`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/consensusRegions-package.md)
+  is reachable from the help index, and points at the vignette.
+- The vignette has an installation section, says how the approach
+  relates to MSPC and to the consensus options already in Bioconductor,
+  and evaluates the parallel and blacklist examples instead of showing
+  them unevaluated.
+- `LICENSE` is no longer shipped in the tarball, since `GPL-3` needs no
+  copy of its text.
+- The chromosome-name fallback credits `RegionSetDE`, by the same
+  author, and links to it.
+
 ## consensusRegions 0.99.2
 
 ### Reproducibility

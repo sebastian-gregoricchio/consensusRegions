@@ -19,6 +19,32 @@ here is the ability to weight replicates, to calibrate the decision
 threshold rather than fix it, and to work with peak files that have lost
 their statistics.
 
+Bioconductor offers other ways to reach a consensus. `DiffBind` counts
+how many replicates called a peak and keeps the regions that clear a
+`minOverlap` threshold, which asks nothing about how convincing those
+calls were; IDR measures how reproducibly two replicates rank the same
+regions, and answers a question about the pair rather than returning a
+region set for an arbitrary number of samples. Here the evidence itself
+is combined, so a region can be kept on three mediocre calls and dropped
+on one excellent call that nobody else saw.
+
+  
+
+## **Installation**
+
+The package is installed from Bioconductor:
+
+``` r
+
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
+
+BiocManager::install("consensusRegions")
+```
+
+Once installed, load it as usual:
+
 ``` r
 
 library(consensusRegions)
@@ -33,10 +59,10 @@ deliberately shallow third sample.
 
 ``` r
 peakFiles <- system.file("extdata",
-    c("rep1.narrowPeak",
-        "rep2.narrowPeak",
-        "rep3.narrowPeak"),
-    package = "consensusRegions")
+                         c("rep1.narrowPeak",
+                           "rep2.narrowPeak",
+                           "rep3.narrowPeak"),
+                         package = "consensusRegions")
 
 peaks <- readPeakSets(peakFiles, sampleNames = c("rep1", "rep2", "rep3"))
 peaks
@@ -153,16 +179,22 @@ result looks like a biological finding rather than a clerical one.
 
 [`readPeakSets()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/readPeakSets.md)
 therefore harmonises the names on the way in, defaulting to UCSC style,
-in the same way as `RegionSetDE::loadRegions()`:
+in the same way as `loadRegions()` in
+[RegionSetDE](https://github.com/sebastian-gregoricchio/RegionSetDE), by
+the same author:
 
 ``` r
-withChr <- GenomicRanges::GRanges(
-    "chr1", IRanges::IRanges(start = c(1000, 20000), width = 500))
-withoutChr <- GenomicRanges::GRanges(
-    "1", IRanges::IRanges(start = c(1100, 20100), width = 500))
+withChr <- GenomicRanges::GRanges("chr1",
+                                  IRanges::IRanges(start = c(1000, 20000),
+                                                   width = 500))
+
+withoutChr <- GenomicRanges::GRanges("1",
+                                     IRanges::IRanges(start = c(1100, 20100),
+                                                      width = 500))
 
 mixed <- readPeakSets(list(a = withChr, b = withoutChr),
-    seqlevelsStyle = "UCSC")
+                      seqlevelsStyle = "UCSC")
+
 GenomeInfoDb::seqlevels(mixed[["b"]])
 > [1] "chr1"
 ```
@@ -206,14 +238,17 @@ The per-replicate summary is where to look first.
 
 ``` r
 consensusStats(result)
->   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive
-> 1      rep1     430        241   189        340       99              0
-> 2      rep2     430        240   190        340      100              0
-> 3      rep3     430         30   400        340      310              0
->   nDiscarded rescueRate
-> 1         90  0.2911765
-> 2         90  0.2941176
-> 3         90  0.9117647
+> DataFrame with 3 rows and 9 columns
+>     replicate   nTested nStringent     nWeak nConfirmed  nRescued
+>   <character> <integer>  <integer> <integer>  <integer> <integer>
+> 1        rep1       430        241       189        340        99
+> 2        rep2       430        240       190        340       100
+> 3        rep3       430         30       400        340       310
+>   nFalsePositive nDiscarded rescueRate
+>        <integer>  <integer>  <numeric>
+> 1              0         90   0.291176
+> 2              0         90   0.294118
+> 3              0         90   0.911765
 ```
 
 `nRescued` counts peaks that were only weak on their own and were kept
@@ -264,10 +299,11 @@ directly:
 
 ``` r
 
-weights <- computeReplicateWeights(
-    peaks,
-    method = "frip",
-    bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"))
+weights <- computeReplicateWeights(peaks,
+                                   method = "frip",
+                                   bamFiles = c("rep1.bam",
+                                                "rep2.bam",
+                                                "rep3.bam"))
 ```
 
 More often the alignments are long gone and only the numbers survive in
@@ -275,9 +311,9 @@ an old QC report. Pass them in:
 
 ``` r
 weights <- computeReplicateWeights(peaks,
-    method = "frip",
-    frip = c(0.21, 0.19, 0.06),
-    verbose = FALSE)
+                                   method = "frip",
+                                   frip = c(0.21, 0.19, 0.06),
+                                   verbose = FALSE)
 weights
 >      rep1      rep2      rep3 
 > 1.3695652 1.2391304 0.3913043 
@@ -295,8 +331,8 @@ be scored by how well it agrees with the others:
 
 ``` r
 computeReplicateWeights(peaks,
-    method = "intrinsic",
-    verbose = FALSE)
+                        method = "intrinsic",
+                        verbose = FALSE)
 >      rep1      rep2      rep3 
 > 0.9925346 1.0069021 1.0005633 
 > attr(,"metrics")
@@ -317,18 +353,21 @@ method. Fisher and the rank product ignore them.
 
 ``` r
 weighted <- buildConsensus(peaks,
-    weights = weights,
-    combinationMethod = "stouffer",
-    verbose = FALSE)
+                           weights = weights,
+                           combinationMethod = "stouffer",
+                           verbose = FALSE)
 consensusStats(weighted)
->   replicate nTested nStringent nWeak nConfirmed nRescued nFalsePositive
-> 1      rep1     430        241   189        340       99              0
-> 2      rep2     430        240   190        340      100              0
-> 3      rep3     430         30   400        340      310              0
->   nDiscarded rescueRate
-> 1         90  0.2911765
-> 2         90  0.2941176
-> 3         90  0.9117647
+> DataFrame with 3 rows and 9 columns
+>     replicate   nTested nStringent     nWeak nConfirmed  nRescued
+>   <character> <integer>  <integer> <integer>  <integer> <integer>
+> 1        rep1       430        241       189        340        99
+> 2        rep2       430        240       190        340       100
+> 3        rep3       430         30       400        340       310
+>   nFalsePositive nDiscarded rescueRate
+>        <integer>  <integer>  <numeric>
+> 1              0         90   0.291176
+> 2              0         90   0.294118
+> 3              0         90   0.911765
 ```
 
 ``` r
@@ -412,8 +451,8 @@ checks for this and refuses rather than handing back an empty result:
 
 ``` r
 buildConsensus(peaks,
-    combinationMethod = "rankProduct",
-    verbose = FALSE)
+               combinationMethod = "rankProduct",
+               verbose = FALSE)
 >  [1m [33mError [39m in `buildConsensus()`: [22m
 >  [33m! [39m the rank product cannot reach a combined p-value of 1e-08 with these peak sets: the smallest attainable is 7.07e-05, because the statistic is bounded by the number of peaks per replicate. Lower 'combinedThreshold', or let calibrateThreshold() choose one
 ```
@@ -423,9 +462,9 @@ one:
 
 ``` r
 ranked <- buildConsensus(peaks,
-    combinationMethod = "rankProduct",
-    combinedThreshold = 0.05,
-    verbose = FALSE)
+                         combinationMethod = "rankProduct",
+                         combinedThreshold = 0.05,
+                         verbose = FALSE)
 length(ranked)
 > [1] 0
 ```
@@ -440,10 +479,10 @@ one MSPC uses and the peaks reappear:
 
 ``` r
 relaxed <- buildConsensus(peaks,
-    combinationMethod = "rankProduct",
-    combinedThreshold = 0.05,
-    adjustmentFamily = "confirmed",
-    verbose = FALSE)
+                          combinationMethod = "rankProduct",
+                          combinedThreshold = 0.05,
+                          adjustmentFamily = "confirmed",
+                          verbose = FALSE)
 length(relaxed)
 > [1] 38
 ```
@@ -467,11 +506,11 @@ MSPC’s `-c`. Give one or the other, never both.
 
 ``` r
 c(byTotal = length(buildConsensus(peaks,
-            minReplicates = 3,
-            verbose = FALSE)),
-    bySupport = length(buildConsensus(peaks,
-            minSupport = 2,
-            verbose = FALSE)))
+                                  minReplicates = 3,
+                                  verbose = FALSE)),
+  bySupport = length(buildConsensus(peaks,
+                                    minSupport = 2,
+                                    verbose = FALSE)))
 >   byTotal bySupport 
 >       292       292
 ```
@@ -481,8 +520,8 @@ the requirement can be written the way it is usually described:
 
 ``` r
 length(buildConsensus(peaks,
-        minReplicates = "60%",
-        verbose = FALSE))
+                      minReplicates = "60%",
+                      verbose = FALSE))
 > [1] 292
 ```
 
@@ -520,8 +559,8 @@ corrects across every peak that entered the analysis.
 tested <- buildConsensus(peaks, verbose = FALSE)
 
 mspcStyle <- buildConsensus(peaks,
-    adjustmentFamily = "confirmed",
-    verbose = FALSE)
+                            adjustmentFamily = "confirmed",
+                            verbose = FALSE)
 
 c(tested = length(tested), confirmed = length(mspcStyle))
 >    tested confirmed 
@@ -560,13 +599,34 @@ null peaks falls to a chosen fraction of the observed count.
 
 ``` r
 calibration <- calibrateThreshold(peaks,
-    nPermutations = 10,
-    targetFDR = 0.05,
-    seed = 42,
-    verbose = FALSE)
+                                  nPermutations = 10,
+                                  targetFDR = 0.05,
+                                  seed = 42,
+                                  verbose = FALSE)
 
-calibration$threshold
+calibration
+> ThresholdCalibration
+>   threshold       : 4.24e-11 ( -log10 10.37 )
+>   FDR             : 0.03894831 achieved, 0.05 asked for
+>   permutations    : 10 
+>   statistics      : 1020 observed, 552 null
+>   seed            : 42 (from seed)
+```
+
+The result is a `ThresholdCalibration` object. Its components are
+reached with accessors, and `$` works too, since this was a plain list
+up to version 0.99.2:
+
+``` r
+calibrationThreshold(calibration)
 > [1] 4.242908e-11
+calibrationAchievedFDR(calibration)
+> [1] 0.03894831
+head(calibrationCurve(calibration), 3)
+>        cut nObserved expectedNull        fdr
+> 1 10.37234      1020     39.72727 0.03894831
+> 2 10.52061      1014     39.36364 0.03882015
+> 3 10.88139      1011     37.54545 0.03713695
 ```
 
 ``` r
@@ -576,10 +636,15 @@ plotCalibration(calibration)
 
 ![](consensusRegions.vignette_files/figure-html/plotCalibration-1.png)
 
+Pass the object itself to
+[`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md),
+which reads the threshold out of it and refuses anything that is not a
+calibration:
+
 ``` r
 calibrated <- buildConsensus(peaks,
-    combinedThreshold = calibration$threshold,
-    verbose = FALSE)
+                             calibration = calibration,
+                             verbose = FALSE)
 length(calibrated)
 > [1] 292
 ```
@@ -589,8 +654,9 @@ working number. The positions are drawn at random, and `seed` is what
 brings the same threshold back. The draws happen inside `BiocParallel`,
 which keeps its random numbers apart from those of the session, so a
 [`set.seed()`](https://rdrr.io/r/base/Random.html) before the call does
-not reach them. The seed is kept with the result, in `calibration$seed`,
-and the random numbers of the session are left as they were.
+not reach them. The seed is kept with the result, as
+`calibrationSeed(calibration)`, and the random numbers of the session
+are left as they were.
 
 The permutations are independent of one another and are where nearly all
 the time goes, so they are handed to `BiocParallel`. On a genome-scale
@@ -598,24 +664,37 @@ peak set a single round takes tens of seconds, which makes fifty of them
 most of an afternoon in series:
 
 ``` r
+calibration <- calibrateThreshold(peaks,
+                                  nPermutations = 5,
+                                  BPPARAM = 1,
+                                  seed = 42)
 
-calibration <- calibrateThreshold(peaks, nPermutations = 50, BPPARAM = 8,
-    seed = 42)
+calibrationSeed(calibration)
+> [1] 42
 ```
 
 `BPPARAM` takes the number of cores directly, which is how the question
-usually gets asked, and the same seed returns the same threshold on one
-core or on eight. A `BiocParallelParam` object is accepted too, for
-finer control of the workers. It is used as it is, so the seed then
-travels with the backend, as its `RNGseed`, and `seed` is ignored:
+usually gets asked: a real run would say `BPPARAM = 8` and
+`nPermutations = 50`, and the same seed returns the same threshold on
+one core or on eight. Nothing runs in parallel unless asked, so the
+default is a serial backend.
+
+A `BiocParallelParam` object is accepted too, for finer control of the
+workers. It is used exactly as it is, which means the seed has to travel
+with the backend, as its `RNGseed`; `seed` is ignored in that case, with
+a warning, rather than silently overriding what the object carries:
 
 ``` r
+calibration <- calibrateThreshold(peaks,
+                                  nPermutations = 5,
+                                  BPPARAM = BiocParallel::SerialParam(RNGseed = 42))
 
-calibration <- calibrateThreshold(
-    peaks,
-    nPermutations = 50,
-    BPPARAM = BiocParallel::MulticoreParam(workers = 8, RNGseed = 42))
+calibration$seedSource
+> [1] "BPPARAM"
 ```
+
+`MulticoreParam(workers = 8, RNGseed = 42)` is the same thing with eight
+workers, and is what the above would be outside a vignette.
 
 Passing a blacklist through `excludeRegions` makes the null more honest,
 because shuffled peaks otherwise land in artefact regions where real
@@ -633,10 +712,10 @@ weights that is the familiar k-of-n rule.
 
 ``` r
 minimalFile <- system.file("extdata", "rep1_minimal.bed",
-    package = "consensusRegions")
+                           package = "consensusRegions")
 
 minimal <- readPeakSets(rep(minimalFile, 3),
-    sampleNames = c("a", "b", "c"))
+                        sampleNames = c("a", "b", "c"))
 
 minimalResult <- buildConsensus(minimal, verbose = FALSE)
 analysisParameters(minimalResult)$presenceOnly
@@ -661,8 +740,9 @@ seeding on the most significant peak, claiming what it overlaps, and
 repeating, which is the approach the ATAC-seq peak atlases use.
 
 ``` r
-seeded <- buildConsensus(peaks, mergeMethod = "iterative",
-    verbose = FALSE)
+seeded <- buildConsensus(peaks,
+                         mergeMethod = "iterative",
+                         verbose = FALSE)
 
 summary(GenomicRanges::width(consensusRanges(result)))
 >    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
@@ -744,9 +824,22 @@ distorts the rank distributions the combination relies on, which is why
 `excludeRegions` is applied at the end of
 [`buildConsensus()`](https://sebastian-gregoricchio.github.io/consensusRegions/reference/buildConsensus.md).
 
-``` r
+Any `GRanges` will do. A real blacklist comes from ENCODE; this one is
+made by hand, over the two chromosomes the example data uses:
 
-result <- buildConsensus(peaks, excludeRegions = blacklistGRanges)
+``` r
+blacklist <- GenomicRanges::GRanges(seqnames = c("chr1", "chr2"),
+                                    ranges = IRanges::IRanges(start = c(1e5, 2e6),
+                                                              width = 5e5))
+
+filtered <- buildConsensus(peakList = peaks,
+                           excludeRegions = blacklist,
+                           verbose = FALSE)
+
+length(consensusRanges(result))
+> [1] 292
+length(consensusRanges(filtered))
+> [1] 271
 ```
 
   
@@ -772,10 +865,10 @@ chains them: read, weight, optionally calibrate, build, optionally
 recentre, optionally write out.
 
 ``` r
-result <- runConsensus(peakFiles,
-    sampleNames = c("rep1", "rep2", "rep3"),
-    minReplicates = 2,
-    verbose = FALSE)
+result <- runConsensus(peaks = peakFiles,
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       minReplicates = 2,
+                       verbose = FALSE)
 length(result)
 > [1] 292
 ```
@@ -788,17 +881,17 @@ all work here too:
 ``` r
 
 result <- runConsensus(peakFiles,
-    sampleNames = c("rep1", "rep2", "rep3"),
-    weightMethod = "frip",
-    bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
-    calibrate = TRUE,
-    nPermutations = 50,
-    combinationMethod = "stouffer",
-    minReplicates = "75%",
-    recentre = TRUE, width = 400,
-    excludeRegions = blacklist,
-    outputFile = "consensus.bed",
-    BPPARAM = 8)
+                       sampleNames = c("rep1", "rep2", "rep3"),
+                       weightMethod = "frip",
+                       bamFiles = c("rep1.bam", "rep2.bam", "rep3.bam"),
+                       calibrate = TRUE,
+                       nPermutations = 50,
+                       combinationMethod = "stouffer",
+                       minReplicates = "75%",
+                       recentre = TRUE, width = 400,
+                       excludeRegions = blacklist,
+                       outputFile = "consensus.bed",
+                       BPPARAM = 8)
 ```
 
 Use the individual functions when a step needs looking at before the
@@ -812,13 +905,13 @@ rather than blind trust, and the wrapper gives you no chance to take it.
 
 ## **Session info**
 
-    > R version 4.6.1 (2026-06-24)
+    > R version 4.6.2 (2026-10-29)
     > Platform: x86_64-pc-linux-gnu
-    > Running under: Ubuntu 24.04.5 LTS
+    > Running under: Ubuntu 26.04.1 LTS
     > 
     > Matrix products: default
     > BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-    > LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    > LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
     > 
     > locale:
     >  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -834,52 +927,47 @@ rather than blind trust, and the wrapper gives you no chance to take it.
     > [8] base     
     > 
     > other attached packages:
-    > [1] consensusRegions_0.99.2 GenomicRanges_1.64.0    Seqinfo_1.2.0          
+    > [1] consensusRegions_0.99.3 GenomicRanges_1.64.0    Seqinfo_1.2.0          
     > [4] IRanges_2.46.0          S4Vectors_0.50.3        BiocGenerics_0.58.1    
     > [7] generics_0.1.4          BiocStyle_2.40.0       
     > 
     > loaded via a namespace (and not attached):
-    >  [1] tidyselect_1.2.1            dplyr_1.2.1                
-    >  [3] farver_2.1.2                Biostrings_2.80.2          
-    >  [5] S7_0.2.2                    bitops_1.1-0               
-    >  [7] fastmap_1.2.0               RCurl_1.98-1.20            
-    >  [9] GenomicAlignments_1.48.0    XML_3.99-0.25              
-    > [11] digest_0.6.39               lifecycle_1.0.5            
-    > [13] magrittr_2.0.5              compiler_4.6.1             
-    > [15] rlang_1.3.0                 sass_0.4.10                
-    > [17] tools_4.6.1                 utf8_1.2.6                 
-    > [19] yaml_2.3.12                 rtracklayer_1.72.0         
-    > [21] knitr_1.52                  S4Arrays_1.12.1            
-    > [23] labeling_0.4.3              curl_8.0.0                 
-    > [25] DelayedArray_0.38.2         xml2_1.6.0                 
-    > [27] RColorBrewer_1.1-3          abind_1.4-8                
-    > [29] BiocParallel_1.46.0         withr_3.0.3                
-    > [31] purrr_1.2.2                 desc_1.4.3                 
-    > [33] grid_4.6.1                  ggplot2_4.0.3              
-    > [35] scales_1.4.0                SummarizedExperiment_1.42.0
-    > [37] cli_3.6.6                   rmarkdown_2.32             
-    > [39] crayon_1.5.3                ragg_1.5.2                 
-    > [41] otel_0.2.0                  httr_1.4.9                 
-    > [43] rjson_0.2.23                commonmark_2.0.0           
-    > [45] cachem_1.1.0                stringr_1.6.0              
-    > [47] parallel_4.6.1              BiocManager_1.30.27        
-    > [49] XVector_0.52.0              restfulr_0.0.17            
-    > [51] matrixStats_1.5.0           vctrs_0.7.3                
-    > [53] Matrix_1.7-5                jsonlite_2.0.0             
-    > [55] litedown_0.11               bookdown_0.48              
-    > [57] systemfonts_1.3.2           jquerylib_0.1.4            
-    > [59] tidyr_1.3.2                 glue_1.8.1                 
-    > [61] pkgdown_2.2.1               codetools_0.2-20           
-    > [63] ggtext_0.2.0                stringi_1.8.9              
-    > [65] gtable_0.3.6                GenomeInfoDb_1.48.0        
-    > [67] BiocIO_1.22.0               UCSC.utils_1.8.0           
-    > [69] tibble_3.3.1                pillar_1.11.1              
-    > [71] htmltools_0.5.9             R6_2.6.1                   
-    > [73] textshaping_1.0.5           evaluate_1.0.5             
-    > [75] lattice_0.22-9              Biobase_2.72.0             
-    > [77] markdown_2.0                Rsamtools_2.28.0           
-    > [79] cigarillo_1.2.1             gridtext_0.1.6             
-    > [81] bslib_0.12.0                Rcpp_1.1.2                 
-    > [83] SparseArray_1.12.3          xfun_0.61                  
-    > [85] fs_2.1.0                    MatrixGenerics_1.24.0      
-    > [87] pkgconfig_2.0.3
+    >  [1] SummarizedExperiment_1.42.0 gtable_0.3.6               
+    >  [3] rjson_0.2.23                xfun_0.62                  
+    >  [5] bslib_0.12.0                ggplot2_4.0.4              
+    >  [7] Biobase_2.72.0              lattice_0.23-1             
+    >  [9] vctrs_0.7.3                 tools_4.6.2                
+    > [11] bitops_1.1-0                curl_8.1.0                 
+    > [13] parallel_4.6.2              tibble_3.3.1               
+    > [15] pkgconfig_2.0.3             Matrix_1.7-6               
+    > [17] RColorBrewer_1.1-3          cigarillo_1.2.1            
+    > [19] S7_0.2.2                    desc_1.4.3                 
+    > [21] lifecycle_1.0.5             compiler_4.6.2             
+    > [23] farver_2.1.2                Rsamtools_2.28.0           
+    > [25] textshaping_1.0.5           Biostrings_2.80.2          
+    > [27] codetools_0.2-20            GenomeInfoDb_1.48.0        
+    > [29] htmltools_0.5.9             sass_0.4.10                
+    > [31] RCurl_1.98-1.20             yaml_2.3.12                
+    > [33] tidyr_1.3.2                 pkgdown_2.2.1              
+    > [35] pillar_1.11.1               crayon_1.5.3               
+    > [37] jquerylib_0.1.4             BiocParallel_1.46.0        
+    > [39] DelayedArray_0.38.2         cachem_1.1.0               
+    > [41] abind_1.4-8                 tidyselect_1.2.1           
+    > [43] digest_0.6.39               purrr_1.2.2                
+    > [45] restfulr_0.0.17             dplyr_1.2.1                
+    > [47] bookdown_0.48               labeling_0.4.3             
+    > [49] fastmap_1.2.0               grid_4.6.2                 
+    > [51] cli_3.6.6                   SparseArray_1.12.3         
+    > [53] magrittr_2.0.5              S4Arrays_1.12.1            
+    > [55] utf8_1.2.6                  XML_3.99-0.25              
+    > [57] withr_3.0.3                 UCSC.utils_1.8.0           
+    > [59] scales_1.4.0                rmarkdown_2.32             
+    > [61] XVector_0.52.0              httr_1.4.9                 
+    > [63] matrixStats_1.5.0           otel_0.3.0                 
+    > [65] ragg_1.5.2                  evaluate_1.0.5             
+    > [67] knitr_1.52                  BiocIO_1.22.0              
+    > [69] rtracklayer_1.72.0          rlang_1.3.0                
+    > [71] glue_1.8.1                  BiocManager_1.30.27        
+    > [73] jsonlite_2.0.0              R6_2.6.1                   
+    > [75] GenomicAlignments_1.48.0    MatrixGenerics_1.24.0      
+    > [77] systemfonts_1.3.3           fs_2.1.0
