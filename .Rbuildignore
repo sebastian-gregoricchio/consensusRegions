@@ -13,6 +13,7 @@
 ^doc$
 ^Meta$
 ^README\.Rmd$
+^LICENSE$
 ^LICENSE\.md$
 ^CODE_OF_CONDUCT\.md$
 ^citation\.cff$

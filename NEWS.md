@@ -1,3 +1,53 @@
+# consensusRegions 0.99.3
+
+## New
+
+* `ThresholdCalibration` class. `calibrateThreshold()` returned a plain
+  list, which `buildConsensus()` then had to check by looking for a
+  `threshold` element. It now returns an S4 object with a validity method,
+  so a malformed calibration is refused where it is made rather than
+  surfacing later as an empty consensus. Accessors are
+  `calibrationThreshold()`, `calibrationThresholdNegLog10()`,
+  `calibrationCurve()`, `calibrationTargetFDR()`,
+  `calibrationAchievedFDR()`, `calibrationSeed()`, `nullStatistics()` and
+  `observedStatistics()`, and there is a `show()` method. `$` still
+  reaches the components by name, so code written against the list keeps
+  working.
+* `calibrationResult()` returns the calibration of a `ConsensusRegions`
+  object, so that every slot now has an accessor. A consensus built
+  without calibration carries `NULL` rather than an empty list.
+
+## Changes
+
+* The components of a `ConsensusRegions` object are read through their
+  accessors throughout, so `@` appears only in the class definition and
+  in the methods themselves.
+* The `stats` slot is an `S4Vectors::DataFrame` rather than a
+  `data.frame`.
+* `BPPARAM` defaults to `NULL`, which builds a
+  `BiocParallel::SerialParam()` seeded from `seed`, so nothing runs in
+  parallel unasked. A `BiocParallelParam` is used untouched and a number
+  of cores is still accepted as a shorthand.
+* `buildConsensus()` hands its argument checking to
+  `.resolveBuildSettings()`, which can be read and tested on its own.
+* `plotCalibration()` labels its axis with a plotmath expression, and
+  `ggtext` is no longer a dependency.
+* `.pairwiseJaccard()` computes the upper triangle only and mirrors it,
+  rather than every ordered pair. A set still scores 1 against itself,
+  and 0 when it covers no bases at all.
+* The package man page is no longer marked internal, so
+  `?consensusRegions` is reachable from the help index, and points at the
+  vignette.
+* The vignette has an installation section, says how the approach relates
+  to MSPC and to the consensus options already in Bioconductor, and
+  evaluates the parallel and blacklist examples instead of showing them
+  unevaluated.
+* `LICENSE` is no longer shipped in the tarball, since `GPL-3` needs no
+  copy of its text.
+* The chromosome-name fallback credits `RegionSetDE`, by the same author,
+  and links to it.
+
+
 # consensusRegions 0.99.2
 
 ## Reproducibility

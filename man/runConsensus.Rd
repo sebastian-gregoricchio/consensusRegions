@@ -19,7 +19,7 @@ runConsensus(
   outputFile = NULL,
   seqlevelsStyle = "UCSC",
   excludeRegions = NULL,
-  BPPARAM = 1,
+  BPPARAM = NULL,
   seed = NULL,
   verbose = TRUE,
   ...
@@ -65,9 +65,10 @@ there with [exportConsensus()]. Default: \code{NULL}.}
 \item{excludeRegions}{Optional `GRanges` of blacklisted positions.
 Default: \code{NULL}.}
 
-\item{BPPARAM}{Either the number of cores to use, or a
-`BiocParallelParam` object. Only the calibration uses it.
-Default: \code{1}.}
+\item{BPPARAM}{A `BiocParallelParam` object, or a number of cores as
+a shorthand for one. Only the calibration uses it.
+Default: \code{NULL}, a \code{BiocParallel::SerialParam()} seeded
+from \code{seed}.}
 
 \item{seed}{Number seeding the random positions of the calibration,
 passed to [calibrateThreshold()], which explains why `set.seed()`
@@ -97,14 +98,18 @@ across experiments.
 }
 \examples{
 peakFiles <- system.file("extdata",
-    c("rep1.narrowPeak", "rep2.narrowPeak",
-        "rep3.narrowPeak"),
-    package = "consensusRegions")
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
 
 result <- runConsensus(peakFiles,
     sampleNames = c("r1", "r2", "r3"),
     minReplicates = 2,
-    verbose = FALSE)
+    verbose = FALSE
+)
 result
 
 ## the same with measured weights and a calibrated threshold. Five
@@ -118,7 +123,8 @@ calibrated <- runConsensus(peakFiles,
     calibrate = TRUE,
     nPermutations = 5,
     seed = 42,
-    verbose = FALSE)
+    verbose = FALSE
+)
 calibrated
 
 }

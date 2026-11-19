@@ -47,11 +47,14 @@
 #'   inferred from the furthest peak, when left `NULL`. Default: \code{NULL}.
 #' @param excludeRegions Optional `GRanges` the shuffled peaks must avoid.
 #'   Default: \code{NULL}.
-#' @param BPPARAM Either the number of cores to use, or a
-#'   `BiocParallelParam` object for finer control. The permutations are
-#'   independent of one another and are where nearly all the time goes, so
-#'   raising this is worth it on a large peak set: a single round takes
-#'   around half a minute on 100,000 peaks per replicate. Default: \code{1}.
+#' @param BPPARAM A `BiocParallelParam` object, used as it is. A single
+#'   number is accepted as a shorthand for that many cores, since asking
+#'   for more cores and nothing else is the common case. The permutations
+#'   are independent of one another and are where nearly all the time
+#'   goes, so raising this is worth it on a large peak set: a single round
+#'   takes around half a minute on 100,000 peaks per replicate.
+#'   Default: \code{NULL}, a \code{BiocParallel::SerialParam()} seeded
+#'   from \code{seed}, so that nothing runs in parallel unasked.
 #' @param seed Number seeding the random positions of the shuffled peaks.
 #'   It goes to the backend built from `BPPARAM` as its `RNGseed`, so the
 #'   same seed returns the same threshold on any number of cores. Ignored,
@@ -59,12 +62,15 @@
 #'   the seed to it as `RNGseed` instead. Default: \code{NULL}, no seed.
 #' @param verbose Report progress. Default: \code{TRUE}.
 #'
-#' @return A list with the recommended `threshold` on the p-value scale,
-#'   the `fdrCurve` it was read off, the observed and null combined
-#'   statistics, the `seed` the permutations were drawn with and its
-#'   `seedSource`: `"seed"` for the argument, `"BPPARAM"` for the `RNGseed`
-#'   of a backend passed as `BPPARAM`, `"unseeded"` when there was none, in
-#'   which case `seed` is `NULL`.
+#' @return A [ThresholdCalibration-class] object, holding the recommended
+#'   `threshold` on the p-value scale, the `fdrCurve` it was read off, the
+#'   observed and null combined statistics, the `seed` the permutations
+#'   were drawn with and its `seedSource`: `"seed"` for the argument,
+#'   `"BPPARAM"` for the `RNGseed` of a backend passed as `BPPARAM`,
+#'   `"unseeded"` when there was none, in which case `seed` is `NULL`. Its
+#'   components are reached with the accessors documented in
+#'   [ThresholdCalibration-accessors], and `$` still reaches them by name,
+#'   as it did when this was a plain list.
 #'
 #' @details
 #' Shuffling within a chromosome preserves peak density but not the
@@ -91,7 +97,7 @@
 #'
 #' @importFrom BiocParallel bplapply bpnworkers bpRNGseed SerialParam
 #'   MulticoreParam SnowParam
-#' @importFrom methods is
+#' @importFrom methods is new
 #' @importFrom GenomicRanges GRangesList mcols mcols<-
 #' @importFrom GenomeInfoDb seqlengths
 #' @importFrom S4Vectors metadata
@@ -101,26 +107,36 @@
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #'
-#' calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 42,
-#'                                   verbose = FALSE)
+#' calibration <- calibrateThreshold(peaks,
+#'     nPermutations = 5, seed = 42,
+#'     verbose = FALSE
+#' )
 #' calibration$threshold
 #'
 #' result <- buildConsensus(peaks,
-#'                          combinedThreshold = calibration$threshold,
-#'                          verbose = FALSE)
+#'     combinedThreshold = calibration$threshold,
+#'     verbose = FALSE
+#' )
 #'
 #' @export
 calibrateThreshold <- function(peakList,
                                weights = NULL,
-                               combinationMethod = c("stouffer", "fisher",
-                                                     "lancaster",
-                                                     "rankProduct"),
+                               combinationMethod = c(
+                                   "stouffer", "fisher",
+                                   "lancaster",
+                                   "rankProduct"
+                               ),
                                nPermutations = 50L,
                                targetFDR = 0.05,
                                stringencyThreshold = 1e-8,
@@ -134,7 +150,7 @@ calibrateThreshold <- function(peakList,
                                multipleIntersections = c("lowest", "highest"),
                                chromosomeLengths = NULL,
                                excludeRegions = NULL,
-                               BPPARAM = 1,
+                               BPPARAM = NULL,
                                seed = NULL,
                                verbose = TRUE) {
     combinationMethod <- match.arg(combinationMethod)
@@ -154,8 +170,10 @@ calibrateThreshold <- function(peakList,
 
     scoreType <- S4Vectors::metadata(peakList)$scoreType
     if (identical(scoreType, "none")) {
-        stop("calibration needs a per-peak statistic; with BED3 input ",
-             "there is no combined p-value to calibrate")
+        stop(
+            "calibration needs a per-peak statistic; with BED3 input ",
+            "there is no combined p-value to calibrate"
+        )
     }
     if (targetFDR <= 0 || targetFDR >= 1) {
         stop("'targetFDR' must lie strictly between 0 and 1")
@@ -164,9 +182,11 @@ calibrateThreshold <- function(peakList,
         stop("'nPermutations' must be at least 1")
     }
     ## the null has to be filtered by the same support rule as the data
-    minSupport <- .resolveRequiredSupport(minSupport = minSupport,
-                                          minReplicates = minReplicates,
-                                          nReplicates = length(peakList))
+    minSupport <- .resolveRequiredSupport(
+        minSupport = minSupport,
+        minReplicates = minReplicates,
+        nReplicates = length(peakList)
+    )
 
     replicateNames <- names(peakList)
     if (is.null(weights)) {
@@ -178,22 +198,25 @@ calibrateThreshold <- function(peakList,
     ## chromosome bounds for the shuffling
     if (is.null(chromosomeLengths)) {
         chromosomeLengths <- .inferSeqlengths(
-            BiocGenerics::unlist(peakList, use.names = FALSE))
+            BiocGenerics::unlist(peakList, use.names = FALSE)
+        )
     }
 
     ## Every operation that shapes the observed statistic has to shape
     ## the null the same way, so the settings are carried across whole
     ## rather than partly re-specified inside the permutation loop.
-    settings <- list(weights = weights,
-                     combinationMethod = combinationMethod,
-                     stringencyThreshold = stringencyThreshold,
-                     weakThreshold = weakThreshold,
-                     minSupport = minSupport,
-                     minOverlap = minOverlap,
-                     minOverlapFraction = minOverlapFraction,
-                     recursive = recursive,
-                     maxIterations = maxIterations,
-                     multipleIntersections = multipleIntersections)
+    settings <- list(
+        weights = weights,
+        combinationMethod = combinationMethod,
+        stringencyThreshold = stringencyThreshold,
+        weakThreshold = weakThreshold,
+        minSupport = minSupport,
+        minOverlap = minOverlap,
+        minOverlapFraction = minOverlapFraction,
+        recursive = recursive,
+        maxIterations = maxIterations,
+        multipleIntersections = multipleIntersections
+    )
 
     ## observed statistics, computed once
     .messageIf(verbose, "Computing observed statistics")
@@ -203,10 +226,15 @@ calibrateThreshold <- function(peakList,
     ## self-contained, so they are handed to BiocParallel rather than run
     ## in sequence: on a genome-scale peak set a single round takes tens
     ## of seconds and fifty of them is most of an afternoon.
-    .messageIf(verbose, "Running ", nPermutations, " permutations on ",
-               BiocParallel::bpnworkers(BPPARAM), " worker(s), ",
-               if (is.null(seed)) "without a seed" else
-                   paste0("seed ", seed))
+    .messageIf(
+        verbose, "Running ", nPermutations, " permutations on ",
+        BiocParallel::bpnworkers(BPPARAM), " worker(s), ",
+        if (is.null(seed)) {
+            "without a seed"
+        } else {
+            paste0("seed ", seed)
+        }
+    )
 
     nullStatistics <- BiocParallel::bplapply(
         seq_len(nPermutations),
@@ -214,44 +242,56 @@ calibrateThreshold <- function(peakList,
             shuffled <- .shufflePeakList(
                 peakList,
                 chromosomeLengths = chromosomeLengths,
-                excludeRegions = excludeRegions)
+                excludeRegions = excludeRegions
+            )
             .combinedStatisticsOnly(shuffled, settings)
         },
-        BPPARAM = BPPARAM)
+        BPPARAM = BPPARAM
+    )
 
     nullStatistics <- unlist(nullStatistics, use.names = FALSE)
 
     ## sweep candidate cuts across the observed range
-    curve <- .empiricalFdrCurve(observed = observed,
-                                nullValues = nullStatistics,
-                                nPermutations = nPermutations)
+    curve <- .empiricalFdrCurve(
+        observed = observed,
+        nullValues = nullStatistics,
+        nPermutations = nPermutations
+    )
 
     acceptable <- dplyr::filter(curve, .data$fdr <= targetFDR)
     if (nrow(acceptable) == 0) {
-        warning("no cut reached an FDR of ", targetFDR,
-                "; returning the cut with the lowest estimated FDR")
+        warning(
+            "no cut reached an FDR of ", targetFDR,
+            "; returning the cut with the lowest estimated FDR"
+        )
         chosen <- dplyr::slice_head(
-            dplyr::arrange(curve, .data$fdr, dplyr::desc(.data$cut)), n = 1)
+            dplyr::arrange(curve, .data$fdr, dplyr::desc(.data$cut)),
+            n = 1
+        )
     } else {
         ## the lowest cut still meeting the target keeps the most peaks
         chosen <- dplyr::slice_head(
-            dplyr::arrange(acceptable, .data$cut), n = 1)
+            dplyr::arrange(acceptable, .data$cut),
+            n = 1
+        )
     }
 
     thresholdP <- 10^(-dplyr::pull(chosen, .data$cut))
 
     .messageIf(verbose, "Threshold at FDR ", targetFDR, ": ", thresholdP)
 
-    list(threshold = thresholdP,
-         thresholdNegLog10 = dplyr::pull(chosen, .data$cut),
-         achievedFDR = dplyr::pull(chosen, .data$fdr),
-         targetFDR = targetFDR,
-         fdrCurve = curve,
-         observed = observed,
-         null = nullStatistics,
-         nPermutations = nPermutations,
-         seed = seed,
-         seedSource = seedSource)
+    methods::new("ThresholdCalibration",
+        threshold = thresholdP,
+        thresholdNegLog10 = dplyr::pull(chosen, .data$cut),
+        achievedFDR = dplyr::pull(chosen, .data$fdr),
+        targetFDR = targetFDR,
+        fdrCurve = as.data.frame(curve),
+        observed = observed,
+        null = nullStatistics,
+        nPermutations = nPermutations,
+        seed = seed,
+        seedSource = seedSource
+    )
 }
 
 
@@ -281,7 +321,8 @@ calibrateThreshold <- function(peakList,
         flatPeaks,
         stringencyThreshold = settings$stringencyThreshold,
         weakThreshold = settings$weakThreshold,
-        presenceOnly = FALSE)
+        presenceOnly = FALSE
+    )
 
     retained <- flatPeaks[S4Vectors::mcols(flatPeaks)$class != "background"]
     if (length(retained) == 0) {
@@ -291,12 +332,14 @@ calibrateThreshold <- function(peakList,
     S4Vectors::mcols(retained)$rho <- .relativeRanks(
         negLog10P = S4Vectors::mcols(retained)$negLog10P,
         replicate = S4Vectors::mcols(retained)$replicate,
-        presenceOnly = FALSE)
+        presenceOnly = FALSE
+    )
 
     overlapTable <- .buildOverlapTable(
         retained,
         minOverlap = settings$minOverlap,
-        minOverlapFraction = settings$minOverlapFraction)
+        minOverlapFraction = settings$minOverlapFraction
+    )
 
     verdict <- .runConfirmation(
         retained = retained,
@@ -310,7 +353,8 @@ calibrateThreshold <- function(peakList,
         recursive = settings$recursive,
         maxIterations = settings$maxIterations,
         presenceOnly = FALSE,
-        verbose = FALSE)
+        verbose = FALSE
+    )
 
     ## unsupported peaks never reach the combination in a real run either
     verdict$combinedNegLog10P[verdict$nSupport >= settings$minSupport]
@@ -336,8 +380,9 @@ calibrateThreshold <- function(peakList,
                              excludeRegions = NULL) {
     shuffled <- lapply(peakList, function(gr) {
         moved <- .shuffleRanges(gr,
-                                chromosomeLengths = chromosomeLengths,
-                                excludeRegions = excludeRegions)
+            chromosomeLengths = chromosomeLengths,
+            excludeRegions = excludeRegions
+        )
         ## the statistics travel with the peaks, only the positions move
         S4Vectors::mcols(moved) <- S4Vectors::mcols(gr)
         moved
@@ -375,12 +420,16 @@ calibrateThreshold <- function(peakList,
     ## no threshold below the median observed statistic could ever be
     ## chosen, however clean the null turned out to be.
     candidateCuts <- unique(stats::quantile(
-        observed, probs = seq(0, 0.999, length.out = 200),
-        na.rm = TRUE, names = FALSE))
+        observed,
+        probs = seq(0, 0.999, length.out = 200),
+        na.rm = TRUE, names = FALSE
+    ))
 
-    nObserved <- vapply(candidateCuts,
-                        function(cut) sum(observed >= cut, na.rm = TRUE),
-                        numeric(1))
+    nObserved <- vapply(
+        candidateCuts,
+        function(cut) sum(observed >= cut, na.rm = TRUE),
+        numeric(1)
+    )
 
     ## Seeing no null peak above a cut in a finite number of permutations
     ## is not evidence that none exists, and dividing straight through
@@ -392,12 +441,16 @@ calibrateThreshold <- function(peakList,
         function(cut) {
             (1 + sum(nullValues >= cut, na.rm = TRUE)) / (nPermutations + 1)
         },
-        numeric(1))
+        numeric(1)
+    )
 
     dplyr::arrange(
-        dplyr::tibble(cut = candidateCuts,
-                      nObserved = nObserved,
-                      expectedNull = expectedNull,
-                      fdr = expectedNull / pmax(nObserved, 1)),
-        .data$cut)
+        dplyr::tibble(
+            cut = candidateCuts,
+            nObserved = nObserved,
+            expectedNull = expectedNull,
+            fdr = expectedNull / pmax(nObserved, 1)
+        ),
+        .data$cut
+    )
 }

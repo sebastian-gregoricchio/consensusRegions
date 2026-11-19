@@ -4,11 +4,20 @@ export(analysisParameters)
 export(asSummarizedExperiment)
 export(buildConsensus)
 export(calibrateThreshold)
+export(calibrationAchievedFDR)
+export(calibrationCurve)
+export(calibrationResult)
+export(calibrationSeed)
+export(calibrationTargetFDR)
+export(calibrationThreshold)
+export(calibrationThresholdNegLog10)
 export(combineEvidence)
 export(computeReplicateWeights)
 export(consensusRanges)
 export(consensusStats)
 export(exportConsensus)
+export(nullStatistics)
+export(observedStatistics)
 export(peakSets)
 export(plotCalibration)
 export(plotJaccard)
@@ -19,15 +28,27 @@ export(recentrePeaks)
 export(replicateWeights)
 export(runConsensus)
 exportClasses(ConsensusRegions)
+exportClasses(ThresholdCalibration)
+exportMethods("$")
 exportMethods(analysisParameters)
+exportMethods(calibrationAchievedFDR)
+exportMethods(calibrationCurve)
+exportMethods(calibrationResult)
+exportMethods(calibrationSeed)
+exportMethods(calibrationTargetFDR)
+exportMethods(calibrationThreshold)
+exportMethods(calibrationThresholdNegLog10)
 exportMethods(consensusRanges)
 exportMethods(consensusStats)
 exportMethods(length)
+exportMethods(nullStatistics)
+exportMethods(observedStatistics)
 exportMethods(peakSets)
 exportMethods(replicateWeights)
 exportMethods(show)
 importClassesFrom(GenomicRanges,GRanges)
 importClassesFrom(GenomicRanges,GRangesList)
+importClassesFrom(S4Vectors,DataFrame)
 importFrom(BiocGenerics,unlist)
 importFrom(BiocParallel,
   MulticoreParam,
@@ -129,17 +150,21 @@ importFrom(ggplot2,
   theme,
   theme_bw
 )
-importFrom(ggtext,element_markdown)
 importFrom(grDevices,colorRamp)
 importFrom(methods,
   "slot<-",
+  as,
   is,
   new,
+  prototype,
   setClass,
+  setClassUnion,
   setGeneric,
   setMethod,
+  setValidity,
   show,
   slot,
+  slotNames,
   validObject
 )
 importFrom(rlang,.data)

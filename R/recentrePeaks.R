@@ -10,8 +10,10 @@
 #' that have nothing to do with the biology.
 #'
 #' Recentring fixes it. Each region is reduced to a single position and
-#' re-expanded to a common width, which is what the ATAC-seq peak atlases
-#' do and what motif analysis wants.
+#' re-expanded to a common width, which is what motif analysis wants and
+#' what the published accessibility atlases do: Corces and colleagues
+#' build their pan-cancer ATAC-seq atlas out of fixed-width windows taken
+#' around summits for the same reason.
 #'
 #' @param object A [ConsensusRegions-class] object.
 #' @param width Width of the returned regions in base pairs.
@@ -38,6 +40,10 @@
 #'
 #' @author Sebastian Gregoricchio
 #'
+#' @references
+#' Corces M.R. *et al.* (2018). The chromatin accessibility landscape of
+#' primary human cancers. *Science* 362(6413):eaav1898.
+#'
 #' @importFrom GenomicRanges GRanges start end width findOverlaps
 #'   seqnames
 #' @importFrom IRanges IRanges
@@ -49,11 +55,16 @@
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #' result <- buildConsensus(peaks, verbose = FALSE)
 #'
 #' recentrePeaks(result, width = 400)
@@ -72,7 +83,7 @@ recentrePeaks <- function(object,
         stop("'width' must be a positive number of base pairs")
     }
 
-    consensus <- object@consensus
+    consensus <- consensusRanges(object)
     if (length(consensus) == 0) {
         stop("the consensus is empty, there is nothing to recentre")
     }
@@ -81,8 +92,10 @@ recentrePeaks <- function(object,
     if (summitSource == "centre") {
         anchor <- GenomicRanges::start(consensus) +
             round(GenomicRanges::width(consensus) / 2)
-        return(.expandAroundAnchor(consensus, anchor, width,
-                                   chromosomeLengths))
+        return(.expandAroundAnchor(
+            consensus, anchor, width,
+            chromosomeLengths
+        ))
     }
 
     confirmedPeaks <- .confirmedPeaks(object)
@@ -99,36 +112,43 @@ recentrePeaks <- function(object,
         summitPosition <- GenomicRanges::start(confirmedPeaks) +
             pmax(peakMetadata$peak, 0)
     } else {
-        warning("no summit offsets found in the peak files, using peak ",
-                "midpoints instead")
+        warning(
+            "no summit offsets found in the peak files, using peak ",
+            "midpoints instead"
+        )
         summitPosition <- GenomicRanges::start(confirmedPeaks) +
             round(GenomicRanges::width(confirmedPeaks) / 2)
     }
 
     ## map every confirmed peak onto the consensus region holding it
     hits <- GenomicRanges::findOverlaps(confirmedPeaks, consensus,
-                                        ignore.strand = TRUE)
+        ignore.strand = TRUE
+    )
     members <- dplyr::tibble(
         region = S4Vectors::subjectHits(hits),
         summit = summitPosition[S4Vectors::queryHits(hits)],
-        negLog10P = peakMetadata$negLog10P[S4Vectors::queryHits(hits)])
+        negLog10P = peakMetadata$negLog10P[S4Vectors::queryHits(hits)]
+    )
 
     ## a missing statistic must not silently drop out of a weighted mean
     members <- dplyr::mutate(
         members,
-        negLog10P = ifelse(is.na(.data$negLog10P), 1, .data$negLog10P))
+        negLog10P = ifelse(is.na(.data$negLog10P), 1, .data$negLog10P)
+    )
 
     anchorTable <- if (summitSource == "best") {
         dplyr::summarise(
             dplyr::group_by(members, .data$region),
             anchor = .data$summit[which.max(.data$negLog10P)],
-            .groups = "drop")
+            .groups = "drop"
+        )
     } else {
         dplyr::summarise(
             dplyr::group_by(members, .data$region),
             anchor = round(sum(.data$summit * .data$negLog10P) /
-                               sum(.data$negLog10P)),
-            .groups = "drop")
+                sum(.data$negLog10P)),
+            .groups = "drop"
+        )
     }
 
     ## regions with no member peak fall back to their own midpoint
@@ -171,7 +191,8 @@ recentrePeaks <- function(object,
     }
     if (!all(is.na(chromosomeLengths))) {
         bound <- chromosomeLengths[
-            as.character(GenomicRanges::seqnames(consensus))]
+            as.character(GenomicRanges::seqnames(consensus))
+        ]
         trimmable <- !is.na(bound) & newEnd > bound
         newEnd[trimmable] <- bound[trimmable]
     }
@@ -179,7 +200,8 @@ recentrePeaks <- function(object,
     recentred <- GenomicRanges::GRanges(
         seqnames = GenomicRanges::seqnames(consensus),
         ranges = IRanges::IRanges(start = newStart, end = newEnd),
-        seqinfo = GenomeInfoDb::seqinfo(consensus))
+        seqinfo = GenomeInfoDb::seqinfo(consensus)
+    )
 
     S4Vectors::mcols(recentred) <- S4Vectors::mcols(consensus)
     S4Vectors::mcols(recentred)$summit <- anchor
@@ -202,6 +224,6 @@ recentrePeaks <- function(object,
 #' @keywords internal
 #' @noRd
 .confirmedPeaks <- function(object) {
-    allPeaks <- BiocGenerics::unlist(object@peaks, use.names = FALSE)
+    allPeaks <- BiocGenerics::unlist(peakSets(object), use.names = FALSE)
     allPeaks[S4Vectors::mcols(allPeaks)$status == "confirmed"]
 }

@@ -53,14 +53,10 @@ Corces M.R. *et al.* (2018). The chromatin accessibility landscape of
 primary human cancers. *Science* 362(6413):eaav1898.
 }
 \seealso{
-Useful links:
-\itemize{
-  \item \url{https://github.com/sebastian-gregoricchio/consensusRegions}
-  \item Report bugs at \url{https://github.com/sebastian-gregoricchio/consensusRegions/issues}
-}
-
+`vignette("consensusRegions.vignette", package = "consensusRegions")`
+walks through a full analysis, from reading the peak files to writing
+the consensus out.
 }
 \author{
 Sebastian Gregoricchio
 }
-\keyword{internal}

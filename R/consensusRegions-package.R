@@ -48,5 +48,9 @@
 #' Corces M.R. *et al.* (2018). The chromatin accessibility landscape of
 #' primary human cancers. *Science* 362(6413):eaav1898.
 #'
-#' @keywords internal
+#' @seealso
+#' `vignette("consensusRegions.vignette", package = "consensusRegions")`
+#' walks through a full analysis, from reading the peak files to writing
+#' the consensus out.
+#'
 "_PACKAGE"

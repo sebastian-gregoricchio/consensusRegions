@@ -28,11 +28,16 @@
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #' result <- buildConsensus(peaks, verbose = FALSE)
 #'
 #' target <- file.path(tempdir(), "consensus.bed")
@@ -49,14 +54,14 @@ exportConsensus <- function(object,
     if (!methods::is(object, "ConsensusRegions")) {
         stop("'object' must be a ConsensusRegions object")
     }
-    if (length(object@consensus) == 0) {
+    consensus <- consensusRanges(object)
+    if (length(consensus) == 0) {
         stop("the consensus is empty, there is nothing to write")
     }
 
     written <- character(0)
 
     ## the browser expects a name and a bounded score in those columns
-    consensus <- object@consensus
     S4Vectors::mcols(consensus)$name <-
         paste0("consensus_", seq_along(consensus))
     S4Vectors::mcols(consensus)$score <-
@@ -86,10 +91,14 @@ exportConsensus <- function(object,
         stem <- tools::file_path_sans_ext(file)
         extension <- tools::file_ext(file)
 
-        for (thisReplicate in names(object@peaks)) {
-            replicateFile <- paste0(stem, "_", thisReplicate, ".",
-                                    extension)
-            peaks <- object@peaks[[thisReplicate]]
+        allPeaks <- peakSets(object)
+
+        for (thisReplicate in names(allPeaks)) {
+            replicateFile <- paste0(
+                stem, "_", thisReplicate, ".",
+                extension
+            )
+            peaks <- allPeaks[[thisReplicate]]
             S4Vectors::mcols(peaks)$name <-
                 S4Vectors::mcols(peaks)$status
             S4Vectors::mcols(peaks)$score <-
@@ -97,8 +106,10 @@ exportConsensus <- function(object,
             rtracklayer::export(peaks, con = replicateFile, format = "bed")
             written <- c(written, replicateFile)
         }
-        .messageIf(verbose, "Per-replicate files written: ",
-                   length(written) - 1)
+        .messageIf(
+            verbose, "Per-replicate files written: ",
+            length(written) - 1
+        )
     }
 
     invisible(written)

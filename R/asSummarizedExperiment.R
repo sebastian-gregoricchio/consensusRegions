@@ -35,11 +35,16 @@
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #' result <- buildConsensus(peaks, verbose = FALSE)
 #'
 #' se <- asSummarizedExperiment(result)
@@ -51,44 +56,53 @@ asSummarizedExperiment <- function(object, assayName = "negLog10P") {
         stop("'object' must be a ConsensusRegions object")
     }
 
-    consensus <- object@consensus
+    consensus <- consensusRanges(object)
     if (length(consensus) == 0) {
         stop("the consensus is empty, there is nothing to convert")
     }
 
-    replicateNames <- names(object@peaks)
-    significance <- matrix(0, nrow = length(consensus),
-                           ncol = length(replicateNames),
-                           dimnames = list(NULL, replicateNames))
-    presence <- matrix(FALSE, nrow = length(consensus),
-                       ncol = length(replicateNames),
-                       dimnames = list(NULL, replicateNames))
+    allPeaks <- peakSets(object)
+    replicateNames <- names(allPeaks)
+    significance <- matrix(0,
+        nrow = length(consensus),
+        ncol = length(replicateNames),
+        dimnames = list(NULL, replicateNames)
+    )
+    presence <- matrix(FALSE,
+        nrow = length(consensus),
+        ncol = length(replicateNames),
+        dimnames = list(NULL, replicateNames)
+    )
 
     ## fill one column at a time, keeping the strongest peak when a
     ## replicate has several inside the same consensus region
     for (thisReplicate in replicateNames) {
-        peaks <- object@peaks[[thisReplicate]]
+        peaks <- allPeaks[[thisReplicate]]
         peaks <- peaks[S4Vectors::mcols(peaks)$status == "confirmed"]
         if (length(peaks) == 0) {
             next
         }
 
         hits <- GenomicRanges::findOverlaps(peaks, consensus,
-                                            ignore.strand = TRUE)
+            ignore.strand = TRUE
+        )
         rowIndex <- S4Vectors::subjectHits(hits)
         value <- S4Vectors::mcols(peaks)$negLog10P[
-            S4Vectors::queryHits(hits)]
+            S4Vectors::queryHits(hits)
+        ]
         value[is.na(value)] <- 1
 
         significance[, thisReplicate] <- .maxByIndex(
-            rowIndex, value, length(consensus))
+            rowIndex, value, length(consensus)
+        )
         presence[unique(rowIndex), thisReplicate] <- TRUE
     }
 
     columnData <- S4Vectors::DataFrame(
         replicate = replicateNames,
-        weight = unname(object@weights[replicateNames]),
-        row.names = replicateNames)
+        weight = unname(replicateWeights(object)[replicateNames]),
+        row.names = replicateNames
+    )
 
     assayList <- list(significance, presence)
     names(assayList) <- c(assayName, "detected")
@@ -97,7 +111,8 @@ asSummarizedExperiment <- function(object, assayName = "negLog10P") {
         assays = assayList,
         rowRanges = consensus,
         colData = columnData,
-        metadata = object@parameters)
+        metadata = analysisParameters(object)
+    )
 }
 
 

@@ -22,13 +22,20 @@ chance often enough to support a consensus at that stringency.
 }
 \examples{
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
-peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                      verbose = FALSE)
-calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 42,
-                                  verbose = FALSE)
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
+peaks <- readPeakSets(peakFiles,
+    sampleNames = c("r1", "r2", "r3"),
+    verbose = FALSE
+)
+calibration <- calibrateThreshold(peaks,
+    nPermutations = 5, seed = 42,
+    verbose = FALSE
+)
 
 plotCalibration(calibration)
 

@@ -101,7 +101,8 @@ from the pool of eligible supporters. Default: \code{TRUE}.}
 
 \item{mergeMethod}{`"reduce"` merges anything that touches;
 `"iterative"` seeds on the most significant peak and removes what it
-overlaps, then repeats. Default: \code{"reduce"}.}
+overlaps, then repeats, which is the iterative removal procedure of
+Corces and colleagues. Default: \code{"reduce"}.}
 
 \item{maxConsensusWidth}{Optional cap in base pairs. Merged regions
 wider than this are rebuilt with the iterative rule.
@@ -152,11 +153,16 @@ the weights of the replicates supporting it sum to at least
 }
 \examples{
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
-peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                      verbose = FALSE)
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
+peaks <- readPeakSets(peakFiles,
+    sampleNames = c("r1", "r2", "r3"),
+    verbose = FALSE
+)
 
 result <- buildConsensus(peaks, verbose = FALSE)
 consensusRanges(result)
@@ -164,12 +170,19 @@ consensusRanges(result)
 ## down-weighting a replicate known to be poor
 weighted <- buildConsensus(
     peaks,
-    weights = computeReplicateWeights(peaks, method = "frip",
-                                      frip = c(0.2, 0.18, 0.05)),
+    weights = computeReplicateWeights(peaks,
+        method = "frip",
+        frip = c(0.2, 0.18, 0.05)
+    ),
     combinationMethod = "stouffer",
-    verbose = FALSE)
+    verbose = FALSE
+)
 consensusStats(weighted)
 
+}
+\references{
+Corces M.R. *et al.* (2018). The chromatin accessibility landscape of
+primary human cancers. *Science* 362(6413):eaav1898.
 }
 \author{
 Sebastian Gregoricchio

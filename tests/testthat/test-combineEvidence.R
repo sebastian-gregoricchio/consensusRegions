@@ -1,7 +1,9 @@
 test_that("Fisher matches the closed form computed directly", {
     pValues <- c(0.01, 0.02, 0.03)
-    expected <- stats::pchisq(-2 * sum(log(pValues)), df = 6,
-                              lower.tail = FALSE)
+    expected <- stats::pchisq(-2 * sum(log(pValues)),
+        df = 6,
+        lower.tail = FALSE
+    )
 
     combined <- combineEvidence(-log10(pValues), method = "fisher")
 
@@ -35,8 +37,9 @@ test_that("weights shift the result in the expected direction", {
 
     trusting <- combineEvidence(negLog10P, method = "stouffer")
     sceptical <- combineEvidence(negLog10P,
-                                 weights = c(1.3, 1.3, 0.4),
-                                 method = "stouffer")
+        weights = c(1.3, 1.3, 0.4),
+        method = "stouffer"
+    )
 
     ## down-weighting the weak replicate should raise the combined
     ## significance, since the two strong ones now carry more of it
@@ -55,16 +58,21 @@ test_that("extreme p-values do not underflow", {
 
 
 test_that("the rank product needs relative ranks", {
-    expect_error(combineEvidence(c(3, 4), method = "rankProduct"),
-                 "rho")
+    expect_error(
+        combineEvidence(c(3, 4), method = "rankProduct"),
+        "rho"
+    )
 
-    combined <- combineEvidence(c(3, 4), method = "rankProduct",
-                                rho = c(0.001, 0.002))
+    combined <- combineEvidence(c(3, 4),
+        method = "rankProduct",
+        rho = c(0.001, 0.002)
+    )
     expect_true(is.finite(combined))
 
     expect_error(
         combineEvidence(c(3, 4), method = "rankProduct", rho = c(0, 0.5)),
-        "relative ranks")
+        "relative ranks"
+    )
 })
 
 

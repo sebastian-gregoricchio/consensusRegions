@@ -24,11 +24,10 @@ peaks after classification. Each element carries the metadata columns
 
 \item{\code{parameters}}{A list with the call arguments.}
 
-\item{\code{stats}}{A `data.frame` summarising each replicate.}
+\item{\code{stats}}{A `DataFrame` summarising each replicate.}
 
-\item{\code{calibration}}{A list holding the output of [calibrateThreshold()]
-when one was supplied, the seed of its permutations included, empty
-otherwise.}
+\item{\code{calibration}}{A [ThresholdCalibration-class] object when the
+consensus was built with one, `NULL` otherwise.}
 }}
 
 \author{

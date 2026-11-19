@@ -21,7 +21,7 @@ calibrateThreshold(
   multipleIntersections = c("lowest", "highest"),
   chromosomeLengths = NULL,
   excludeRegions = NULL,
-  BPPARAM = 1,
+  BPPARAM = NULL,
   seed = NULL,
   verbose = TRUE
 )
@@ -74,11 +74,14 @@ inferred from the furthest peak, when left `NULL`. Default: \code{NULL}.}
 \item{excludeRegions}{Optional `GRanges` the shuffled peaks must avoid.
 Default: \code{NULL}.}
 
-\item{BPPARAM}{Either the number of cores to use, or a
-`BiocParallelParam` object for finer control. The permutations are
-independent of one another and are where nearly all the time goes, so
-raising this is worth it on a large peak set: a single round takes
-around half a minute on 100,000 peaks per replicate. Default: \code{1}.}
+\item{BPPARAM}{A `BiocParallelParam` object, used as it is. A single
+number is accepted as a shorthand for that many cores, since asking
+for more cores and nothing else is the common case. The permutations
+are independent of one another and are where nearly all the time
+goes, so raising this is worth it on a large peak set: a single round
+takes around half a minute on 100,000 peaks per replicate.
+Default: \code{NULL}, a \code{BiocParallel::SerialParam()} seeded
+from \code{seed}, so that nothing runs in parallel unasked.}
 
 \item{seed}{Number seeding the random positions of the shuffled peaks.
 It goes to the backend built from `BPPARAM` as its `RNGseed`, so the
@@ -89,12 +92,15 @@ the seed to it as `RNGseed` instead. Default: \code{NULL}, no seed.}
 \item{verbose}{Report progress. Default: \code{TRUE}.}
 }
 \value{
-A list with the recommended `threshold` on the p-value scale,
-  the `fdrCurve` it was read off, the observed and null combined
-  statistics, the `seed` the permutations were drawn with and its
-  `seedSource`: `"seed"` for the argument, `"BPPARAM"` for the `RNGseed`
-  of a backend passed as `BPPARAM`, `"unseeded"` when there was none, in
-  which case `seed` is `NULL`.
+A [ThresholdCalibration-class] object, holding the recommended
+  `threshold` on the p-value scale, the `fdrCurve` it was read off, the
+  observed and null combined statistics, the `seed` the permutations
+  were drawn with and its `seedSource`: `"seed"` for the argument,
+  `"BPPARAM"` for the `RNGseed` of a backend passed as `BPPARAM`,
+  `"unseeded"` when there was none, in which case `seed` is `NULL`. Its
+  components are reached with the accessors documented in
+  [ThresholdCalibration-accessors], and `$` still reaches them by name,
+  as it did when this was a plain list.
 }
 \description{
 The threshold on the combined p-value is normally set by hand, and
@@ -133,19 +139,27 @@ carries its own seed, for instance
 }
 \examples{
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
-peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                      verbose = FALSE)
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
+peaks <- readPeakSets(peakFiles,
+    sampleNames = c("r1", "r2", "r3"),
+    verbose = FALSE
+)
 
-calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 42,
-                                  verbose = FALSE)
+calibration <- calibrateThreshold(peaks,
+    nPermutations = 5, seed = 42,
+    verbose = FALSE
+)
 calibration$threshold
 
 result <- buildConsensus(peaks,
-                         combinedThreshold = calibration$threshold,
-                         verbose = FALSE)
+    combinedThreshold = calibration$threshold,
+    verbose = FALSE
+)
 
 }
 \author{

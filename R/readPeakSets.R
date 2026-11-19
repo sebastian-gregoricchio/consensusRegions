@@ -51,17 +51,22 @@
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
 #' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"))
 #' peaks
 #'
 #' @export
 readPeakSets <- function(peaks,
                          sampleNames = NULL,
-                         scoreType = c("auto", "log10pvalue", "pvalue",
-                                       "score", "none"),
+                         scoreType = c(
+                             "auto", "log10pvalue", "pvalue",
+                             "score", "none"
+                         ),
                          scoreColumn = NULL,
                          keepStandardChromosomes = TRUE,
                          seqlevelsStyle = "UCSC",
@@ -71,11 +76,16 @@ readPeakSets <- function(peaks,
 
     if (!is.null(seqlevelsStyle)) {
         seqlevelsStyle <- unname(
-            c(ucsc = "UCSC", ensembl = "Ensembl",
-              ncbi = "NCBI")[tolower(seqlevelsStyle[1])])
+            c(
+                ucsc = "UCSC", ensembl = "Ensembl",
+                ncbi = "NCBI"
+            )[tolower(seqlevelsStyle[1])]
+        )
         if (is.na(seqlevelsStyle)) {
             stop("The 'seqlevelsStyle' parameter must be one among ",
-                 "'UCSC', 'Ensembl' or 'NCBI'.", call. = FALSE)
+                "'UCSC', 'Ensembl' or 'NCBI'.",
+                call. = FALSE
+            )
         }
     }
 
@@ -83,8 +93,10 @@ readPeakSets <- function(peaks,
     peakList <- .coercePeakInput(peaks, genome = genome)
 
     if (length(peakList) < 2) {
-        stop("at least two replicates are needed, ", length(peakList),
-             " were supplied")
+        stop(
+            "at least two replicates are needed, ", length(peakList),
+            " were supplied"
+        )
     }
 
     ## names drive the weight lookup and every table produced later
@@ -95,8 +107,10 @@ readPeakSets <- function(peaks,
         stop("replicate names could not be determined, supply 'sampleNames'")
     }
     if (length(sampleNames) != length(peakList)) {
-        stop("'sampleNames' has length ", length(sampleNames),
-             " but ", length(peakList), " peak sets were supplied")
+        stop(
+            "'sampleNames' has length ", length(sampleNames),
+            " but ", length(peakList), " peak sets were supplied"
+        )
     }
     if (anyDuplicated(sampleNames) > 0) {
         stop("'sampleNames' must be unique")
@@ -108,8 +122,9 @@ readPeakSets <- function(peaks,
     ## no overlap at all: every peak would be discarded for lack of
     ## support and the analysis would look like a biological result.
     peakList <- .applySeqlevelsStyle(peakList,
-                                     seqlevelsStyle = seqlevelsStyle,
-                                     verbose = verbose)
+        seqlevelsStyle = seqlevelsStyle,
+        verbose = verbose
+    )
 
     if (isTRUE(keepStandardChromosomes)) {
         peakList <- lapply(peakList, function(x) {
@@ -130,8 +145,9 @@ readPeakSets <- function(peaks,
 
     ## attach the statistic every replicate will be judged on
     peakList <- lapply(peakList, .attachNegLog10P,
-                       scoreType = resolvedType,
-                       scoreColumn = scoreColumn)
+        scoreType = resolvedType,
+        scoreColumn = scoreColumn
+    )
 
     emptySets <- names(peakList)[vapply(peakList, length, integer(1)) == 0]
     if (length(emptySets) > 0) {
@@ -150,7 +166,9 @@ readPeakSets <- function(peaks,
 #' `GenomeInfoDb` knows the mapping for the assemblies it ships, and falls
 #' over on anything it does not recognise. The prefix rule below is the
 #' fallback for those cases, which is the same arrangement used by
-#' `RegionSetDE::loadRegions()`.
+#' `loadRegions()` in
+#' [RegionSetDE](https://github.com/sebastian-gregoricchio/RegionSetDE),
+#' by the same author.
 #'
 #' @param peakList Named list of `GRanges`.
 #' @param seqlevelsStyle `"UCSC"`, `"Ensembl"`, `"NCBI"` or `NULL`.
@@ -168,7 +186,8 @@ readPeakSets <- function(peaks,
 .applySeqlevelsStyle <- function(peakList, seqlevelsStyle, verbose = TRUE) {
     currentStyle <- function(gr) {
         style <- tryCatch(GenomeInfoDb::seqlevelsStyle(gr),
-                          error = function(e) NA_character_)
+            error = function(e) NA_character_
+        )
         style[1]
     }
 
@@ -181,14 +200,18 @@ readPeakSets <- function(peaks,
 
         if (length(unique(prefixed)) > 1) {
             stop("the replicates use different chromosome naming styles (",
-                 paste(names(peakList)[prefixed], collapse = ", "),
-                 " carry a 'chr' prefix and the others do not); set ",
-                 "'seqlevelsStyle' to harmonise them", call. = FALSE)
+                paste(names(peakList)[prefixed], collapse = ", "),
+                " carry a 'chr' prefix and the others do not); set ",
+                "'seqlevelsStyle' to harmonise them",
+                call. = FALSE
+            )
         }
         if (length(unique(stats::na.omit(styles))) > 1) {
             stop("the replicates use different chromosome naming styles: ",
-                 paste(unique(stats::na.omit(styles)), collapse = ", "),
-                 "; set 'seqlevelsStyle' to harmonise them", call. = FALSE)
+                paste(unique(stats::na.omit(styles)), collapse = ", "),
+                "; set 'seqlevelsStyle' to harmonise them",
+                call. = FALSE
+            )
         }
         return(peakList)
     }
@@ -198,10 +221,13 @@ readPeakSets <- function(peaks,
     }, character(1))
 
     harmonised <- lapply(peakList, function(gr) {
-        tryCatch({
-            GenomeInfoDb::seqlevelsStyle(gr) <- seqlevelsStyle
-            gr
-        }, error = function(e) .harmonizeSeqlevels(gr, seqlevelsStyle))
+        tryCatch(
+            {
+                GenomeInfoDb::seqlevelsStyle(gr) <- seqlevelsStyle
+                gr
+            },
+            error = function(e) .harmonizeSeqlevels(gr, seqlevelsStyle)
+        )
     })
 
     after <- vapply(harmonised, function(gr) {
@@ -210,8 +236,10 @@ readPeakSets <- function(peaks,
 
     changed <- names(peakList)[before != after]
     if (length(changed) > 0) {
-        .messageIf(verbose, "Chromosome names set to ", seqlevelsStyle,
-                   " style in: ", paste(changed, collapse = ", "))
+        .messageIf(
+            verbose, "Chromosome names set to ", seqlevelsStyle,
+            " style in: ", paste(changed, collapse = ", ")
+        )
     }
 
     harmonised
@@ -236,7 +264,8 @@ readPeakSets <- function(peaks,
 
     if (style == "UCSC") {
         newLevels <- ifelse(grepl("^chr", newLevels), newLevels,
-                            paste0("chr", newLevels))
+            paste0("chr", newLevels)
+        )
         newLevels <- gsub("^chrMT$", "chrM", newLevels)
     } else {
         newLevels <- gsub("^chr", "", newLevels)
@@ -245,7 +274,9 @@ readPeakSets <- function(peaks,
 
     if (any(duplicated(newLevels))) {
         stop("The chromosome names could not be converted to the ",
-             "requested style without collisions.", call. = FALSE)
+            "requested style without collisions.",
+            call. = FALSE
+        )
     }
 
     GenomeInfoDb::seqlevels(gr) <- newLevels
@@ -284,8 +315,10 @@ readPeakSets <- function(peaks,
     }
 
     if (methods::is(peaks, "GRanges")) {
-        stop("a single GRanges was supplied; consensus needs several ",
-             "replicates, pass a list or a GRangesList")
+        stop(
+            "a single GRanges was supplied; consensus needs several ",
+            "replicates, pass a list or a GRangesList"
+        )
     }
 
     if (is.list(peaks) &&
@@ -358,8 +391,10 @@ readPeakSets <- function(peaks,
 
     if (!is.null(scoreColumn)) {
         if (!scoreColumn %in% shared) {
-            stop("column '", scoreColumn,
-                 "' is not present in every peak set")
+            stop(
+                "column '", scoreColumn,
+                "' is not present in every peak set"
+            )
         }
         return("score")
     }

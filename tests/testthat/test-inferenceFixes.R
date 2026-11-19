@@ -2,385 +2,493 @@
 ## case that the earlier implementation got wrong.
 
 examplePeaks <- function() {
-  readPeakSets(system.file("extdata",
-                           c("rep1.narrowPeak", "rep2.narrowPeak",
-                             "rep3.narrowPeak"),
-                           package = "consensusRegions"),
-               sampleNames = c("r1", "r2", "r3"),
-               verbose = FALSE)
+    readPeakSets(
+        system.file("extdata",
+            c(
+                "rep1.narrowPeak", "rep2.narrowPeak",
+                "rep3.narrowPeak"
+            ),
+            package = "consensusRegions"
+        ),
+        sampleNames = c("r1", "r2", "r3"),
+        verbose = FALSE
+    )
 }
 
 
 ## Two replicates hold the same peaks and the third overlaps nothing, so
 ## no peak ever has more than one supporter.
 lopsidedPeaks <- function() {
-  shared <- GenomicRanges::GRanges(
-    "chr1", IRanges::IRanges(start = seq(1000, 100000, by = 5000),
-                             width = 500))
-  apart <- GenomicRanges::GRanges(
-    "chr1", IRanges::IRanges(start = seq(500000, 599000, by = 5000),
-                             width = 500))
-  readPeakSets(list(A = shared, B = shared, C = apart), verbose = FALSE)
+    shared <- GenomicRanges::GRanges(
+        "chr1", IRanges::IRanges(
+            start = seq(1000, 100000, by = 5000),
+            width = 500
+        )
+    )
+    apart <- GenomicRanges::GRanges(
+        "chr1", IRanges::IRanges(
+            start = seq(500000, 599000, by = 5000),
+            width = 500
+        )
+    )
+    readPeakSets(list(A = shared, B = shared, C = apart), verbose = FALSE)
 }
 
 
 test_that("a heavy weight cannot stand in for a missing replicate", {
-  peaks <- lopsidedPeaks()
-  weights <- computeReplicateWeights(peaks, method = "custom",
-                                     weights = c(0.3, 2.4, 0.3))
+    peaks <- lopsidedPeaks()
+    weights <- computeReplicateWeights(peaks,
+        method = "custom",
+        weights = c(0.3, 2.4, 0.3)
+    )
 
-  result <- suppressWarnings(
-    buildConsensus(peaks, weights = weights, minSupport = 2,
-                   verbose = FALSE))
+    result <- suppressWarnings(
+        buildConsensus(peaks,
+            weights = weights, minSupport = 2,
+            verbose = FALSE
+        )
+    )
 
-  confirmed <- BiocGenerics::unlist(peakSets(result), use.names = FALSE)
-  confirmed <- confirmed[
-    S4Vectors::mcols(confirmed)$status == "confirmed"]
+    confirmed <- BiocGenerics::unlist(peakSets(result), use.names = FALSE)
+    confirmed <- confirmed[
+        S4Vectors::mcols(confirmed)$status == "confirmed"
+    ]
 
-  ## replicate B carries a weight above minSupport on its own; that
-  ## must not be enough to confirm a peak only B supports
-  expect_true(all(S4Vectors::mcols(confirmed)$nSupport >= 2))
-  expect_equal(length(confirmed), 0L)
+    ## replicate B carries a weight above minSupport on its own; that
+    ## must not be enough to confirm a peak only B supports
+    expect_true(all(S4Vectors::mcols(confirmed)$nSupport >= 2))
+    expect_equal(length(confirmed), 0L)
 })
 
 
 test_that("minSupportWeight applies on top of the replicate count", {
-  peaks <- examplePeaks()
-  weights <- computeReplicateWeights(peaks, method = "custom",
-                                     weights = c(1.5, 1.0, 0.5))
+    peaks <- examplePeaks()
+    weights <- computeReplicateWeights(peaks,
+        method = "custom",
+        weights = c(1.5, 1.0, 0.5)
+    )
 
-  without <- buildConsensus(peaks, weights = weights, verbose = FALSE)
-  with <- suppressWarnings(
-    buildConsensus(peaks, weights = weights, minSupportWeight = 2.4,
-                   verbose = FALSE))
+    without <- buildConsensus(peaks, weights = weights, verbose = FALSE)
+    with <- suppressWarnings(
+        buildConsensus(peaks,
+            weights = weights, minSupportWeight = 2.4,
+            verbose = FALSE
+        )
+    )
 
-  ## an extra requirement can only remove regions, never add them
-  expect_lte(length(with), length(without))
+    ## an extra requirement can only remove regions, never add them
+    expect_lte(length(with), length(without))
 })
 
 
 test_that("unequal weights do not unravel the recursive confirmation", {
-  peaks <- examplePeaks()
-  weights <- computeReplicateWeights(peaks, method = "custom",
-                                     weights = c(0.3, 2.4, 0.3))
+    peaks <- examplePeaks()
+    weights <- computeReplicateWeights(peaks,
+        method = "custom",
+        weights = c(0.3, 2.4, 0.3)
+    )
 
-  recursive <- buildConsensus(peaks, weights = weights, recursive = TRUE,
-                              verbose = FALSE)
-  singlePass <- buildConsensus(peaks, weights = weights,
-                               recursive = FALSE, verbose = FALSE)
+    recursive <- buildConsensus(peaks,
+        weights = weights, recursive = TRUE,
+        verbose = FALSE
+    )
+    singlePass <- buildConsensus(peaks,
+        weights = weights,
+        recursive = FALSE, verbose = FALSE
+    )
 
-  ## eligibility now turns on reproducibility rather than on a peak's
-  ## own score, so recursion settles instead of cascading to nothing
-  expect_gt(length(recursive), 0)
-  expect_equal(length(recursive), length(singlePass))
+    ## eligibility now turns on reproducibility rather than on a peak's
+    ## own score, so recursion settles instead of cascading to nothing
+    expect_gt(length(recursive), 0)
+    expect_equal(length(recursive), length(singlePass))
 })
 
 
 test_that("a region counts each replicate once however fragmented", {
-  peaks <- examplePeaks()
-  result <- buildConsensus(peaks, verbose = FALSE)
-  regions <- consensusRanges(result)
-  regionData <- S4Vectors::mcols(regions)
+    peaks <- examplePeaks()
+    result <- buildConsensus(peaks, verbose = FALSE)
+    regions <- consensusRanges(result)
+    regionData <- S4Vectors::mcols(regions)
 
-  ## the chained loci in the example data put five peaks per replicate
-  ## inside one region, which is the case that used to inflate the score
-  fragmented <- which(regionData$nPeaks > regionData$nReplicates)
-  expect_gt(length(fragmented), 0)
+    ## the chained loci in the example data put five peaks per replicate
+    ## inside one region, which is the case that used to inflate the score
+    fragmented <- which(regionData$nPeaks > regionData$nReplicates)
+    expect_gt(length(fragmented), 0)
 
-  ## a fragmented region must not outscore what its replicates support
-  perReplicate <- regionData$nPeaks / regionData$nReplicates
-  correlation <- suppressWarnings(
-    stats::cor(perReplicate, regionData$combinedNegLog10P,
-               use = "complete.obs", method = "spearman"))
-  expect_lt(abs(correlation), 0.5)
+    ## a fragmented region must not outscore what its replicates support
+    perReplicate <- regionData$nPeaks / regionData$nReplicates
+    correlation <- suppressWarnings(
+        stats::cor(perReplicate, regionData$combinedNegLog10P,
+            use = "complete.obs", method = "spearman"
+        )
+    )
+    expect_lt(abs(correlation), 0.5)
 })
 
 
 test_that("the BH family defaults to every peak that was tested", {
-  peaks <- examplePeaks()
+    peaks <- examplePeaks()
 
-  tested <- buildConsensus(peaks, verbose = FALSE)
-  mspcStyle <- buildConsensus(peaks, adjustmentFamily = "confirmed",
-                              verbose = FALSE)
+    tested <- buildConsensus(peaks, verbose = FALSE)
+    mspcStyle <- buildConsensus(peaks,
+        adjustmentFamily = "confirmed",
+        verbose = FALSE
+    )
 
-  expect_identical(analysisParameters(tested)$adjustmentFamily, "tested")
+    expect_identical(analysisParameters(tested)$adjustmentFamily, "tested")
 
-  ## correcting across the whole family is the more conservative of the
-  ## two, so it can never return more regions
-  expect_lte(length(tested), length(mspcStyle))
+    ## correcting across the whole family is the more conservative of the
+    ## two, so it can never return more regions
+    expect_lte(length(tested), length(mspcStyle))
 })
 
 
 test_that("calibration can choose a cut below the median statistic", {
-  peaks <- examplePeaks()
-  calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 11,
-                                    verbose = FALSE)
+    peaks <- examplePeaks()
+    calibration <- calibrateThreshold(peaks,
+        nPermutations = 5, seed = 11,
+        verbose = FALSE
+    )
 
-  medianObserved <- stats::median(calibration$observed, na.rm = TRUE)
-  expect_lt(min(calibration$fdrCurve$cut), medianObserved)
+    medianObserved <- stats::median(calibration$observed, na.rm = TRUE)
+    expect_lt(min(calibration$fdrCurve$cut), medianObserved)
 })
 
 
 test_that("a finite permutation never reports an FDR of exactly zero", {
-  peaks <- examplePeaks()
-  calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 11,
-                                    verbose = FALSE)
+    peaks <- examplePeaks()
+    calibration <- calibrateThreshold(peaks,
+        nPermutations = 5, seed = 11,
+        verbose = FALSE
+    )
 
-  expect_true(all(calibration$fdrCurve$expectedNull > 0))
-  expect_true(all(calibration$fdrCurve$fdr > 0))
+    expect_true(all(calibration$fdrCurve$expectedNull > 0))
+    expect_true(all(calibration$fdrCurve$fdr > 0))
 
-  ## the floor is one expected null peak in nPermutations + 1
-  expect_gte(min(calibration$fdrCurve$expectedNull), 1 / 6)
+    ## the floor is one expected null peak in nPermutations + 1
+    expect_gte(min(calibration$fdrCurve$expectedNull), 1 / 6)
 })
 
 
 test_that("calibration uses the same settings as the analysis", {
-  peaks <- examplePeaks()
+    peaks <- examplePeaks()
 
-  ## recursive is TRUE by default in buildConsensus, so a calibration
-  ## hard-coded to FALSE would be describing a different procedure
-  expect_silent(
-    calibration <- calibrateThreshold(peaks, nPermutations = 3,
-                                      recursive = TRUE, seed = 11,
-                                      verbose = FALSE))
-  expect_true(calibration$threshold > 0)
+    ## recursive is TRUE by default in buildConsensus, so a calibration
+    ## hard-coded to FALSE would be describing a different procedure
+    expect_silent(
+        calibration <- calibrateThreshold(peaks,
+            nPermutations = 3,
+            recursive = TRUE, seed = 11,
+            verbose = FALSE
+        )
+    )
+    expect_true(calibration$threshold > 0)
 
-  withFraction <- calibrateThreshold(peaks, nPermutations = 3,
-                                     minOverlapFraction = 0.5,
-                                     verbose = FALSE)
-  expect_true(withFraction$threshold > 0)
+    withFraction <- calibrateThreshold(peaks,
+        nPermutations = 3,
+        minOverlapFraction = 0.5,
+        verbose = FALSE
+    )
+    expect_true(withFraction$threshold > 0)
 })
 
 
 test_that("minReplicates counts the peak's own replicate as MSPC does", {
-  peaks <- examplePeaks()
+    peaks <- examplePeaks()
 
-  ## two of three replicates is one supporting replicate
-  byTotal <- buildConsensus(peaks, minReplicates = 2, verbose = FALSE)
-  bySupport <- buildConsensus(peaks, minSupport = 1, verbose = FALSE)
-  expect_equal(length(byTotal), length(bySupport))
+    ## two of three replicates is one supporting replicate
+    byTotal <- buildConsensus(peaks, minReplicates = 2, verbose = FALSE)
+    bySupport <- buildConsensus(peaks, minSupport = 1, verbose = FALSE)
+    expect_equal(length(byTotal), length(bySupport))
 
-  ## all three is two supporting replicates
-  allThree <- buildConsensus(peaks, minReplicates = 3, verbose = FALSE)
-  twoOthers <- buildConsensus(peaks, minSupport = 2, verbose = FALSE)
-  expect_equal(length(allThree), length(twoOthers))
-  expect_lte(length(allThree), length(byTotal))
+    ## all three is two supporting replicates
+    allThree <- buildConsensus(peaks, minReplicates = 3, verbose = FALSE)
+    twoOthers <- buildConsensus(peaks, minSupport = 2, verbose = FALSE)
+    expect_equal(length(allThree), length(twoOthers))
+    expect_lte(length(allThree), length(byTotal))
 })
 
 
 test_that("proportions and percentages resolve the same way", {
-  ## rounded up, so two thirds of three replicates asks for two
-  expect_equal(consensusRegions:::.parseReplicateCount(0.66, 3), 2L)
-  expect_equal(consensusRegions:::.parseReplicateCount("66%", 3), 2L)
-  expect_equal(consensusRegions:::.parseReplicateCount("75%", 8), 6L)
-  expect_equal(consensusRegions:::.parseReplicateCount(0.75, 8), 6L)
+    ## rounded up, so two thirds of three replicates asks for two
+    expect_equal(consensusRegions:::.parseReplicateCount(0.66, 3), 2L)
+    expect_equal(consensusRegions:::.parseReplicateCount("66%", 3), 2L)
+    expect_equal(consensusRegions:::.parseReplicateCount("75%", 8), 6L)
+    expect_equal(consensusRegions:::.parseReplicateCount(0.75, 8), 6L)
 
-  ## anything at or above one is taken literally
-  expect_equal(consensusRegions:::.parseReplicateCount(5, 8), 5L)
-  expect_equal(consensusRegions:::.parseReplicateCount("5", 8), 5L)
+    ## anything at or above one is taken literally
+    expect_equal(consensusRegions:::.parseReplicateCount(5, 8), 5L)
+    expect_equal(consensusRegions:::.parseReplicateCount("5", 8), 5L)
 
-  ## a percentage stays a share even at the top of the range
-  expect_equal(consensusRegions:::.parseReplicateCount("100%", 3), 3L)
-  expect_equal(consensusRegions:::.parseReplicateCount("50%", 2), 1L)
+    ## a percentage stays a share even at the top of the range
+    expect_equal(consensusRegions:::.parseReplicateCount("100%", 3), 3L)
+    expect_equal(consensusRegions:::.parseReplicateCount("50%", 2), 1L)
 
-  expect_error(consensusRegions:::.parseReplicateCount("150%", 3),
-               "not a percentage")
+    expect_error(
+        consensusRegions:::.parseReplicateCount("150%", 3),
+        "not a percentage"
+    )
 })
 
 
 test_that("a percentage runs end to end", {
-  peaks <- examplePeaks()
+    peaks <- examplePeaks()
 
-  ## 60% of three replicates rounds up to two, so one supporter
-  byPercent <- buildConsensus(peaks, minReplicates = "60%",
-                              verbose = FALSE)
-  expect_equal(length(byPercent),
-               length(buildConsensus(peaks, minSupport = 1,
-                                     verbose = FALSE)))
+    ## 60% of three replicates rounds up to two, so one supporter
+    byPercent <- buildConsensus(peaks,
+        minReplicates = "60%",
+        verbose = FALSE
+    )
+    expect_equal(
+        length(byPercent),
+        length(buildConsensus(peaks,
+            minSupport = 1,
+            verbose = FALSE
+        ))
+    )
 })
 
 
 test_that("contradictory or impossible requirements are refused", {
-  peaks <- examplePeaks()
+    peaks <- examplePeaks()
 
-  expect_error(
-    buildConsensus(peaks, minSupport = 1, minReplicates = 2,
-                   verbose = FALSE),
-    "not both")
+    expect_error(
+        buildConsensus(peaks,
+            minSupport = 1, minReplicates = 2,
+            verbose = FALSE
+        ),
+        "not both"
+    )
 
-  expect_error(
-    buildConsensus(peaks, minReplicates = 1, verbose = FALSE),
-    "not a consensus")
+    expect_error(
+        buildConsensus(peaks, minReplicates = 1, verbose = FALSE),
+        "not a consensus"
+    )
 
-  expect_error(
-    buildConsensus(peaks, minReplicates = 5, verbose = FALSE),
-    "5 replicates in total but only 3")
+    expect_error(
+        buildConsensus(peaks, minReplicates = 5, verbose = FALSE),
+        "5 replicates in total but only 3"
+    )
 
-  expect_error(
-    buildConsensus(peaks, minReplicates = "many", verbose = FALSE),
-    "could not read")
+    expect_error(
+        buildConsensus(peaks, minReplicates = "many", verbose = FALSE),
+        "could not read"
+    )
 })
 
 
 test_that("chromosome names are harmonised across replicates", {
-  withChr <- GenomicRanges::GRanges(
-    "chr1", IRanges::IRanges(start = seq(1000, 50000, by = 5000),
-                             width = 500))
-  withoutChr <- GenomicRanges::GRanges(
-    "1", IRanges::IRanges(start = seq(1000, 50000, by = 5000),
-                          width = 500))
+    withChr <- GenomicRanges::GRanges(
+        "chr1", IRanges::IRanges(
+            start = seq(1000, 50000, by = 5000),
+            width = 500
+        )
+    )
+    withoutChr <- GenomicRanges::GRanges(
+        "1", IRanges::IRanges(
+            start = seq(1000, 50000, by = 5000),
+            width = 500
+        )
+    )
 
-  ## left alone these two share no chromosome at all, so every peak
-  ## would be discarded for lack of support
-  harmonised <- readPeakSets(list(a = withChr, b = withoutChr),
-                             seqlevelsStyle = "UCSC", verbose = FALSE)
-  expect_equal(GenomeInfoDb::seqlevels(harmonised[["b"]]), "chr1")
+    ## left alone these two share no chromosome at all, so every peak
+    ## would be discarded for lack of support
+    harmonised <- readPeakSets(list(a = withChr, b = withoutChr),
+        seqlevelsStyle = "UCSC", verbose = FALSE
+    )
+    expect_equal(GenomeInfoDb::seqlevels(harmonised[["b"]]), "chr1")
 
-  ensembl <- readPeakSets(list(a = withChr, b = withoutChr),
-                          seqlevelsStyle = "Ensembl", verbose = FALSE)
-  expect_equal(GenomeInfoDb::seqlevels(ensembl[["a"]]), "1")
+    ensembl <- readPeakSets(list(a = withChr, b = withoutChr),
+        seqlevelsStyle = "Ensembl", verbose = FALSE
+    )
+    expect_equal(GenomeInfoDb::seqlevels(ensembl[["a"]]), "1")
 })
 
 
 test_that("a mismatch is refused rather than silently analysed", {
-  withChr <- GenomicRanges::GRanges(
-    "chr1", IRanges::IRanges(start = seq(1000, 50000, by = 5000),
-                             width = 500))
-  withoutChr <- GenomicRanges::GRanges(
-    "1", IRanges::IRanges(start = seq(1000, 50000, by = 5000),
-                          width = 500))
+    withChr <- GenomicRanges::GRanges(
+        "chr1", IRanges::IRanges(
+            start = seq(1000, 50000, by = 5000),
+            width = 500
+        )
+    )
+    withoutChr <- GenomicRanges::GRanges(
+        "1", IRanges::IRanges(
+            start = seq(1000, 50000, by = 5000),
+            width = 500
+        )
+    )
 
-  expect_error(
-    readPeakSets(list(a = withChr, b = withoutChr),
-                 seqlevelsStyle = NULL, verbose = FALSE),
-    "different chromosome naming styles")
+    expect_error(
+        readPeakSets(list(a = withChr, b = withoutChr),
+            seqlevelsStyle = NULL, verbose = FALSE
+        ),
+        "different chromosome naming styles"
+    )
 
-  expect_error(
-    readPeakSets(list(a = withChr, b = withoutChr),
-                 seqlevelsStyle = "hg38", verbose = FALSE),
-    "must be one among")
+    expect_error(
+        readPeakSets(list(a = withChr, b = withoutChr),
+            seqlevelsStyle = "hg38", verbose = FALSE
+        ),
+        "must be one among"
+    )
 })
 
 
 test_that("the wrapper reproduces the step-by-step analysis", {
-  peakFiles <- system.file("extdata",
-                           c("rep1.narrowPeak", "rep2.narrowPeak",
-                             "rep3.narrowPeak"),
-                           package = "consensusRegions")
+    peakFiles <- system.file("extdata",
+        c(
+            "rep1.narrowPeak", "rep2.narrowPeak",
+            "rep3.narrowPeak"
+        ),
+        package = "consensusRegions"
+    )
 
-  oneCall <- runConsensus(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                          verbose = FALSE)
-  stepwise <- buildConsensus(examplePeaks(), verbose = FALSE)
+    oneCall <- runConsensus(peakFiles,
+        sampleNames = c("r1", "r2", "r3"),
+        verbose = FALSE
+    )
+    stepwise <- buildConsensus(examplePeaks(), verbose = FALSE)
 
-  expect_s4_class(oneCall, "ConsensusRegions")
-  expect_equal(length(oneCall), length(stepwise))
-  expect_equal(consensusStats(oneCall), consensusStats(stepwise))
+    expect_s4_class(oneCall, "ConsensusRegions")
+    expect_equal(length(oneCall), length(stepwise))
+    expect_equal(consensusStats(oneCall), consensusStats(stepwise))
 })
 
 
 test_that("the wrapper passes options through and recentres", {
-  peakFiles <- system.file("extdata",
-                           c("rep1.narrowPeak", "rep2.narrowPeak",
-                             "rep3.narrowPeak"),
-                           package = "consensusRegions")
+    peakFiles <- system.file("extdata",
+        c(
+            "rep1.narrowPeak", "rep2.narrowPeak",
+            "rep3.narrowPeak"
+        ),
+        package = "consensusRegions"
+    )
 
-  result <- runConsensus(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                         weightMethod = "frip",
-                         frip = c(0.21, 0.19, 0.06),
-                         minReplicates = 3,
-                         mergeMethod = "iterative",
-                         recentre = TRUE, width = 400,
-                         verbose = FALSE)
+    result <- runConsensus(peakFiles,
+        sampleNames = c("r1", "r2", "r3"),
+        weightMethod = "frip",
+        frip = c(0.21, 0.19, 0.06),
+        minReplicates = 3,
+        mergeMethod = "iterative",
+        recentre = TRUE, width = 400,
+        verbose = FALSE
+    )
 
-  expect_true(all(GenomicRanges::width(consensusRanges(result)) <= 400))
-  expect_equal(analysisParameters(result)$mergeMethod, "iterative")
-  expect_equal(analysisParameters(result)$minSupport, 2)
-  expect_lt(replicateWeights(result)[["r3"]],
-            replicateWeights(result)[["r1"]])
+    expect_true(all(GenomicRanges::width(consensusRanges(result)) <= 400))
+    expect_equal(analysisParameters(result)$mergeMethod, "iterative")
+    expect_equal(analysisParameters(result)$minSupport, 2)
+    expect_lt(
+        replicateWeights(result)[["r3"]],
+        replicateWeights(result)[["r1"]]
+    )
 })
 
 
 test_that("BPPARAM accepts a plain number of cores", {
-  expect_s4_class(consensusRegions:::.resolveBPPARAM(1), "SerialParam")
+    expect_s4_class(consensusRegions:::.resolveBPPARAM(1), "SerialParam")
 
-  fourCores <- consensusRegions:::.resolveBPPARAM(4)
-  expect_equal(BiocParallel::bpnworkers(fourCores), 4L)
+    fourCores <- consensusRegions:::.resolveBPPARAM(4)
+    expect_equal(BiocParallel::bpnworkers(fourCores), 4L)
 
-  ## an object is handed back untouched, which is how a fixed random
-  ## seed reaches the workers
-  supplied <- BiocParallel::SnowParam(workers = 2, RNGseed = 1)
-  expect_identical(consensusRegions:::.resolveBPPARAM(supplied), supplied)
+    ## an object is handed back untouched, which is how a fixed random
+    ## seed reaches the workers
+    supplied <- BiocParallel::SnowParam(workers = 2, RNGseed = 1)
+    expect_identical(consensusRegions:::.resolveBPPARAM(supplied), supplied)
 })
 
 
 test_that("a seed goes to the backend built from a core count, and only there", {
-  expect_equal(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(1, seed = 5)), 5)
-  expect_equal(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(4, seed = 5)), 5)
-  expect_null(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(1)))
+    expect_equal(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(1, seed = 5)), 5)
+    expect_equal(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(4, seed = 5)), 5)
+    expect_null(BiocParallel::bpRNGseed(consensusRegions:::.resolveBPPARAM(1)))
 
-  ## a backend of the user is a reference object, it is left as it came
-  supplied <- BiocParallel::SerialParam()
-  expect_warning(resolved <- consensusRegions:::.resolveBPPARAM(supplied, seed = 5),
-                 "'seed' is ignored")
-  expect_identical(resolved, supplied)
-  expect_null(BiocParallel::bpRNGseed(supplied))
+    ## a backend of the user is a reference object, it is left as it came
+    supplied <- BiocParallel::SerialParam()
+    expect_warning(
+        resolved <- consensusRegions:::.resolveBPPARAM(supplied, seed = 5),
+        "'seed' is ignored"
+    )
+    expect_identical(resolved, supplied)
+    expect_null(BiocParallel::bpRNGseed(supplied))
 
-  expect_error(consensusRegions:::.resolveBPPARAM(1, seed = "five"), "'seed' must be")
-  expect_error(consensusRegions:::.resolveBPPARAM(1, seed = c(1, 2)), "'seed' must be")
+    expect_error(consensusRegions:::.resolveBPPARAM(1, seed = "five"), "'seed' must be")
+    expect_error(consensusRegions:::.resolveBPPARAM(1, seed = c(1, 2)), "'seed' must be")
 })
 
 
 test_that("a nonsensical core count is refused", {
-  expect_error(consensusRegions:::.resolveBPPARAM("many"),
-               "number of cores")
-  expect_error(consensusRegions:::.resolveBPPARAM(0),
-               "number of cores")
-  expect_error(consensusRegions:::.resolveBPPARAM(c(2, 4)),
-               "number of cores")
+    expect_error(
+        consensusRegions:::.resolveBPPARAM("many"),
+        "number of cores"
+    )
+    expect_error(
+        consensusRegions:::.resolveBPPARAM(0),
+        "number of cores"
+    )
+    expect_error(
+        consensusRegions:::.resolveBPPARAM(c(2, 4)),
+        "number of cores"
+    )
 })
 
 
 test_that("calibration runs whichever way BPPARAM is given", {
-  peaks <- examplePeaks()
+    peaks <- examplePeaks()
 
-  byNumber <- calibrateThreshold(peaks, nPermutations = 3, BPPARAM = 1,
-                                 seed = 1, verbose = FALSE)
-  byObject <- calibrateThreshold(peaks, nPermutations = 3,
-                                 BPPARAM = BiocParallel::SerialParam(RNGseed = 1),
-                                 verbose = FALSE)
+    byNumber <- calibrateThreshold(peaks,
+        nPermutations = 3, BPPARAM = 1,
+        seed = 1, verbose = FALSE
+    )
+    byObject <- calibrateThreshold(peaks,
+        nPermutations = 3,
+        BPPARAM = BiocParallel::SerialParam(RNGseed = 1),
+        verbose = FALSE
+    )
 
-  ## a core count of one and SerialParam are the same thing, so the same
-  ## seed has to draw the same peaks
-  expect_identical(byNumber$null, byObject$null)
-  expect_equal(byNumber$threshold, byObject$threshold)
-  expect_identical(byNumber$seedSource, "seed")
-  expect_identical(byObject$seedSource, "BPPARAM")
-  expect_equal(byObject$seed, 1)
+    ## a core count of one and SerialParam are the same thing, so the same
+    ## seed has to draw the same peaks
+    expect_identical(byNumber$null, byObject$null)
+    expect_equal(byNumber$threshold, byObject$threshold)
+    expect_identical(byNumber$seedSource, "seed")
+    expect_identical(byObject$seedSource, "BPPARAM")
+    expect_equal(byObject$seed, 1)
 })
 
 
 test_that("the same seed draws the same peaks on any number of cores", {
-  skip_on_os("windows")
-  peaks <- examplePeaks()
+    skip_on_os("windows")
+    peaks <- examplePeaks()
 
-  oneCore <- calibrateThreshold(peaks, nPermutations = 4, BPPARAM = 1,
-                                seed = 9, verbose = FALSE)
-  twoCores <- calibrateThreshold(peaks, nPermutations = 4, BPPARAM = 2,
-                                 seed = 9, verbose = FALSE)
+    oneCore <- calibrateThreshold(peaks,
+        nPermutations = 4, BPPARAM = 1,
+        seed = 9, verbose = FALSE
+    )
+    twoCores <- calibrateThreshold(peaks,
+        nPermutations = 4, BPPARAM = 2,
+        seed = 9, verbose = FALSE
+    )
 
-  expect_identical(twoCores$null, oneCore$null)
+    expect_identical(twoCores$null, oneCore$null)
 })
 
 
 test_that("runConsensus passes the seed on and keeps it with the calibration", {
-  result <- runConsensus(examplePeaks(), calibrate = TRUE, nPermutations = 3,
-                         seed = 5, verbose = FALSE)
+    result <- runConsensus(examplePeaks(),
+        calibrate = TRUE, nPermutations = 3,
+        seed = 5, verbose = FALSE
+    )
 
-  expect_equal(result@calibration$seed, 5)
-  expect_identical(result@calibration$seedSource, "seed")
-  expect_output(show(result), "\\(seed 5\\)")
+    expect_equal(calibrationResult(result)$seed, 5)
+    expect_identical(calibrationResult(result)$seedSource, "seed")
+    expect_output(show(result), "\\(seed 5\\)")
 
-  again <- runConsensus(examplePeaks(), calibrate = TRUE, nPermutations = 3,
-                        seed = 5, verbose = FALSE)
-  expect_identical(again@calibration$null, result@calibration$null)
+    again <- runConsensus(examplePeaks(),
+        calibrate = TRUE, nPermutations = 3,
+        seed = 5, verbose = FALSE
+    )
+    expect_identical(
+        calibrationResult(again)$null,
+        calibrationResult(result)$null
+    )
 })

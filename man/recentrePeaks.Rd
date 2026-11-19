@@ -38,8 +38,10 @@ wider region collects more reads and more motif matches for reasons
 that have nothing to do with the biology.
 
 Recentring fixes it. Each region is reduced to a single position and
-re-expanded to a common width, which is what the ATAC-seq peak atlases
-do and what motif analysis wants.
+re-expanded to a common width, which is what motif analysis wants and
+what the published accessibility atlases do: Corces and colleagues
+build their pan-cancer ATAC-seq atlas out of fixed-width windows taken
+around summits for the same reason.
 }
 \details{
 `"best"` needs a summit offset, which narrowPeak files carry in their
@@ -52,15 +54,24 @@ collapsing a domain to a point throws away the thing being measured.
 }
 \examples{
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
-peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-                      verbose = FALSE)
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
+peaks <- readPeakSets(peakFiles,
+    sampleNames = c("r1", "r2", "r3"),
+    verbose = FALSE
+)
 result <- buildConsensus(peaks, verbose = FALSE)
 
 recentrePeaks(result, width = 400)
 
+}
+\references{
+Corces M.R. *et al.* (2018). The chromatin accessibility landscape of
+primary human cancers. *Science* 362(6413):eaav1898.
 }
 \author{
 Sebastian Gregoricchio

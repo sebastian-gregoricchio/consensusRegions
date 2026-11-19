@@ -90,8 +90,10 @@
 .pairwiseJaccard <- function(peakList) {
     n <- length(peakList)
     replicateNames <- names(peakList)
-    jaccard <- matrix(NA_real_, nrow = n, ncol = n,
-                      dimnames = list(replicateNames, replicateNames))
+    jaccard <- matrix(NA_real_,
+        nrow = n, ncol = n,
+        dimnames = list(replicateNames, replicateNames)
+    )
 
     ## collapsing each set first stops overlapping peaks inside a single
     ## replicate from inflating the covered base count
@@ -99,18 +101,30 @@
         GenomicRanges::reduce(x, ignore.strand = TRUE)
     })
 
-    for (i in seq_len(n)) {
-        for (j in seq_len(n)) {
+    ## a set shares all of its bases with itself, unless it is empty and
+    ## has no bases to share
+    covered <- vapply(flattened, function(x) {
+        sum(as.numeric(GenomicRanges::width(x)))
+    }, numeric(1))
+    diag(jaccard) <- as.numeric(covered > 0)
+
+    ## the index is symmetric, so only the upper triangle is computed and
+    ## then mirrored onto the lower one
+    for (i in seq_len(n - 1)) {
+        for (j in seq(i + 1, n)) {
             shared <- GenomicRanges::intersect(flattened[[i]], flattened[[j]],
-                                               ignore.strand = TRUE)
+                ignore.strand = TRUE
+            )
             combined <- GenomicRanges::union(flattened[[i]], flattened[[j]],
-                                             ignore.strand = TRUE)
+                ignore.strand = TRUE
+            )
             totalWidth <- sum(as.numeric(GenomicRanges::width(combined)))
             jaccard[i, j] <- if (totalWidth == 0) {
                 0
             } else {
                 sum(as.numeric(GenomicRanges::width(shared))) / totalWidth
             }
+            jaccard[j, i] <- jaccard[i, j]
         }
     }
 
@@ -142,8 +156,10 @@
     ## available bound; it underestimates the chromosome, which makes the
     ## permutation slightly conservative
     lastEnd <- vapply(
-        S4Vectors::split(GenomicRanges::end(gr),
-                         as.character(GenomeInfoDb::seqnames(gr))),
+        S4Vectors::split(
+            GenomicRanges::end(gr),
+            as.character(GenomeInfoDb::seqnames(gr))
+        ),
         function(x) if (length(x) == 0) NA_real_ else max(x),
         numeric(1)
     )
@@ -196,7 +212,8 @@
     buildRanges <- function(starts) {
         GenomicRanges::GRanges(
             seqnames = chromosome,
-            ranges = IRanges::IRanges(start = starts, width = peakWidth))
+            ranges = IRanges::IRanges(start = starts, width = peakWidth)
+        )
     }
     shuffled <- buildRanges(newStart)
 
@@ -205,7 +222,9 @@
     if (!is.null(excludeRegions)) {
         for (attempt in seq_len(maxAttempts)) {
             bad <- which(GenomicRanges::countOverlaps(
-                shuffled, excludeRegions, ignore.strand = TRUE) > 0)
+                shuffled, excludeRegions,
+                ignore.strand = TRUE
+            ) > 0)
             if (length(bad) == 0) {
                 break
             }
@@ -246,7 +265,8 @@
 #' built from a number of cores as its `RNGseed`, the only way
 #' `BiocParallel` takes one: `set.seed()` does not reach its workers.
 #'
-#' @param BPPARAM A number of cores or a `BiocParallelParam` object.
+#' @param BPPARAM A `BiocParallelParam` object, a number of cores, or
+#'   `NULL` for a serial backend seeded from `seed`.
 #' @param seed Number seeding the random numbers of the workers, or
 #'   `NULL`. Ignored, with a warning, when `BPPARAM` is a
 #'   `BiocParallelParam` object, which is never modified.
@@ -267,21 +287,30 @@
         stop("'seed' must be a single number, or NULL")
     }
 
+    ## nothing asked for, so a serial backend the seed can still govern
+    if (is.null(BPPARAM)) {
+        return(BiocParallel::SerialParam(RNGseed = seed))
+    }
+
     ## a backend of the user is a reference object, so setting its seed
     ## here would change it behind the user's back
     if (methods::is(BPPARAM, "BiocParallelParam")) {
         if (!is.null(seed)) {
-            warning("'seed' is ignored when 'BPPARAM' is a ",
-                    "BiocParallelParam object; give it the seed as ",
-                    "RNGseed instead")
+            warning(
+                "'seed' is ignored when 'BPPARAM' is a ",
+                "BiocParallelParam object; give it the seed as ",
+                "RNGseed instead"
+            )
         }
         return(BPPARAM)
     }
 
     if (!is.numeric(BPPARAM) || length(BPPARAM) != 1 ||
         !is.finite(BPPARAM) || BPPARAM < 1) {
-        stop("'BPPARAM' must be a number of cores, or a ",
-             "BiocParallelParam object")
+        stop(
+            "'BPPARAM' must be a BiocParallelParam object, a number of ",
+            "cores, or NULL"
+        )
     }
 
     nCores <- as.integer(BPPARAM)

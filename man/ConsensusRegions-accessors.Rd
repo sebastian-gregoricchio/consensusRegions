@@ -7,11 +7,13 @@
 \alias{replicateWeights}
 \alias{analysisParameters}
 \alias{consensusStats}
+\alias{calibrationResult}
 \alias{consensusRanges,ConsensusRegions-method}
 \alias{peakSets,ConsensusRegions-method}
 \alias{replicateWeights,ConsensusRegions-method}
 \alias{analysisParameters,ConsensusRegions-method}
 \alias{consensusStats,ConsensusRegions-method}
+\alias{calibrationResult,ConsensusRegions-method}
 \title{Accessors for ConsensusRegions objects}
 \usage{
 consensusRanges(object)
@@ -24,6 +26,8 @@ analysisParameters(object)
 
 consensusStats(object)
 
+calibrationResult(object)
+
 \S4method{consensusRanges}{ConsensusRegions}(object)
 
 \S4method{peakSets}{ConsensusRegions}(object)
@@ -33,6 +37,8 @@ consensusStats(object)
 \S4method{analysisParameters}{ConsensusRegions}(object)
 
 \S4method{consensusStats}{ConsensusRegions}(object)
+
+\S4method{calibrationResult}{ConsensusRegions}(object)
 }
 \arguments{
 \item{object}{A [ConsensusRegions-class] object.}
@@ -43,15 +49,20 @@ consensusStats(object)
 `GRangesList`. `replicateWeights()` returns the named numeric vector of
 weights. `analysisParameters()` returns the list of settings used.
 `consensusStats()` returns a per-replicate summary `data.frame`.
+`calibrationResult()` returns the [ThresholdCalibration-class] object
+the consensus was built with, or `NULL` when it was built without one.
 }
 \description{
 Retrieve the components of a [ConsensusRegions-class] object.
 }
 \examples{
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"))
 result <- buildConsensus(peaks, verbose = FALSE)
 

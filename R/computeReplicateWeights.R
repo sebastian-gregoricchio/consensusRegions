@@ -63,24 +63,33 @@
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #'
 #' ## no BAM files at hand
 #' computeReplicateWeights(peaks, method = "intrinsic")
 #'
 #' ## FRiP measured elsewhere
-#' computeReplicateWeights(peaks, method = "frip",
-#'                         frip = c(0.21, 0.19, 0.06))
+#' computeReplicateWeights(peaks,
+#'     method = "frip",
+#'     frip = c(0.21, 0.19, 0.06)
+#' )
 #'
 #' @export
 computeReplicateWeights <- function(peakList,
-                                    method = c("equal", "frip",
-                                               "librarySize", "intrinsic",
-                                               "custom"),
+                                    method = c(
+                                        "equal", "frip",
+                                        "librarySize", "intrinsic",
+                                        "custom"
+                                    ),
                                     bamFiles = NULL,
                                     frip = NULL,
                                     librarySize = NULL,
@@ -107,8 +116,10 @@ computeReplicateWeights <- function(peakList,
             stop("'weights' must be supplied when method is 'custom'")
         }
         if (length(weights) != length(peakList)) {
-            stop("'weights' has length ", length(weights), " but ",
-                 length(peakList), " replicates were supplied")
+            stop(
+                "'weights' has length ", length(weights), " but ",
+                length(peakList), " replicates were supplied"
+            )
         }
         result <- .normaliseWeights(weights)
         names(result) <- replicateNames
@@ -124,32 +135,42 @@ computeReplicateWeights <- function(peakList,
         ## quality when nothing better is available
         agreement <- rowMeans(jaccard, na.rm = TRUE)
         if (any(agreement <= 0)) {
-            stop("at least one replicate shares no peaks with the others, ",
-                 "intrinsic weights cannot be computed")
+            stop(
+                "at least one replicate shares no peaks with the others, ",
+                "intrinsic weights cannot be computed"
+            )
         }
         result <- .normaliseWeights(agreement)
         names(result) <- replicateNames
-        attr(result, "metrics") <- dplyr::tibble(replicate = replicateNames,
-                                                 jaccard = agreement)
+        attr(result, "metrics") <- dplyr::tibble(
+            replicate = replicateNames,
+            jaccard = agreement
+        )
         return(result)
     }
 
     ## from here on the metrics either come pre-computed or are read off
     ## the alignments
-    measured <- .collectBamMetrics(peakList = peakList,
-                                   required = method,
-                                   bamFiles = bamFiles,
-                                   frip = frip,
-                                   librarySize = librarySize,
-                                   minMapq = minMapq,
-                                   verbose = verbose)
+    measured <- .collectBamMetrics(
+        peakList = peakList,
+        required = method,
+        bamFiles = bamFiles,
+        frip = frip,
+        librarySize = librarySize,
+        minMapq = minMapq,
+        verbose = verbose
+    )
 
     if (method == "frip") {
         usable <- dplyr::filter(measured, !is.na(.data$frip))
         if (nrow(usable) != nrow(measured)) {
-            stop("FRiP is missing for: ",
-                 paste(dplyr::pull(dplyr::filter(measured, is.na(.data$frip)),
-                                   .data$replicate), collapse = ", "))
+            stop(
+                "FRiP is missing for: ",
+                paste(dplyr::pull(
+                    dplyr::filter(measured, is.na(.data$frip)),
+                    .data$replicate
+                ), collapse = ", ")
+            )
         }
         result <- .normaliseWeights(measured$frip)
     } else {
@@ -202,12 +223,16 @@ computeReplicateWeights <- function(peakList,
 
     ## supplied numbers win over anything that would have to be measured
     if (!is.null(frip) && length(frip) != nReplicates) {
-        stop("'frip' has length ", length(frip), " but ", nReplicates,
-             " replicates were supplied")
+        stop(
+            "'frip' has length ", length(frip), " but ", nReplicates,
+            " replicates were supplied"
+        )
     }
     if (!is.null(librarySize) && length(librarySize) != nReplicates) {
-        stop("'librarySize' has length ", length(librarySize), " but ",
-             nReplicates, " replicates were supplied")
+        stop(
+            "'librarySize' has length ", length(librarySize), " but ",
+            nReplicates, " replicates were supplied"
+        )
     }
 
     fripValues <- if (is.null(frip)) rep(NA_real_, nReplicates) else frip
@@ -225,17 +250,23 @@ computeReplicateWeights <- function(peakList,
 
     if (needsBam) {
         if (is.null(bamFiles)) {
-            stop("supply 'bamFiles', or pass 'frip' and 'librarySize' ",
-                 "directly if the alignments are no longer available")
+            stop(
+                "supply 'bamFiles', or pass 'frip' and 'librarySize' ",
+                "directly if the alignments are no longer available"
+            )
         }
         if (length(bamFiles) != nReplicates) {
-            stop("'bamFiles' has length ", length(bamFiles), " but ",
-                 nReplicates, " replicates were supplied")
+            stop(
+                "'bamFiles' has length ", length(bamFiles), " but ",
+                nReplicates, " replicates were supplied"
+            )
         }
         missingFiles <- bamFiles[!file.exists(bamFiles)]
         if (length(missingFiles) > 0) {
-            stop("BAM file not found: ",
-                 paste(missingFiles, collapse = ", "))
+            stop(
+                "BAM file not found: ",
+                paste(missingFiles, collapse = ", ")
+            )
         }
 
         for (i in seq_len(nReplicates)) {
@@ -251,11 +282,14 @@ computeReplicateWeights <- function(peakList,
                 depthValues[i] <- if (minMapq > 0) {
                     totalParam <- Rsamtools::ScanBamParam(
                         flag = Rsamtools::scanBamFlag(
-                            isUnmappedQuery = FALSE),
-                        mapqFilter = minMapq)
+                            isUnmappedQuery = FALSE
+                        ),
+                        mapqFilter = minMapq
+                    )
                     sum(Rsamtools::countBam(
                         Rsamtools::BamFile(bamFiles[i]),
-                        param = totalParam)$records)
+                        param = totalParam
+                    )$records)
                 } else {
                     sum(Rsamtools::idxstatsBam(bamFiles[i])$mapped)
                 }
@@ -265,24 +299,33 @@ computeReplicateWeights <- function(peakList,
                 ## flattening the peaks first stops a read that spans two
                 ## overlapping calls from being counted twice
                 targets <- GenomicRanges::reduce(peakList[[i]],
-                                                 ignore.strand = TRUE)
-                countParam <- Rsamtools::ScanBamParam(which = targets,
-                                                      mapqFilter = minMapq)
+                    ignore.strand = TRUE
+                )
+                countParam <- Rsamtools::ScanBamParam(
+                    which = targets,
+                    mapqFilter = minMapq
+                )
                 counted <- Rsamtools::countBam(
-                    Rsamtools::BamFile(bamFiles[i]), param = countParam)
+                    Rsamtools::BamFile(bamFiles[i]),
+                    param = countParam
+                )
                 fripValues[i] <- sum(counted$records) / depthValues[i]
             }
         }
     }
 
     outOfRange <- which(!is.na(fripValues) &
-                            (fripValues <= 0 | fripValues > 1))
+        (fripValues <= 0 | fripValues > 1))
     if (length(outOfRange) > 0) {
-        stop("FRiP outside (0, 1] for: ",
-             paste(replicateNames[outOfRange], collapse = ", "))
+        stop(
+            "FRiP outside (0, 1] for: ",
+            paste(replicateNames[outOfRange], collapse = ", ")
+        )
     }
 
-    dplyr::tibble(replicate = replicateNames,
-                  frip = fripValues,
-                  librarySize = depthValues)
+    dplyr::tibble(
+        replicate = replicateNames,
+        frip = fripValues,
+        librarySize = depthValues
+    )
 }

@@ -64,9 +64,12 @@ score-only rather than as a set of p-values equal to `10`.
 }
 \examples{
 peakFiles <- system.file("extdata",
-                         c("rep1.narrowPeak", "rep2.narrowPeak",
-                           "rep3.narrowPeak"),
-                         package = "consensusRegions")
+    c(
+        "rep1.narrowPeak", "rep2.narrowPeak",
+        "rep3.narrowPeak"
+    ),
+    package = "consensusRegions"
+)
 peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"))
 peaks
 

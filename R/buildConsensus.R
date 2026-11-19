@@ -69,7 +69,8 @@
 #' @param maxIterations Cap on the recursive rounds. Default: \code{10L}.
 #' @param mergeMethod `"reduce"` merges anything that touches;
 #'   `"iterative"` seeds on the most significant peak and removes what it
-#'   overlaps, then repeats. Default: \code{"reduce"}.
+#'   overlaps, then repeats, which is the iterative removal procedure of
+#'   Corces and colleagues. Default: \code{"reduce"}.
 #' @param maxConsensusWidth Optional cap in base pairs. Merged regions
 #'   wider than this are rebuilt with the iterative rule.
 #'   Default: \code{NULL}.
@@ -102,6 +103,10 @@
 #'
 #' @author Sebastian Gregoricchio
 #'
+#' @references
+#' Corces M.R. *et al.* (2018). The chromatin accessibility landscape of
+#' primary human cancers. *Science* 362(6413):eaav1898.
+#'
 #' @importFrom GenomicRanges findOverlaps reduce pintersect width mcols
 #'   GRanges seqnames countOverlaps
 #' @importFrom S4Vectors queryHits subjectHits mcols mcols<- metadata
@@ -111,15 +116,20 @@
 #'   slice_max slice_min left_join bind_rows arrange n_distinct pull
 #'   distinct ungroup case_when
 #' @importFrom rlang .data
-#' @importFrom methods new
+#' @importFrom methods new is as
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #'
 #' result <- buildConsensus(peaks, verbose = FALSE)
 #' consensusRanges(result)
@@ -127,17 +137,22 @@
 #' ## down-weighting a replicate known to be poor
 #' weighted <- buildConsensus(
 #'     peaks,
-#'     weights = computeReplicateWeights(peaks, method = "frip",
-#'                                       frip = c(0.2, 0.18, 0.05)),
+#'     weights = computeReplicateWeights(peaks,
+#'         method = "frip",
+#'         frip = c(0.2, 0.18, 0.05)
+#'     ),
 #'     combinationMethod = "stouffer",
-#'     verbose = FALSE)
+#'     verbose = FALSE
+#' )
 #' consensusStats(weighted)
 #'
 #' @export
 buildConsensus <- function(peakList,
                            weights = NULL,
-                           combinationMethod = c("stouffer", "fisher",
-                                                 "lancaster", "rankProduct"),
+                           combinationMethod = c(
+                               "stouffer", "fisher",
+                               "lancaster", "rankProduct"
+                           ),
                            replicateType = c("biological", "technical"),
                            stringencyThreshold = 1e-8,
                            weakThreshold = 1e-4,
@@ -163,57 +178,25 @@ buildConsensus <- function(peakList,
     multipleIntersections <- match.arg(multipleIntersections)
     mergeMethod <- match.arg(mergeMethod)
 
-    ## ---- settings ----------------------------------------------------
-    if (!methods::is(peakList, "GRangesList")) {
-        stop("'peakList' must be a GRangesList, see readPeakSets()")
-    }
-    if (length(peakList) < 2) {
-        stop("consensus needs at least two replicates")
-    }
-    if (weakThreshold < stringencyThreshold) {
-        stop("'weakThreshold' must be larger than 'stringencyThreshold'; ",
-             "they are p-values, so the weak cut is the more permissive one")
-    }
-    ## a calibrated threshold was derived from these peak sets, so it
-    ## takes precedence over anything carried over by hand
-    if (!is.null(calibration)) {
-        if (!is.list(calibration) || is.null(calibration$threshold)) {
-            stop("'calibration' must be the output of calibrateThreshold()")
-        }
-        combinedThreshold <- calibration$threshold
-        .messageIf(verbose, "Using the calibrated threshold ",
-                   signif(combinedThreshold, 3))
-    }
-    if (is.null(combinedThreshold)) {
-        combinedThreshold <- stringencyThreshold
-    }
+    ## ---- settings and weights ----------------------------------------
+    resolved <- .resolveBuildSettings(
+        peakList = peakList,
+        calibration = calibration,
+        combinedThreshold = combinedThreshold,
+        stringencyThreshold = stringencyThreshold,
+        weakThreshold = weakThreshold,
+        replicateType = replicateType,
+        minSupport = minSupport,
+        minReplicates = minReplicates,
+        weights = weights,
+        verbose = verbose
+    )
 
-    nReplicates <- length(peakList)
-    replicateNames <- names(peakList)
-
-    requiredSupport <- if (replicateType == "technical") {
-        ## technical replicates are expected to agree everywhere
-        nReplicates - 1L
-    } else {
-        .resolveRequiredSupport(minSupport = minSupport,
-                                minReplicates = minReplicates,
-                                nReplicates = nReplicates)
-    }
-    if (requiredSupport > nReplicates - 1L) {
-        stop("the requested support asks for ", requiredSupport + 1L,
-             " replicates in total but only ", nReplicates,
-             " were supplied")
-    }
-
-    ## ---- weights -----------------------------------------------------
-    if (is.null(weights)) {
-        weights <- rep(1, nReplicates)
-        names(weights) <- replicateNames
-    }
-    if (!setequal(names(weights), replicateNames)) {
-        stop("names of 'weights' do not match the replicate names")
-    }
-    weights <- .normaliseWeights(weights[replicateNames])
+    combinedThreshold <- resolved$combinedThreshold
+    requiredSupport <- resolved$requiredSupport
+    weights <- resolved$weights
+    replicateNames <- resolved$replicateNames
+    nReplicates <- resolved$nReplicates
 
     ## ---- score type --------------------------------------------------
     scoreType <- S4Vectors::metadata(peakList)$scoreType
@@ -223,9 +206,11 @@ buildConsensus <- function(peakList,
     presenceOnly <- identical(scoreType, "none")
 
     if (presenceOnly) {
-        .messageIf(verbose,
-                   "No usable statistic found, falling back to the ",
-                   "weighted presence rule")
+        .messageIf(
+            verbose,
+            "No usable statistic found, falling back to the ",
+            "weighted presence rule"
+        )
     }
 
     ## ---- flatten -----------------------------------------------------
@@ -240,23 +225,29 @@ buildConsensus <- function(peakList,
 
     ## ---- classification ----------------------------------------------
     flatPeaks <- .classifyPeaks(flatPeaks,
-                                stringencyThreshold = stringencyThreshold,
-                                weakThreshold = weakThreshold,
-                                presenceOnly = presenceOnly)
+        stringencyThreshold = stringencyThreshold,
+        weakThreshold = weakThreshold,
+        presenceOnly = presenceOnly
+    )
 
     retained <- flatPeaks[S4Vectors::mcols(flatPeaks)$class != "background"]
     if (length(retained) == 0) {
-        stop("every peak fell below 'weakThreshold'; the input is likely ",
-             "already filtered, call peaks more permissively")
+        stop(
+            "every peak fell below 'weakThreshold'; the input is likely ",
+            "already filtered, call peaks more permissively"
+        )
     }
-    .messageIf(verbose, "Peaks entering the analysis: ", length(retained),
-               " of ", length(flatPeaks))
+    .messageIf(
+        verbose, "Peaks entering the analysis: ", length(retained),
+        " of ", length(flatPeaks)
+    )
 
     ## within-replicate relative ranks, needed by the rank product
     S4Vectors::mcols(retained)$rho <- .relativeRanks(
         negLog10P = S4Vectors::mcols(retained)$negLog10P,
         replicate = S4Vectors::mcols(retained)$replicate,
-        presenceOnly = presenceOnly)
+        presenceOnly = presenceOnly
+    )
 
     ## the rank product is bounded by the number of peaks per replicate,
     ## so the usual 1e-8 is often unreachable and would silently return
@@ -264,12 +255,14 @@ buildConsensus <- function(peakList,
     if (!presenceOnly && combinationMethod == "rankProduct") {
         reachable <- .rankProductCeiling(retained, requiredSupport)
         if (-log10(combinedThreshold) > reachable) {
-            stop("the rank product cannot reach a combined p-value of ",
-                 combinedThreshold, " with these peak sets: the smallest ",
-                 "attainable is ", signif(10^(-reachable), 3),
-                 ", because the statistic is bounded by the number of ",
-                 "peaks per replicate. Lower 'combinedThreshold', or let ",
-                 "calibrateThreshold() choose one")
+            stop(
+                "the rank product cannot reach a combined p-value of ",
+                combinedThreshold, " with these peak sets: the smallest ",
+                "attainable is ", signif(10^(-reachable), 3),
+                ", because the statistic is bounded by the number of ",
+                "peaks per replicate. Lower 'combinedThreshold', or let ",
+                "calibrateThreshold() choose one"
+            )
         }
     }
 
@@ -278,7 +271,8 @@ buildConsensus <- function(peakList,
     overlapTable <- .buildOverlapTable(
         retained,
         minOverlap = minOverlap,
-        minOverlapFraction = minOverlapFraction)
+        minOverlapFraction = minOverlapFraction
+    )
 
     ## ---- confirmation ------------------------------------------------
     verdict <- .runConfirmation(
@@ -293,7 +287,8 @@ buildConsensus <- function(peakList,
         recursive = recursive,
         maxIterations = maxIterations,
         presenceOnly = presenceOnly,
-        verbose = verbose)
+        verbose = verbose
+    )
 
     S4Vectors::mcols(retained)$nSupport <- verdict$nSupport
     S4Vectors::mcols(retained)$supportWeight <- verdict$supportWeight
@@ -305,7 +300,8 @@ buildConsensus <- function(peakList,
         passed = verdict$passed,
         replicate = S4Vectors::mcols(retained)$replicate,
         presenceOnly = presenceOnly,
-        adjustmentFamily = adjustmentFamily)
+        adjustmentFamily = adjustmentFamily
+    )
 
     S4Vectors::mcols(retained)$combinedNegLog10Padj <- adjusted
     keptPeak <- verdict$passed &
@@ -314,7 +310,8 @@ buildConsensus <- function(peakList,
     S4Vectors::mcols(retained)$status <- dplyr::case_when(
         keptPeak ~ "confirmed",
         verdict$passed ~ "falsePositive",
-        .default = "discarded")
+        .default = "discarded"
+    )
 
     .messageIf(verbose, "Peaks confirmed: ", sum(keptPeak))
 
@@ -326,24 +323,30 @@ buildConsensus <- function(peakList,
         mergeMethod = mergeMethod,
         maxConsensusWidth = maxConsensusWidth,
         multipleIntersections = multipleIntersections,
-        presenceOnly = presenceOnly)
+        presenceOnly = presenceOnly
+    )
 
     ## blacklisting belongs here and not earlier: removing regions before
     ## the combination would distort the rank distributions it relies on
     if (!is.null(excludeRegions)) {
         before <- length(consensus)
         consensus <- IRanges::subsetByOverlaps(consensus, excludeRegions,
-                                               invert = TRUE,
-                                               ignore.strand = TRUE)
-        .messageIf(verbose, "Excluded regions removed: ",
-                   before - length(consensus))
+            invert = TRUE,
+            ignore.strand = TRUE
+        )
+        .messageIf(
+            verbose, "Excluded regions removed: ",
+            before - length(consensus)
+        )
     }
 
     .messageIf(verbose, "Consensus regions: ", length(consensus))
 
     ## ---- assemble the object -----------------------------------------
-    annotatedPeaks <- S4Vectors::split(retained,
-                                       S4Vectors::mcols(retained)$replicate)
+    annotatedPeaks <- S4Vectors::split(
+        retained,
+        S4Vectors::mcols(retained)$replicate
+    )
     annotatedPeaks <- annotatedPeaks[replicateNames]
 
     methods::new(
@@ -353,8 +356,11 @@ buildConsensus <- function(peakList,
         weights = weights,
         parameters = list(
             scoreType = scoreType,
-            combinationMethod = if (presenceOnly) NA_character_ else
-                combinationMethod,
+            combinationMethod = if (presenceOnly) {
+                NA_character_
+            } else {
+                combinationMethod
+            },
             replicateType = replicateType,
             stringencyThreshold = stringencyThreshold,
             weakThreshold = weakThreshold,
@@ -370,9 +376,13 @@ buildConsensus <- function(peakList,
             recursive = recursive,
             mergeMethod = mergeMethod,
             maxConsensusWidth = maxConsensusWidth,
-            presenceOnly = presenceOnly),
-        stats = .replicateSummary(retained, replicateNames),
-        calibration = if (is.null(calibration)) list() else calibration
+            presenceOnly = presenceOnly
+        ),
+        stats = methods::as(
+            .replicateSummary(retained, replicateNames),
+            "DataFrame"
+        ),
+        calibration = calibration
     )
 }
 
@@ -400,9 +410,11 @@ buildConsensus <- function(peakList,
 .resolveRequiredSupport <- function(minSupport, minReplicates,
                                     nReplicates) {
     if (!is.null(minSupport) && !is.null(minReplicates)) {
-        stop("give either 'minSupport' or 'minReplicates', not both: ",
-             "they state the same requirement, one counting the other ",
-             "replicates and one counting all of them")
+        stop(
+            "give either 'minSupport' or 'minReplicates', not both: ",
+            "they state the same requirement, one counting the other ",
+            "replicates and one counting all of them"
+        )
     }
 
     if (is.null(minReplicates)) {
@@ -411,8 +423,10 @@ buildConsensus <- function(peakList,
 
     total <- .parseReplicateCount(minReplicates, nReplicates)
     if (total < 2L) {
-        stop("'minReplicates' resolved to ", total,
-             "; a peak supported by no other replicate is not a consensus")
+        stop(
+            "'minReplicates' resolved to ", total,
+            "; a peak supported by no other replicate is not a consensus"
+        )
     }
 
     ## the peak's own replicate is one of the total, the rest must support
@@ -439,8 +453,10 @@ buildConsensus <- function(peakList,
         ## check the shape first rather than converting and inspecting
         ## the damage, which would need the warning to be muffled
         if (!grepl("^[0-9]*[.]?[0-9]+[%]?$", trimmed)) {
-            stop("could not read '", value,
-                 "' as a count, a proportion or a percentage")
+            stop(
+                "could not read '", value,
+                "' as a count, a proportion or a percentage"
+            )
         }
         number <- as.numeric(sub("%$", "", trimmed))
 
@@ -502,7 +518,8 @@ buildConsensus <- function(peakList,
     S4Vectors::mcols(gr)$class <- dplyr::case_when(
         negLog10P >= -log10(stringencyThreshold) ~ "stringent",
         negLog10P >= -log10(weakThreshold) ~ "weak",
-        .default = "background")
+        .default = "background"
+    )
     gr
 }
 
@@ -532,7 +549,8 @@ buildConsensus <- function(peakList,
     ranked <- dplyr::mutate(
         ranked,
         rho = rank(-.data$negLog10P, ties.method = "average") /
-            (dplyr::n() + 1))
+            (dplyr::n() + 1)
+    )
     dplyr::pull(dplyr::ungroup(ranked), .data$rho)
 }
 
@@ -561,14 +579,17 @@ buildConsensus <- function(peakList,
     metadataColumns <- S4Vectors::mcols(retained)
     bestPerReplicate <- vapply(
         split(metadataColumns$rho, metadataColumns$replicate),
-        min, numeric(1))
+        min, numeric(1)
+    )
 
     ## a peak plus the replicates that have to support it
     nMembers <- min(requiredSupport + 1L, length(bestPerReplicate))
     bestMembers <- sort(bestPerReplicate)[seq_len(nMembers)]
 
-    -stats::pgamma(sum(-log(bestMembers)), shape = nMembers, rate = 1,
-                   lower.tail = FALSE, log.p = TRUE) / log(10)
+    -stats::pgamma(sum(-log(bestMembers)),
+        shape = nMembers, rate = 1,
+        lower.tail = FALSE, log.p = TRUE
+    ) / log(10)
 }
 
 
@@ -592,8 +613,9 @@ buildConsensus <- function(peakList,
 #' @noRd
 .buildOverlapTable <- function(retained, minOverlap, minOverlapFraction) {
     hits <- GenomicRanges::findOverlaps(retained, retained,
-                                        minoverlap = max(minOverlap, 1L),
-                                        ignore.strand = TRUE)
+        minoverlap = max(minOverlap, 1L),
+        ignore.strand = TRUE
+    )
 
     metadataColumns <- S4Vectors::mcols(retained)
     queryIndex <- S4Vectors::queryHits(hits)
@@ -606,12 +628,14 @@ buildConsensus <- function(peakList,
         subjectReplicate = metadataColumns$replicate[subjectIndex],
         subjectNegLog10P = metadataColumns$negLog10P[subjectIndex],
         subjectRho = metadataColumns$rho[subjectIndex],
-        subjectWeight = metadataColumns$weight[subjectIndex])
+        subjectWeight = metadataColumns$weight[subjectIndex]
+    )
 
     ## a peak cannot support itself, and neither can its neighbours from
     ## the same replicate
     overlaps <- dplyr::filter(
-        overlaps, .data$queryReplicate != .data$subjectReplicate)
+        overlaps, .data$queryReplicate != .data$subjectReplicate
+    )
 
     if (!is.null(minOverlapFraction)) {
         if (minOverlapFraction <= 0 || minOverlapFraction > 1) {
@@ -621,15 +645,20 @@ buildConsensus <- function(peakList,
         ## broad domain still counts as supported
         sharedWidth <- GenomicRanges::width(
             GenomicRanges::pintersect(retained[overlaps$queryHits],
-                                      retained[overlaps$subjectHits],
-                                      ignore.strand = TRUE))
+                retained[overlaps$subjectHits],
+                ignore.strand = TRUE
+            )
+        )
         shorterWidth <- pmin(
             GenomicRanges::width(retained[overlaps$queryHits]),
-            GenomicRanges::width(retained[overlaps$subjectHits]))
+            GenomicRanges::width(retained[overlaps$subjectHits])
+        )
         overlaps <- dplyr::filter(
             dplyr::mutate(overlaps,
-                          overlapFraction = sharedWidth / shorterWidth),
-            .data$overlapFraction >= minOverlapFraction)
+                overlapFraction = sharedWidth / shorterWidth
+            ),
+            .data$overlapFraction >= minOverlapFraction
+        )
     }
 
     overlaps
@@ -686,8 +715,10 @@ buildConsensus <- function(peakList,
     result <- NULL
 
     for (iteration in seq_len(max(maxIterations, 1L))) {
-        currentOverlaps <- dplyr::filter(overlapTable,
-                                         eligible[.data$subjectHits])
+        currentOverlaps <- dplyr::filter(
+            overlapTable,
+            eligible[.data$subjectHits]
+        )
 
         ## keep one supporter per replicate, the most or the least
         ## significant depending on the rule asked for
@@ -695,23 +726,31 @@ buildConsensus <- function(peakList,
             ## nothing to rank on, so any one overlapping peak per
             ## replicate carries the same information
             dplyr::distinct(currentOverlaps, .data$queryHits,
-                            .data$subjectReplicate, .keep_all = TRUE)
+                .data$subjectReplicate,
+                .keep_all = TRUE
+            )
         } else {
             ## Sorting once and keeping the first row of every pair picks
             ## the same peak as a grouped slice_max(), ties included since
             ## both sorts are stable, without evaluating tens of thousands
             ## of groups one at a time
             ordered <- if (multipleIntersections == "lowest") {
-                dplyr::arrange(currentOverlaps, .data$queryHits,
-                               .data$subjectReplicate,
-                               dplyr::desc(.data$subjectNegLog10P))
+                dplyr::arrange(
+                    currentOverlaps, .data$queryHits,
+                    .data$subjectReplicate,
+                    dplyr::desc(.data$subjectNegLog10P)
+                )
             } else {
-                dplyr::arrange(currentOverlaps, .data$queryHits,
-                               .data$subjectReplicate,
-                               .data$subjectNegLog10P)
+                dplyr::arrange(
+                    currentOverlaps, .data$queryHits,
+                    .data$subjectReplicate,
+                    .data$subjectNegLog10P
+                )
             }
             dplyr::distinct(ordered, .data$queryHits,
-                            .data$subjectReplicate, .keep_all = TRUE)
+                .data$subjectReplicate,
+                .keep_all = TRUE
+            )
         }
 
         ## one row per peak and supporting replicate is left, so the
@@ -730,10 +769,12 @@ buildConsensus <- function(peakList,
         combined <- if (presenceOnly) {
             rep(NA_real_, nPeaks)
         } else {
-            .combineOverPeaks(retained = retained,
-                              selected = selected,
-                              combinationMethod = combinationMethod,
-                              nPeaks = nPeaks)
+            .combineOverPeaks(
+                retained = retained,
+                selected = selected,
+                combinationMethod = combinationMethod,
+                nPeaks = nPeaks
+            )
         }
 
         ## the replicate count is the reproducibility criterion and a
@@ -751,22 +792,28 @@ buildConsensus <- function(peakList,
             enoughReplicates & enoughWeight & combined >= combinedCut
         }
 
-        result <- list(nSupport = nSupport,
-                       supportWeight = supportWeight,
-                       combinedNegLog10P = combined,
-                       passed = passed)
+        result <- list(
+            nSupport = nSupport,
+            supportWeight = supportWeight,
+            combinedNegLog10P = combined,
+            passed = passed
+        )
 
         if (!recursive) {
             break
         }
         if (!is.null(previousPassed) && identical(previousPassed, passed)) {
-            .messageIf(verbose, "Confirmation stable after ", iteration,
-                       " rounds")
+            .messageIf(
+                verbose, "Confirmation stable after ", iteration,
+                " rounds"
+            )
             break
         }
         if (iteration == maxIterations) {
-            warning("confirmation did not stabilise within ", maxIterations,
-                    " rounds; consider recursive = FALSE")
+            warning(
+                "confirmation did not stabilise within ", maxIterations,
+                " rounds; consider recursive = FALSE"
+            )
             break
         }
 
@@ -806,24 +853,32 @@ buildConsensus <- function(peakList,
 
     ## each peak contributes its own evidence alongside its supporters
     members <- dplyr::bind_rows(
-        dplyr::tibble(queryHits = seq_len(nPeaks),
-                      negLog10P = metadataColumns$negLog10P,
-                      rho = metadataColumns$rho,
-                      weight = metadataColumns$weight),
-        dplyr::tibble(queryHits = selected$queryHits,
-                      negLog10P = selected$subjectNegLog10P,
-                      rho = selected$subjectRho,
-                      weight = selected$subjectWeight))
+        dplyr::tibble(
+            queryHits = seq_len(nPeaks),
+            negLog10P = metadataColumns$negLog10P,
+            rho = metadataColumns$rho,
+            weight = metadataColumns$weight
+        ),
+        dplyr::tibble(
+            queryHits = selected$queryHits,
+            negLog10P = selected$subjectNegLog10P,
+            rho = selected$subjectRho,
+            weight = selected$subjectWeight
+        )
+    )
 
     ## all four schemes are sums over members, so the whole table can be
     ## reduced in one grouped pass rather than peak by peak
-    terms <- .transformMembers(negLog10P = members$negLog10P,
-                               weight = members$weight,
-                               method = combinationMethod,
-                               rho = members$rho)
+    terms <- .transformMembers(
+        negLog10P = members$negLog10P,
+        weight = members$weight,
+        method = combinationMethod,
+        rho = members$rho
+    )
     members <- dplyr::mutate(members,
-                             term = terms$term,
-                             scale = terms$scale)
+        term = terms$term,
+        scale = terms$scale
+    )
 
     ## split() and sum() rather than a grouped summarise(): the same
     ## sums, without a data mask evaluated once per peak
@@ -835,7 +890,8 @@ buildConsensus <- function(peakList,
         sumTerm = vapply(termSplit, sum, numeric(1)),
         sumScale = vapply(scaleSplit, sum, numeric(1)),
         nMembers = lengths(termSplit),
-        method = combinationMethod)
+        method = combinationMethod
+    )
 
     combined
 }
@@ -965,11 +1021,15 @@ buildConsensus <- function(peakList,
     if (!is.null(maxConsensusWidth) && mergeMethod == "reduce") {
         tooWide <- GenomicRanges::width(merged) > maxConsensusWidth
         if (any(tooWide)) {
-            warning(sum(tooWide), " merged regions exceeded ",
-                    maxConsensusWidth, " bp and were rebuilt iteratively")
+            warning(
+                sum(tooWide), " merged regions exceeded ",
+                maxConsensusWidth, " bp and were rebuilt iteratively"
+            )
             rebuilt <- .iterativeMerge(
                 IRanges::subsetByOverlaps(confirmed, merged[tooWide],
-                                          ignore.strand = TRUE))
+                    ignore.strand = TRUE
+                )
+            )
             merged <- c(merged[!tooWide], rebuilt)
             merged <- sort(merged)
         }
@@ -977,7 +1037,8 @@ buildConsensus <- function(peakList,
 
     ## describe each region by the peaks that fall inside it
     hits <- GenomicRanges::findOverlaps(confirmed, merged,
-                                        ignore.strand = TRUE)
+        ignore.strand = TRUE
+    )
     peakMetadata <- S4Vectors::mcols(confirmed)
 
     membership <- dplyr::tibble(
@@ -985,14 +1046,16 @@ buildConsensus <- function(peakList,
         replicate = peakMetadata$replicate[S4Vectors::queryHits(hits)],
         negLog10P = peakMetadata$negLog10P[S4Vectors::queryHits(hits)],
         rho = peakMetadata$rho[S4Vectors::queryHits(hits)],
-        weight = peakMetadata$weight[S4Vectors::queryHits(hits)])
+        weight = peakMetadata$weight[S4Vectors::queryHits(hits)]
+    )
 
     summarised <- dplyr::summarise(
         dplyr::group_by(membership, .data$region),
         nReplicates = dplyr::n_distinct(.data$replicate),
         nPeaks = dplyr::n(),
         replicates = paste(sort(unique(.data$replicate)), collapse = ","),
-        .groups = "drop")
+        .groups = "drop"
+    )
 
     S4Vectors::mcols(merged)$nReplicates <- 0L
     S4Vectors::mcols(merged)$nPeaks <- 0L
@@ -1009,21 +1072,29 @@ buildConsensus <- function(peakList,
     ## domain into five calls would count five times, and the region
     ## would look more significant the worse the peak calling was.
     if (!presenceOnly) {
-        grouped <- dplyr::group_by(membership, .data$region,
-                                   .data$replicate)
+        grouped <- dplyr::group_by(
+            membership, .data$region,
+            .data$replicate
+        )
         representative <- if (multipleIntersections == "lowest") {
-            dplyr::slice_max(grouped, order_by = .data$negLog10P,
-                             n = 1, with_ties = FALSE)
+            dplyr::slice_max(grouped,
+                order_by = .data$negLog10P,
+                n = 1, with_ties = FALSE
+            )
         } else {
-            dplyr::slice_min(grouped, order_by = .data$negLog10P,
-                             n = 1, with_ties = FALSE)
+            dplyr::slice_min(grouped,
+                order_by = .data$negLog10P,
+                n = 1, with_ties = FALSE
+            )
         }
         representative <- dplyr::ungroup(representative)
 
-        terms <- .transformMembers(negLog10P = representative$negLog10P,
-                                   weight = representative$weight,
-                                   method = combinationMethod,
-                                   rho = representative$rho)
+        terms <- .transformMembers(
+            negLog10P = representative$negLog10P,
+            weight = representative$weight,
+            method = combinationMethod,
+            rho = representative$rho
+        )
         representative$term <- terms$term
         representative$scale <- terms$scale
 
@@ -1032,14 +1103,17 @@ buildConsensus <- function(peakList,
             sumTerm = sum(.data$term),
             sumScale = sum(.data$scale),
             nMembers = dplyr::n(),
-            .groups = "drop")
+            .groups = "drop"
+        )
 
         S4Vectors::mcols(merged)$combinedNegLog10P <- NA_real_
         S4Vectors::mcols(merged)$combinedNegLog10P[regionStat$region] <-
-            .closeCombination(sumTerm = regionStat$sumTerm,
-                              sumScale = regionStat$sumScale,
-                              nMembers = regionStat$nMembers,
-                              method = combinationMethod)
+            .closeCombination(
+                sumTerm = regionStat$sumTerm,
+                sumScale = regionStat$sumScale,
+                nMembers = regionStat$nMembers,
+                method = combinationMethod
+            )
     }
 
     merged
@@ -1080,8 +1154,10 @@ buildConsensus <- function(peakList,
     }
 
     hits <- GenomicRanges::findOverlaps(gr, gr, ignore.strand = TRUE)
-    neighbours <- S4Vectors::split(S4Vectors::subjectHits(hits),
-                                   S4Vectors::queryHits(hits))
+    neighbours <- S4Vectors::split(
+        S4Vectors::subjectHits(hits),
+        S4Vectors::queryHits(hits)
+    )
 
     available <- rep(TRUE, length(gr))
     clusters <- vector("list", length(gr))
@@ -1135,15 +1211,122 @@ buildConsensus <- function(peakList,
         nRescued = sum(.data$status == "confirmed" & .data$class == "weak"),
         nFalsePositive = sum(.data$status == "falsePositive"),
         nDiscarded = sum(.data$status == "discarded"),
-        .groups = "drop")
+        .groups = "drop"
+    )
 
     ## the rescue rate is the number to look at first: a value far above
     ## what the replicates share otherwise usually means the weak
     ## threshold was set too permissively
     summarised <- dplyr::mutate(
         summarised,
-        rescueRate = .data$nRescued / pmax(.data$nConfirmed, 1))
+        rescueRate = .data$nRescued / pmax(.data$nConfirmed, 1)
+    )
 
     summarised <- summarised[match(replicateNames, summarised$replicate), ]
     as.data.frame(summarised)
+}
+
+
+#' Check the arguments of buildConsensus and resolve what they imply
+#'
+#' @description
+#' The checks that have to happen before any peak is touched, kept
+#' together so that they can be read, and tested, without the rest of
+#' [buildConsensus()] around them. Each one guards against a mistake that
+#' would otherwise surface much later: an empty consensus, weights
+#' silently matched to the wrong replicate, or a support rule that no
+#' number of replicates could satisfy.
+#'
+#' @param peakList A `GRangesList` of peaks, one element per replicate.
+#' @param calibration A [ThresholdCalibration-class] object, or `NULL`.
+#' @param combinedThreshold Threshold supplied by hand, or `NULL`.
+#' @param stringencyThreshold The stringent p-value cut.
+#' @param weakThreshold The permissive p-value cut.
+#' @param replicateType `"biological"` or `"technical"`.
+#' @param minSupport Supporting replicates required, or `NULL`.
+#' @param minReplicates Replicates required in total, or `NULL`.
+#' @param weights Named numeric vector of replicate weights, or `NULL`.
+#' @param verbose Report what was resolved.
+#'
+#' @return A list with the `combinedThreshold` to apply, the
+#'   `requiredSupport`, the normalised `weights`, the `replicateNames` and
+#'   the number of replicates.
+#'
+#' @author Sebastian Gregoricchio
+#'
+#' @importFrom methods is
+#'
+#' @keywords internal
+#' @noRd
+.resolveBuildSettings <- function(peakList, calibration, combinedThreshold,
+                                  stringencyThreshold, weakThreshold,
+                                  replicateType, minSupport, minReplicates,
+                                  weights, verbose = TRUE) {
+    if (!methods::is(peakList, "GRangesList")) {
+        stop("'peakList' must be a GRangesList, see readPeakSets()")
+    }
+    if (length(peakList) < 2) {
+        stop("consensus needs at least two replicates")
+    }
+    if (weakThreshold < stringencyThreshold) {
+        stop(
+            "'weakThreshold' must be larger than 'stringencyThreshold'; ",
+            "they are p-values, so the weak cut is the more permissive one"
+        )
+    }
+
+    ## a calibrated threshold was derived from these peak sets, so it
+    ## takes precedence over anything carried over by hand
+    if (!is.null(calibration)) {
+        if (!methods::is(calibration, "ThresholdCalibration")) {
+            stop("'calibration' must be the output of calibrateThreshold()")
+        }
+        combinedThreshold <- calibrationThreshold(calibration)
+        .messageIf(
+            verbose, "Using the calibrated threshold ",
+            signif(combinedThreshold, 3)
+        )
+    }
+    if (is.null(combinedThreshold)) {
+        combinedThreshold <- stringencyThreshold
+    }
+
+    nReplicates <- length(peakList)
+    replicateNames <- names(peakList)
+
+    requiredSupport <- if (replicateType == "technical") {
+        ## technical replicates are expected to agree everywhere
+        nReplicates - 1L
+    } else {
+        .resolveRequiredSupport(
+            minSupport = minSupport,
+            minReplicates = minReplicates,
+            nReplicates = nReplicates
+        )
+    }
+    if (requiredSupport > nReplicates - 1L) {
+        stop(
+            "the requested support asks for ", requiredSupport + 1L,
+            " replicates in total but only ", nReplicates,
+            " were supplied"
+        )
+    }
+
+    ## weights are matched to the peaks by replicate name later on, so a
+    ## set that does not cover every replicate has to stop here
+    if (is.null(weights)) {
+        weights <- rep(1, nReplicates)
+        names(weights) <- replicateNames
+    }
+    if (!setequal(names(weights), replicateNames)) {
+        stop("names of 'weights' do not match the replicate names")
+    }
+
+    list(
+        combinedThreshold = combinedThreshold,
+        requiredSupport = requiredSupport,
+        weights = .normaliseWeights(weights[replicateNames]),
+        replicateNames = replicateNames,
+        nReplicates = nReplicates
+    )
 }

@@ -28,8 +28,10 @@
                            borderWidth = 1) {
     ## a heatmap wants a closed panel, everything else wants open axes
     panelBorder <- if (isTRUE(border)) {
-        ggplot2::element_rect(colour = "black", fill = NA,
-                              linewidth = borderWidth)
+        ggplot2::element_rect(
+            colour = "black", fill = NA,
+            linewidth = borderWidth
+        )
     } else {
         ggplot2::element_blank()
     }
@@ -46,25 +48,40 @@
             panel.grid.minor = ggplot2::element_blank(),
             panel.background = ggplot2::element_blank(),
             axis.line = axisLine,
-            axis.text = ggplot2::element_text(colour = "black",
-                                              size = baseSize - 1),
-            axis.title = ggplot2::element_text(colour = "black",
-                                               size = baseSize),
-            axis.ticks = ggplot2::element_line(colour = "black",
-                                               linewidth = 0.5),
+            axis.text = ggplot2::element_text(
+                colour = "black",
+                size = baseSize - 1
+            ),
+            axis.title = ggplot2::element_text(
+                colour = "black",
+                size = baseSize
+            ),
+            axis.ticks = ggplot2::element_line(
+                colour = "black",
+                linewidth = 0.5
+            ),
             legend.position = legendPosition,
             legend.key = ggplot2::element_blank(),
             legend.background = ggplot2::element_blank(),
-            legend.text = ggplot2::element_text(colour = "black",
-                                                size = baseSize - 1),
-            legend.title = ggplot2::element_text(colour = "black",
-                                                 size = baseSize),
+            legend.text = ggplot2::element_text(
+                colour = "black",
+                size = baseSize - 1
+            ),
+            legend.title = ggplot2::element_text(
+                colour = "black",
+                size = baseSize
+            ),
             strip.background = ggplot2::element_blank(),
-            strip.text = ggplot2::element_text(colour = "black",
-                                               size = baseSize),
-            plot.title = ggplot2::element_text(colour = "black",
-                                               size = baseSize + 2,
-                                               face = "bold", hjust = 0.5))
+            strip.text = ggplot2::element_text(
+                colour = "black",
+                size = baseSize
+            ),
+            plot.title = ggplot2::element_text(
+                colour = "black",
+                size = baseSize + 2,
+                face = "bold", hjust = 0.5
+            )
+        )
 }
 
 
@@ -102,8 +119,8 @@
     ## the usual weighted sum for perceived brightness: the eye is far
     ## more sensitive to green than it is to blue
     luminance <- (channels[, 1] * 0.299 +
-                      channels[, 2] * 0.587 +
-                      channels[, 3] * 0.114) / 255
+        channels[, 2] * 0.587 +
+        channels[, 3] * 0.114) / 255
 
     ifelse(luminance > 0.5, "black", "white")
 }
@@ -138,11 +155,16 @@
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #' result <- buildConsensus(peaks, verbose = FALSE)
 #'
 #' plotRescue(result)
@@ -156,38 +178,57 @@ plotRescue <- function(object, proportion = FALSE, baseSize = 12) {
     ## split the confirmed peaks into those that stood on their own and
     ## those that needed the other replicates
     summary <- dplyr::mutate(
-        tibble::as_tibble(object@stats),
-        confirmedStringent = .data$nConfirmed - .data$nRescued)
+        tibble::as_tibble(as.data.frame(consensusStats(object))),
+        confirmedStringent = .data$nConfirmed - .data$nRescued
+    )
 
     plotData <- tidyr::pivot_longer(
-        dplyr::select(summary, "replicate", "confirmedStringent",
-                      "nRescued", "nFalsePositive", "nDiscarded"),
+        dplyr::select(
+            summary, "replicate", "confirmedStringent",
+            "nRescued", "nFalsePositive", "nDiscarded"
+        ),
         cols = -"replicate",
         names_to = "outcome",
-        values_to = "count")
+        values_to = "count"
+    )
 
     plotData <- dplyr::mutate(
         plotData,
         outcome = factor(.data$outcome,
-                         levels = c("confirmedStringent", "nRescued",
-                                    "nFalsePositive", "nDiscarded"),
-                         labels = c("confirmed", "rescued",
-                                    "failed correction", "discarded")))
+            levels = c(
+                "confirmedStringent", "nRescued",
+                "nFalsePositive", "nDiscarded"
+            ),
+            labels = c(
+                "confirmed", "rescued",
+                "failed correction", "discarded"
+            )
+        )
+    )
 
     barPosition <- if (isTRUE(proportion)) "fill" else "stack"
 
-    ggplot2::ggplot(plotData,
-                    ggplot2::aes(x = .data$replicate, y = .data$count,
-                                 fill = .data$outcome)) +
+    ggplot2::ggplot(
+        plotData,
+        ggplot2::aes(
+            x = .data$replicate, y = .data$count,
+            fill = .data$outcome
+        )
+    ) +
         ggplot2::geom_col(position = barPosition, width = 0.7) +
         ggplot2::scale_fill_manual(
-            values = c(confirmed = "#2C6E91",
-                       rescued = "#78B4C8",
-                       `failed correction` = "#E0B25F",
-                       discarded = "#BDBDBD")) +
-        ggplot2::labs(x = NULL,
-                      y = if (isTRUE(proportion)) "fraction" else "peaks",
-                      fill = NULL) +
+            values = c(
+                confirmed = "#2C6E91",
+                rescued = "#78B4C8",
+                `failed correction` = "#E0B25F",
+                discarded = "#BDBDBD"
+            )
+        ) +
+        ggplot2::labs(
+            x = NULL,
+            y = if (isTRUE(proportion)) "fraction" else "peaks",
+            fill = NULL
+        ) +
         .themePubrLike(baseSize = baseSize, legendPosition = "right") +
         ## the replicate names sit under the bars already, so the ticks
         ## only add clutter
@@ -227,11 +268,16 @@ plotRescue <- function(object, proportion = FALSE, baseSize = 12) {
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #' plotJaccard(buildConsensus(peaks, verbose = FALSE))
 #'
 #' @export
@@ -244,49 +290,67 @@ plotJaccard <- function(object,
         stop("'object' must be a ConsensusRegions object")
     }
 
-    jaccard <- .pairwiseJaccard(object@peaks)
+    jaccard <- .pairwiseJaccard(peakSets(object))
 
     plotData <- tidyr::pivot_longer(
         dplyr::mutate(as.data.frame(jaccard),
-                      replicateA = rownames(jaccard)),
+            replicateA = rownames(jaccard)
+        ),
         cols = -"replicateA",
         names_to = "replicateB",
-        values_to = "jaccard")
+        values_to = "jaccard"
+    )
 
     ## the lettering follows the fill rather than the value, so it keeps
     ## working if the palette is changed
     plotData <- dplyr::mutate(
         plotData,
         labelColour = .contrastingLabelColour(.data$jaccard,
-                                              lowColour = lowColour,
-                                              highColour = highColour,
-                                              limits = c(0, 1)))
+            lowColour = lowColour,
+            highColour = highColour,
+            limits = c(0, 1)
+        )
+    )
 
     plot <- ggplot2::ggplot(
         plotData,
-        ggplot2::aes(x = .data$replicateA, y = .data$replicateB,
-                     fill = .data$jaccard)) +
+        ggplot2::aes(
+            x = .data$replicateA, y = .data$replicateB,
+            fill = .data$jaccard
+        )
+    ) +
         ggplot2::geom_tile(colour = "white", linewidth = 0.4) +
-        ggplot2::scale_fill_gradient(low = lowColour, high = highColour,
-                                     limits = c(0, 1)) +
+        ggplot2::scale_fill_gradient(
+            low = lowColour, high = highColour,
+            limits = c(0, 1)
+        ) +
         ## half a category of padding puts the panel edge exactly on the
         ## outer tile boundary: no gap, and no tile cut in half
         ggplot2::scale_x_discrete(
-            expand = ggplot2::expansion(mult = 0, add = 0.5)) +
+            expand = ggplot2::expansion(mult = 0, add = 0.5)
+        ) +
         ggplot2::scale_y_discrete(
-            expand = ggplot2::expansion(mult = 0, add = 0.5)) +
+            expand = ggplot2::expansion(mult = 0, add = 0.5)
+        ) +
         ggplot2::labs(x = NULL, y = NULL, fill = "Jaccard") +
-        .themePubrLike(baseSize = baseSize, legendPosition = "right",
-                       border = TRUE, borderWidth = 1) +
-        ggplot2::theme(aspect.ratio = 1,
-                       axis.ticks = element_blank())
+        .themePubrLike(
+            baseSize = baseSize, legendPosition = "right",
+            border = TRUE, borderWidth = 1
+        ) +
+        ggplot2::theme(
+            aspect.ratio = 1,
+            axis.ticks = element_blank()
+        )
 
     if (isTRUE(showValues)) {
         plot <- plot +
             ggplot2::geom_text(
-                ggplot2::aes(label = sprintf("%.2f", .data$jaccard),
-                             colour = .data$labelColour),
-                size = baseSize / 4) +
+                ggplot2::aes(
+                    label = sprintf("%.2f", .data$jaccard),
+                    colour = .data$labelColour
+                ),
+                size = baseSize / 4
+            ) +
             ggplot2::scale_colour_identity()
     }
 
@@ -315,11 +379,16 @@ plotJaccard <- function(object,
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
 #' result <- buildConsensus(peaks, verbose = FALSE)
 #'
 #' if (requireNamespace("ComplexUpset", quietly = TRUE)) {
@@ -329,8 +398,10 @@ plotJaccard <- function(object,
 #' @export
 plotUpset <- function(object, minSize = 0) {
     if (!requireNamespace("ComplexUpset", quietly = TRUE)) {
-        stop("plotUpset() needs the ComplexUpset package, install it with ",
-             "install.packages('ComplexUpset')")
+        stop(
+            "plotUpset() needs the ComplexUpset package, install it with ",
+            "install.packages('ComplexUpset')"
+        )
     }
     if (!methods::is(object, "ConsensusRegions")) {
         stop("'object' must be a ConsensusRegions object")
@@ -346,7 +417,8 @@ plotUpset <- function(object, minSize = 0) {
         as.data.frame(membership),
         intersect = colnames(membership),
         min_size = minSize,
-        name = "replicates")
+        name = "replicates"
+    )
 }
 
 
@@ -367,43 +439,52 @@ plotUpset <- function(object, minSize = 0) {
 #'
 #' @importFrom ggplot2 ggplot aes geom_line geom_hline geom_vline labs
 #'   theme
-#' @importFrom ggtext element_markdown
 #' @importFrom rlang .data
 #'
 #' @examples
 #' peakFiles <- system.file("extdata",
-#'                          c("rep1.narrowPeak", "rep2.narrowPeak",
-#'                            "rep3.narrowPeak"),
-#'                          package = "consensusRegions")
-#' peaks <- readPeakSets(peakFiles, sampleNames = c("r1", "r2", "r3"),
-#'                       verbose = FALSE)
-#' calibration <- calibrateThreshold(peaks, nPermutations = 5, seed = 42,
-#'                                   verbose = FALSE)
+#'     c(
+#'         "rep1.narrowPeak", "rep2.narrowPeak",
+#'         "rep3.narrowPeak"
+#'     ),
+#'     package = "consensusRegions"
+#' )
+#' peaks <- readPeakSets(peakFiles,
+#'     sampleNames = c("r1", "r2", "r3"),
+#'     verbose = FALSE
+#' )
+#' calibration <- calibrateThreshold(peaks,
+#'     nPermutations = 5, seed = 42,
+#'     verbose = FALSE
+#' )
 #'
 #' plotCalibration(calibration)
 #'
 #' @export
 plotCalibration <- function(calibration, baseSize = 12) {
-    if (!is.list(calibration) || is.null(calibration$fdrCurve)) {
+    if (!methods::is(calibration, "ThresholdCalibration")) {
         stop("'calibration' must be the output of calibrateThreshold()")
     }
 
-    ggplot2::ggplot(calibration$fdrCurve,
-                    ggplot2::aes(x = .data$cut, y = .data$fdr)) +
+    ggplot2::ggplot(
+        calibrationCurve(calibration),
+        ggplot2::aes(x = .data$cut, y = .data$fdr)
+    ) +
         ggplot2::geom_line(colour = "#2C6E91", linewidth = 0.7) +
-        ggplot2::geom_hline(yintercept = calibration$targetFDR,
-                            linetype = "dashed", colour = "grey40") +
-        ggplot2::geom_vline(xintercept = calibration$thresholdNegLog10,
-                            linetype = "dotted", colour = "#B4553C") +
-        ## the base of the logarithm belongs in subscript, which plotmath
-        ## cannot mix with running text the way markdown can
+        ggplot2::geom_hline(
+            yintercept = calibrationTargetFDR(calibration),
+            linetype = "dashed", colour = "grey40"
+        ) +
+        ggplot2::geom_vline(
+            xintercept = calibrationThresholdNegLog10(calibration),
+            linetype = "dotted", colour = "#B4553C"
+        ) +
         ggplot2::labs(
-            x = "combined significance cut (-log<sub>10</sub> p)",
-            y = "empirical FDR") +
-        .themePubrLike(baseSize = baseSize, legendPosition = "none") +
-        ggplot2::theme(
-            axis.title.x = ggtext::element_markdown(colour = "black",
-                                                    size = baseSize))
+            x = expression("combined significance cut (" * -log[10] ~ p *
+                ")"),
+            y = "empirical FDR"
+        ) +
+        .themePubrLike(baseSize = baseSize, legendPosition = "none")
 }
 
 
@@ -421,24 +502,28 @@ plotCalibration <- function(calibration, baseSize = 12) {
 #' @keywords internal
 #' @noRd
 .membershipMatrix <- function(object) {
-    consensus <- object@consensus
-    replicateNames <- names(object@peaks)
+    consensus <- consensusRanges(object)
+    allPeaks <- peakSets(object)
+    replicateNames <- names(allPeaks)
 
-    membership <- matrix(FALSE, nrow = length(consensus),
-                         ncol = length(replicateNames),
-                         dimnames = list(NULL, replicateNames))
+    membership <- matrix(FALSE,
+        nrow = length(consensus),
+        ncol = length(replicateNames),
+        dimnames = list(NULL, replicateNames)
+    )
     if (length(consensus) == 0) {
         return(membership)
     }
 
     for (thisReplicate in replicateNames) {
-        peaks <- object@peaks[[thisReplicate]]
+        peaks <- allPeaks[[thisReplicate]]
         peaks <- peaks[S4Vectors::mcols(peaks)$status == "confirmed"]
         if (length(peaks) == 0) {
             next
         }
         hits <- GenomicRanges::findOverlaps(peaks, consensus,
-                                            ignore.strand = TRUE)
+            ignore.strand = TRUE
+        )
         membership[unique(S4Vectors::subjectHits(hits)), thisReplicate] <-
             TRUE
     }

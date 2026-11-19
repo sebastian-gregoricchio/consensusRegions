@@ -1,7 +1,7 @@
 Package: consensusRegions
 Type: Package
 Title: Consensus Regions from Replicated ChIP-seq and ATAC-seq Experiments
-Version: 0.99.2
+Version: 0.99.3
 Authors@R: person("Sebastian", "Gregoricchio",
                   email = "s.gregoricchio@nki.nl",
                   role = c("aut", "cre"),
@@ -19,6 +19,12 @@ Description: Merges the evidence carried by replicated ChIP-seq, ATAC-seq
     the score is absent. The threshold on the combined significance can be
     calibrated against a permutation null rather than fixed a priori.
     Quality control plots and export to SummarizedExperiment are included.
+    The approach follows MSPC (Jalili et al., 2015). It differs from
+    consensus sets built on occupancy, such as the minOverlap rule of
+    DiffBind, in that a region is kept on the combined significance of the
+    peaks that overlap it rather than on how many replicates called it,
+    and from IDR, which ranks a pair of replicates by reproducibility, in
+    that any number of replicates is reduced to one set of regions.
 License: GPL-3
 Encoding: UTF-8
 Depends:
@@ -30,7 +36,6 @@ Imports:
     dplyr (>= 1.1.0),
     GenomeInfoDb,
     ggplot2,
-    ggtext,
     grDevices,
     IRanges,
     methods,

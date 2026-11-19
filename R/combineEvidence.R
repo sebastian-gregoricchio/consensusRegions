@@ -58,14 +58,18 @@
 #' combineEvidence(c(3, 3.2, 2.8), method = "fisher")
 #'
 #' ## the same peaks, but the third replicate is known to be poor
-#' combineEvidence(c(3, 3.2, 2.8), weights = c(1.3, 1.3, 0.4),
-#'                 method = "stouffer")
+#' combineEvidence(c(3, 3.2, 2.8),
+#'     weights = c(1.3, 1.3, 0.4),
+#'     method = "stouffer"
+#' )
 #'
 #' @export
 combineEvidence <- function(negLog10P,
                             weights = NULL,
-                            method = c("stouffer", "fisher", "lancaster",
-                                       "rankProduct"),
+                            method = c(
+                                "stouffer", "fisher", "lancaster",
+                                "rankProduct"
+                            ),
                             rho = NULL) {
     method <- match.arg(method)
 
@@ -77,15 +81,19 @@ combineEvidence <- function(negLog10P,
     }
     weights <- rep_len(weights, length(negLog10P))
 
-    terms <- .transformMembers(negLog10P = negLog10P,
-                               weight = weights,
-                               method = method,
-                               rho = rho)
+    terms <- .transformMembers(
+        negLog10P = negLog10P,
+        weight = weights,
+        method = method,
+        rho = rho
+    )
 
-    .closeCombination(sumTerm = sum(terms$term),
-                      sumScale = sum(terms$scale),
-                      nMembers = length(negLog10P),
-                      method = method)
+    .closeCombination(
+        sumTerm = sum(terms$term),
+        sumScale = sum(terms$scale),
+        nMembers = length(negLog10P),
+        method = method
+    )
 }
 
 
@@ -119,20 +127,26 @@ combineEvidence <- function(negLog10P,
     if (method == "fisher") {
         ## Fisher only needs the sum of -log10 p; the constants are applied
         ## once when the sum is closed
-        return(tibble::tibble(term = negLog10P,
-                              scale = rep(1, length(negLog10P))))
+        return(tibble::tibble(
+            term = negLog10P,
+            scale = rep(1, length(negLog10P))
+        ))
     }
 
     if (method == "stouffer") {
         zScore <- stats::qnorm(logP, lower.tail = FALSE, log.p = TRUE)
-        return(tibble::tibble(term = weight * zScore,
-                              scale = weight^2))
+        return(tibble::tibble(
+            term = weight * zScore,
+            scale = weight^2
+        ))
     }
 
     if (method == "lancaster") {
         ## the weight becomes the degrees of freedom of each contribution
-        chiTerm <- stats::qchisq(logP, df = weight,
-                                 lower.tail = FALSE, log.p = TRUE)
+        chiTerm <- stats::qchisq(logP,
+            df = weight,
+            lower.tail = FALSE, log.p = TRUE
+        )
         return(tibble::tibble(term = chiTerm, scale = weight))
     }
 
@@ -165,18 +179,23 @@ combineEvidence <- function(negLog10P,
 .closeCombination <- function(sumTerm, sumScale, nMembers, method) {
     logTen <- log(10)
 
-    combined <- switch(
-        method,
+    combined <- switch(method,
         ## X2 = -2 * sum(ln p) = 2 * ln(10) * sum(-log10 p)
         fisher = stats::pchisq(2 * logTen * sumTerm,
-                               df = 2 * nMembers,
-                               lower.tail = FALSE, log.p = TRUE),
+            df = 2 * nMembers,
+            lower.tail = FALSE, log.p = TRUE
+        ),
         stouffer = stats::pnorm(sumTerm / sqrt(sumScale),
-                                lower.tail = FALSE, log.p = TRUE),
-        lancaster = stats::pchisq(sumTerm, df = sumScale,
-                                  lower.tail = FALSE, log.p = TRUE),
-        rankProduct = stats::pgamma(sumTerm, shape = nMembers, rate = 1,
-                                    lower.tail = FALSE, log.p = TRUE)
+            lower.tail = FALSE, log.p = TRUE
+        ),
+        lancaster = stats::pchisq(sumTerm,
+            df = sumScale,
+            lower.tail = FALSE, log.p = TRUE
+        ),
+        rankProduct = stats::pgamma(sumTerm,
+            shape = nMembers, rate = 1,
+            lower.tail = FALSE, log.p = TRUE
+        )
     )
 
     ## report on the same -log10 scale as the input
